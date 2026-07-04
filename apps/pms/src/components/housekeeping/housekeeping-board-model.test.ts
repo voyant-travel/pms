@@ -63,9 +63,7 @@ describe("compareTaskViews", () => {
   it("orders by priority desc then unit number numerically", () => {
     expect(compareTaskViews(task({ priority: 5 }), task({ priority: 1 }))).toBeLessThan(0)
     // "9" must precede "10" under natural-numeric sort.
-    expect(
-      compareTaskViews(task({ unitNumber: "9" }), task({ unitNumber: "10" })),
-    ).toBeLessThan(0)
+    expect(compareTaskViews(task({ unitNumber: "9" }), task({ unitNumber: "10" }))).toBeLessThan(0)
   })
 })
 

@@ -41,18 +41,29 @@ describe("maintenanceTimeline", () => {
   })
 
   it("classifies non-active blocks as closed regardless of dates", () => {
-    expect(maintenanceTimeline({ status: "resolved", fromDate: "2026-07-01", toDate: "2026-07-10" }, TODAY)).toBe(
-      "closed",
-    )
-    expect(maintenanceTimeline({ status: "cancelled", fromDate: "2026-07-08", toDate: "2026-07-10" }, TODAY)).toBe(
-      "closed",
-    )
+    expect(
+      maintenanceTimeline(
+        { status: "resolved", fromDate: "2026-07-01", toDate: "2026-07-10" },
+        TODAY,
+      ),
+    ).toBe("closed")
+    expect(
+      maintenanceTimeline(
+        { status: "cancelled", fromDate: "2026-07-08", toDate: "2026-07-10" },
+        TODAY,
+      ),
+    ).toBe("closed")
   })
 })
 
 describe("toMaintenanceRow", () => {
   it("wraps a block with its timeline and day span", () => {
-    const block = { status: "active" as const, fromDate: "2026-07-04", toDate: "2026-07-06", id: "mblk_1" }
+    const block = {
+      status: "active" as const,
+      fromDate: "2026-07-04",
+      toDate: "2026-07-06",
+      id: "mblk_1",
+    }
     const row = toMaintenanceRow(block, TODAY)
     expect(row.timeline).toBe("current")
     expect(row.days).toBe(3)
@@ -63,11 +74,31 @@ describe("toMaintenanceRow", () => {
 describe("sortMaintenanceRows", () => {
   it("orders current → upcoming → past → closed, then by start date", () => {
     const rows: MaintenanceRow<MaintenanceTimelineInput & { id: string }>[] = [
-      { block: { id: "past", status: "active", fromDate: "2026-07-01", toDate: "2026-07-02" }, timeline: "past", days: 2 },
-      { block: { id: "closed", status: "cancelled", fromDate: "2026-07-01", toDate: "2026-07-30" }, timeline: "closed", days: 30 },
-      { block: { id: "cur-b", status: "active", fromDate: "2026-07-04", toDate: "2026-07-06" }, timeline: "current", days: 3 },
-      { block: { id: "cur-a", status: "active", fromDate: "2026-07-03", toDate: "2026-07-06" }, timeline: "current", days: 4 },
-      { block: { id: "up", status: "active", fromDate: "2026-07-09", toDate: "2026-07-10" }, timeline: "upcoming", days: 2 },
+      {
+        block: { id: "past", status: "active", fromDate: "2026-07-01", toDate: "2026-07-02" },
+        timeline: "past",
+        days: 2,
+      },
+      {
+        block: { id: "closed", status: "cancelled", fromDate: "2026-07-01", toDate: "2026-07-30" },
+        timeline: "closed",
+        days: 30,
+      },
+      {
+        block: { id: "cur-b", status: "active", fromDate: "2026-07-04", toDate: "2026-07-06" },
+        timeline: "current",
+        days: 3,
+      },
+      {
+        block: { id: "cur-a", status: "active", fromDate: "2026-07-03", toDate: "2026-07-06" },
+        timeline: "current",
+        days: 4,
+      },
+      {
+        block: { id: "up", status: "active", fromDate: "2026-07-09", toDate: "2026-07-10" },
+        timeline: "upcoming",
+        days: 2,
+      },
     ]
     expect(sortMaintenanceRows(rows).map((r) => r.block.id)).toEqual([
       "cur-a",
@@ -80,8 +111,16 @@ describe("sortMaintenanceRows", () => {
 
   it("does not mutate the input", () => {
     const rows: MaintenanceRow[] = [
-      { block: { status: "active", fromDate: "2026-07-09", toDate: "2026-07-10" }, timeline: "upcoming", days: 2 },
-      { block: { status: "active", fromDate: "2026-07-01", toDate: "2026-07-10" }, timeline: "current", days: 10 },
+      {
+        block: { status: "active", fromDate: "2026-07-09", toDate: "2026-07-10" },
+        timeline: "upcoming",
+        days: 2,
+      },
+      {
+        block: { status: "active", fromDate: "2026-07-01", toDate: "2026-07-10" },
+        timeline: "current",
+        days: 10,
+      },
     ]
     const before = rows.map((r) => r.timeline)
     sortMaintenanceRows(rows)
