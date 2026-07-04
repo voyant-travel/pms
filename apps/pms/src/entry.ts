@@ -8,6 +8,7 @@ import {
   CHANNEL_PUSH_CONTENT_CRON,
   DRAFT_REAPER_CRON,
   HOUSEKEEPING_GENERATE_CRON,
+  NIGHT_AUDIT_CRON,
   OUTBOX_DRAIN_CRON,
   PROMOTION_BOUNDARY_SCHEDULER_CRON,
 } from "./scheduled-crons"
@@ -73,6 +74,17 @@ export default {
             console.info("[housekeeping-generate] result", result)
           })
           .catch((err) => reportBackgroundFailure("housekeeping-generate", err)),
+      )
+      return
+    }
+    if (event.cron === NIGHT_AUDIT_CRON) {
+      ctx.waitUntil(
+        import("./api/jobs/night-audit-scheduled")
+          .then((mod) => mod.runScheduledNightAudit(event, env))
+          .then((result) => {
+            console.info("[night-audit] result", result)
+          })
+          .catch((err) => reportBackgroundFailure("night-audit", err)),
       )
       return
     }

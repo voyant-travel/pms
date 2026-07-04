@@ -78,6 +78,13 @@
       "when": 1783202287938,
       "tag": "0010_tranquil_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1783204726265,
+      "tag": "0011_foamy_rattler",
+      "breakpoints": true
     }
   ]
 }
