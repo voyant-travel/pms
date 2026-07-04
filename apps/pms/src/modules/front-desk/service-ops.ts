@@ -27,6 +27,28 @@ export interface OpsResult {
   warnings: string[]
 }
 
+/** Minimal readiness shape the check-in warning path consumes (structural). */
+export interface UnitReadinessInfo {
+  unitId: string
+  ready: boolean
+  reasons: string[]
+}
+
+/**
+ * Optional injected lookup that reports whether the assigned units are
+ * guest-ready on a date. Supplied by the housekeeping module at route wiring
+ * (front-desk → housekeeping); when absent, check-in skips readiness warnings.
+ */
+export type UnitReadinessLookup = (
+  db: FrontDeskDb,
+  unitIds: string[],
+  date: string,
+) => Promise<UnitReadinessInfo[]>
+
+export interface CheckInOptions {
+  getUnitReadiness?: UnitReadinessLookup
+}
+
 /** PURE: reason a stay cannot be checked in, or null when it may. */
 export function checkInBlockedReason(reservationStatus: string): string | null {
   if (reservationStatus === "cancelled") return "stay is cancelled"
@@ -47,6 +69,7 @@ async function loadStay(db: FrontDeskDb, bookingItemId: string) {
       bookingItemId: stayBookingItems.bookingItemId,
       roomTypeId: stayBookingItems.roomTypeId,
       status: stayBookingItems.status,
+      checkInDate: stayBookingItems.checkInDate,
     })
     .from(stayBookingItems)
     .where(eq(stayBookingItems.bookingItemId, bookingItemId))
@@ -69,19 +92,19 @@ async function isSerializedRoomType(db: FrontDeskDb, roomTypeId: string): Promis
   return rt?.inventoryMode === "serialized"
 }
 
-async function hasUnitAssignment(db: FrontDeskDb, bookingItemId: string): Promise<boolean> {
-  const [row] = await db
-    .select({ id: unitAssignments.id })
+async function loadAssignedUnitIds(db: FrontDeskDb, bookingItemId: string): Promise<string[]> {
+  const rows = await db
+    .select({ unitId: unitAssignments.unitId })
     .from(unitAssignments)
     .where(eq(unitAssignments.bookingItemId, bookingItemId))
-    .limit(1)
-  return Boolean(row)
+  return rows.map((r) => r.unitId)
 }
 
 export async function checkIn(
   db: FrontDeskDb,
   input: CheckInInput,
   userId?: string,
+  options: CheckInOptions = {},
 ): Promise<OpsResult> {
   const stay = await loadStay(db, input.bookingItemId)
   const reason = checkInBlockedReason(stay.status)
@@ -90,11 +113,21 @@ export async function checkIn(
   }
 
   const warnings: string[] = []
-  if (
-    (await isSerializedRoomType(db, stay.roomTypeId)) &&
-    !(await hasUnitAssignment(db, input.bookingItemId))
-  ) {
+  const assignedUnitIds = await loadAssignedUnitIds(db, input.bookingItemId)
+  if ((await isSerializedRoomType(db, stay.roomTypeId)) && assignedUnitIds.length === 0) {
     warnings.push("no unit assigned for a serialized room type — assign a unit before arrival")
+  }
+
+  // Housekeeping readiness gating — WARN (never block): a dirty room or an
+  // active maintenance block on the assigned unit surfaces a warning so the
+  // agent can react, but the check-in still proceeds.
+  if (options.getUnitReadiness && assignedUnitIds.length > 0) {
+    const readiness = await options.getUnitReadiness(db, assignedUnitIds, stay.checkInDate)
+    for (const unit of readiness) {
+      if (!unit.ready) {
+        warnings.push(`unit ${unit.unitId} is not ready for check-in: ${unit.reasons.join("; ")}`)
+      }
+    }
   }
 
   const now = new Date()

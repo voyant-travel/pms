@@ -110,6 +110,17 @@ describe("operator composed route mounting (smoke)", () => {
     )
   })
 
+  it("mounts the housekeeping module (Phase 4)", async () => {
+    // Auto-discovered deployment-local module (src/modules/housekeeping).
+    // Reached routes hit the stub db and 5xx; that still proves the mount (≠404).
+    expect(await status("/v1/admin/pms/housekeeping/tasks")).not.toBe(404)
+    expect(await status("/v1/admin/pms/housekeeping/room-status?propertyId=p")).not.toBe(404)
+    expect(await status("/v1/admin/pms/housekeeping/maintenance-blocks")).not.toBe(404)
+    expect(
+      await status("/v1/admin/pms/housekeeping/generate?propertyId=p&date=2026-07-01", "POST"),
+    ).not.toBe(404)
+  })
+
   it("mounts multi-prefix lazyRoutes families (catalog-booking, media, settings, payment-link)", async () => {
     expect(await status("/v1/admin/catalog/orders")).not.toBe(404)
     expect(await status("/v1/admin/media/anything")).not.toBe(404)

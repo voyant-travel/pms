@@ -7,6 +7,7 @@ import {
   CHANNEL_PUSH_BOOKING_LINK_CRON,
   CHANNEL_PUSH_CONTENT_CRON,
   DRAFT_REAPER_CRON,
+  HOUSEKEEPING_GENERATE_CRON,
   OUTBOX_DRAIN_CRON,
   PROMOTION_BOUNDARY_SCHEDULER_CRON,
 } from "./scheduled-crons"
@@ -61,6 +62,17 @@ export default {
             console.info("[promotion-scheduler] result", result)
           })
           .catch((err) => reportBackgroundFailure("promotion-scheduler", err)),
+      )
+      return
+    }
+    if (event.cron === HOUSEKEEPING_GENERATE_CRON) {
+      ctx.waitUntil(
+        import("./api/jobs/housekeeping-generate-scheduled")
+          .then((mod) => mod.runScheduledHousekeepingGenerate(event, env))
+          .then((result) => {
+            console.info("[housekeeping-generate] result", result)
+          })
+          .catch((err) => reportBackgroundFailure("housekeeping-generate", err)),
       )
       return
     }

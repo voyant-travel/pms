@@ -42,12 +42,13 @@ describe("operator runtime composition", () => {
     // Stays-only PMS counts (tour verticals stripped): the framework standard set
     // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
     // plus 3 hand-wired deployment-local modules (invitations, team, realtime —
-    // cruises, charters, MICE removed) + 3 auto-discovered deployment-local
-    // modules under src/modules (pms/ari authoring, pms/units, pms/front-desk) =
-    // 34 manifest modules. Commerce + Distribution still expand (+5) → 39 composed
-    // modules. Extensions drop the MICE booking sidecar (16 → 15).
-    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(34)
-    expect(composed.modules).toHaveLength(39)
+    // cruises, charters, MICE removed) + 4 auto-discovered deployment-local
+    // modules under src/modules (pms/ari authoring, pms/units, pms/front-desk,
+    // pms/housekeeping) = 35 manifest modules. Commerce + Distribution still
+    // expand (+5) → 40 composed modules. Extensions drop the MICE booking sidecar
+    // (16 → 15).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(35)
+    expect(composed.modules).toHaveLength(40)
     expect(composed.extensions).toHaveLength(15)
 
     // Every composed unit is a real HonoModule/HonoExtension.
@@ -152,6 +153,20 @@ describe("operator runtime composition", () => {
     const frontDesk = composed.modules.find((m) => m.module.name === "pms/front-desk")
     expect(units?.adminRoutes).toBeDefined()
     expect(frontDesk?.adminRoutes).toBeDefined()
+  })
+
+  it("auto-discovers the housekeeping module (Phase 4) with eager admin routes", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    // Discovered via `modulesFromGlob` under composition key `housekeeping`, but
+    // named `pms/housekeeping` so its admin routes mount at
+    // /v1/admin/pms/housekeeping (PLAN §4.3).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("housekeeping")
+    const housekeeping = composed.modules.find((m) => m.module.name === "pms/housekeeping")
+    expect(housekeeping?.adminRoutes).toBeDefined()
   })
 
   it("every schema-migrated module (voyant.config) is actually mounted at runtime", () => {

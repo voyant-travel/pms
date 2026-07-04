@@ -8,6 +8,7 @@ import type { VoyantDb, VoyantVariables } from "@voyant-travel/hono"
 import { parseJsonBody, parseQuery } from "@voyant-travel/hono"
 import { Hono } from "hono"
 
+import { getUnitReadiness } from "../housekeeping/service-readiness.js"
 import type { FrontDeskDb } from "./db.js"
 import { getBoards } from "./service-boards.js"
 import { checkIn, checkOut, noShow } from "./service-ops.js"
@@ -35,7 +36,11 @@ export const frontDeskAdminRoutes = new Hono<FrontDeskEnv>()
   // --- in-stay operations ----------------------------------------------------
   .post("/check-in", async (c) =>
     c.json(
-      await checkIn(dbOf(c.get("db")), await parseJsonBody(c, checkInSchema), c.get("userId")),
+      await checkIn(dbOf(c.get("db")), await parseJsonBody(c, checkInSchema), c.get("userId"), {
+        // Housekeeping readiness gating (front-desk → housekeeping): warns on a
+        // dirty room or active maintenance block for the assigned unit.
+        getUnitReadiness,
+      }),
     ),
   )
   .post("/check-out", async (c) =>

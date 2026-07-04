@@ -73,7 +73,10 @@
       // Event-outbox drain (RFC #1687 Phase 2.1) — redelivers failed or
       // interrupted event deliveries with backoff; the happy path
       // completes at emit time, so this sweep is small.
-      "*/2 * * * *"
+      "*/2 * * * *",
+      // Housekeeping auto-generation (PLAN §4.3) — daily at 06:00; turns each
+      // property's departures/stayovers into cleaning tasks (idempotent).
+      "0 6 * * *"
     ]
   }
 }

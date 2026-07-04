@@ -30,9 +30,12 @@ export {
   classifyBoards,
 } from "./service-boards.js"
 export {
+  type CheckInOptions,
   checkInBlockedReason,
   checkOutBlockedReason,
   type OpsResult,
+  type UnitReadinessInfo,
+  type UnitReadinessLookup,
 } from "./service-ops.js"
 export type {
   AssignmentContext,
