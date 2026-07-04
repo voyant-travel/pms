@@ -208,4 +208,11 @@ interface CloudflareBindings {
   BANK_TRANSFER_IBAN?: string
   BANK_TRANSFER_BANK_NAME?: string
   BANK_TRANSFER_NOTES?: string
+
+  // Channel connectivity (PLAN §4.7, Phase 6). Shared secret the public channel
+  // webhook (`POST /v1/public/pms/channels/:channel/webhook`) requires in the
+  // `x-channel-secret` header — the endpoint is anonymous by construction, so it
+  // fails closed when this is unset. Set via `wrangler secret put
+  // CHANNEL_WEBHOOK_SECRET`.
+  CHANNEL_WEBHOOK_SECRET?: string
 }

@@ -3,6 +3,7 @@ import { createWorkerFetch, withActiveRouteSsrManifest } from "@voyant-travel/wo
 import { operatorApiDispatch } from "./hono-api-dispatch"
 import { reportBackgroundFailure } from "./lib/observability"
 import {
+  CHANNEL_ARI_PUSH_CRON,
   CHANNEL_PUSH_AVAILABILITY_CRON,
   CHANNEL_PUSH_BOOKING_LINK_CRON,
   CHANNEL_PUSH_CONTENT_CRON,
@@ -85,6 +86,17 @@ export default {
             console.info("[night-audit] result", result)
           })
           .catch((err) => reportBackgroundFailure("night-audit", err)),
+      )
+      return
+    }
+    if (event.cron === CHANNEL_ARI_PUSH_CRON) {
+      ctx.waitUntil(
+        import("./api/jobs/channel-ari-push-scheduled")
+          .then((mod) => mod.runScheduledChannelAriPush(event, env))
+          .then((result) => {
+            if (result.scanned > 0) console.info("[channel-ari-push] result", result)
+          })
+          .catch((err) => reportBackgroundFailure("channel-ari-push", err)),
       )
       return
     }

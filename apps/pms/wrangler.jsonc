@@ -80,7 +80,11 @@
       // Night audit (PLAN §4.4) — daily at 02:00; posts each in-house stay's
       // nightly room + tax charge, computes the day's stats, and rolls each
       // property's business date (idempotent by posting source_key).
-      "0 2 * * *"
+      "0 2 * * *",
+      // Channel ARI push (PLAN §4.7) — every 15 min at :03/:18/:33/:48 (offset
+      // off the distribution reconcilers so the cron STRING is unique). Drains
+      // pending pms_channel_ari_events through registered channel connectors.
+      "3,18,33,48 * * * *"
     ]
   }
 }
