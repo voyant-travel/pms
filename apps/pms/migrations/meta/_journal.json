@@ -71,6 +71,13 @@
       "when": 1783198897577,
       "tag": "0009_pms_units_and_front_desk",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783202287938,
+      "tag": "0010_tranquil_magus",
+      "breakpoints": true
     }
   ]
 }
