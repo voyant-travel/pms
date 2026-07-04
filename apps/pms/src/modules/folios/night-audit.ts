@@ -83,11 +83,7 @@ export function resolveNightlyAmountCents(
   nightCount: number,
 ): number | null {
   if (dailyRateCents !== null && dailyRateCents !== undefined) return dailyRateCents
-  if (
-    dailyRatesTotalCents !== null &&
-    dailyRatesTotalCents !== undefined &&
-    nightCount > 0
-  ) {
+  if (dailyRatesTotalCents !== null && dailyRatesTotalCents !== undefined && nightCount > 0) {
     return Math.round(dailyRatesTotalCents / nightCount)
   }
   return null

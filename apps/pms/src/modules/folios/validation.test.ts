@@ -68,7 +68,9 @@ describe("createPostingSchema", () => {
 
 describe("transferPostingSchema", () => {
   it("requires a posting and a target folio", () => {
-    expect(transferPostingSchema.safeParse({ postingId: "fpst_1", targetFolioId: "folo_2" }).success).toBe(true)
+    expect(
+      transferPostingSchema.safeParse({ postingId: "fpst_1", targetFolioId: "folo_2" }).success,
+    ).toBe(true)
     expect(transferPostingSchema.safeParse({ postingId: "fpst_1" }).success).toBe(false)
   })
 })

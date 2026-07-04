@@ -33,6 +33,7 @@
 
 import { newIdFromPrefix } from "@voyant-travel/db/lib/typeid"
 import { typeIdRef } from "@voyant-travel/db/lib/typeid-column"
+import { sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
   date,
@@ -45,7 +46,6 @@ import {
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
 
 /** Deployment-local primary key: text + auto-generated TypeID from a custom prefix. */
 const localId = (prefix: string) =>

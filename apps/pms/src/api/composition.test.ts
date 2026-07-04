@@ -42,13 +42,13 @@ describe("operator runtime composition", () => {
     // Stays-only PMS counts (tour verticals stripped): the framework standard set
     // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
     // plus 3 hand-wired deployment-local modules (invitations, team, realtime —
-    // cruises, charters, MICE removed) + 4 auto-discovered deployment-local
+    // cruises, charters, MICE removed) + 5 auto-discovered deployment-local
     // modules under src/modules (pms/ari authoring, pms/units, pms/front-desk,
-    // pms/housekeeping) = 35 manifest modules. Commerce + Distribution still
-    // expand (+5) → 40 composed modules. Extensions drop the MICE booking sidecar
-    // (16 → 15).
-    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(35)
-    expect(composed.modules).toHaveLength(40)
+    // pms/housekeeping, pms/folios) = 36 manifest modules. Commerce + Distribution
+    // still expand (+5) → 41 composed modules. Extensions drop the MICE booking
+    // sidecar (16 → 15).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(36)
+    expect(composed.modules).toHaveLength(41)
     expect(composed.extensions).toHaveLength(15)
 
     // Every composed unit is a real HonoModule/HonoExtension.
@@ -167,6 +167,19 @@ describe("operator runtime composition", () => {
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("housekeeping")
     const housekeeping = composed.modules.find((m) => m.module.name === "pms/housekeeping")
     expect(housekeeping?.adminRoutes).toBeDefined()
+  })
+
+  it("auto-discovers the folios module (Phase 5) with eager admin routes", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    // Discovered via `modulesFromGlob` under composition key `folios`, but named
+    // `pms/folios` so its admin routes mount at /v1/admin/pms/folios (PLAN §4.4).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("folios")
+    const folios = composed.modules.find((m) => m.module.name === "pms/folios")
+    expect(folios?.adminRoutes).toBeDefined()
   })
 
   it("every schema-migrated module (voyant.config) is actually mounted at runtime", () => {

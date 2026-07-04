@@ -26,7 +26,10 @@ export function chargesBalanceCents(postings: readonly PostingAmount[]): number 
 
 /** Sum of payment postings (negative), returned as a positive "paid" figure. */
 export function paidCents(postings: readonly PostingAmount[]): number {
-  const payments = postings.reduce((sum, p) => (p.type === "payment" ? sum + p.amountCents : sum), 0)
+  const payments = postings.reduce(
+    (sum, p) => (p.type === "payment" ? sum + p.amountCents : sum),
+    0,
+  )
   return payments === 0 ? 0 : -payments
 }
 

@@ -29,7 +29,14 @@ export const folioPostingTypeSchema = z.enum([
 
 /** Manual postings may not be `transfer` (use the transfer route) — that keeps
  *  the transfer link pair consistent. Night-audit + payment-sync are internal. */
-export const manualPostingTypeSchema = z.enum(["room", "tax", "fee", "extra", "payment", "adjustment"])
+export const manualPostingTypeSchema = z.enum([
+  "room",
+  "tax",
+  "fee",
+  "extra",
+  "payment",
+  "adjustment",
+])
 
 // --- folios ------------------------------------------------------------------
 
