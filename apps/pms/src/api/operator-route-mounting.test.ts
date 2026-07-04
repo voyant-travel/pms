@@ -95,6 +95,21 @@ describe("operator composed route mounting (smoke)", () => {
     ).not.toBe(404)
   })
 
+  it("mounts the units + front-desk modules (Phase 3)", async () => {
+    // Auto-discovered deployment-local modules (src/modules/units, front-desk).
+    // Reached routes hit the stub db and 5xx; that still proves the mount (≠404).
+    expect(await status("/v1/admin/pms/units/units")).not.toBe(404)
+    expect(await status("/v1/admin/pms/units/assignments")).not.toBe(404)
+    expect(
+      await status(
+        "/v1/admin/pms/front-desk/tape-chart?propertyId=p&from=2026-07-01&to=2026-07-02",
+      ),
+    ).not.toBe(404)
+    expect(await status("/v1/admin/pms/front-desk/boards?propertyId=p&date=2026-07-01")).not.toBe(
+      404,
+    )
+  })
+
   it("mounts multi-prefix lazyRoutes families (catalog-booking, media, settings, payment-link)", async () => {
     expect(await status("/v1/admin/catalog/orders")).not.toBe(404)
     expect(await status("/v1/admin/media/anything")).not.toBe(404)

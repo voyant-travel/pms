@@ -42,12 +42,12 @@ describe("operator runtime composition", () => {
     // Stays-only PMS counts (tour verticals stripped): the framework standard set
     // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
     // plus 3 hand-wired deployment-local modules (invitations, team, realtime —
-    // cruises, charters, MICE removed) + 1 auto-discovered deployment-local
-    // module (pms/ari, the ARI authoring surface under src/modules/ari) = 32
-    // manifest modules. Commerce + Distribution still expand (+5) → 37 composed
+    // cruises, charters, MICE removed) + 3 auto-discovered deployment-local
+    // modules under src/modules (pms/ari authoring, pms/units, pms/front-desk) =
+    // 34 manifest modules. Commerce + Distribution still expand (+5) → 39 composed
     // modules. Extensions drop the MICE booking sidecar (16 → 15).
-    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(32)
-    expect(composed.modules).toHaveLength(37)
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(34)
+    expect(composed.modules).toHaveLength(39)
     expect(composed.extensions).toHaveLength(15)
 
     // Every composed unit is a real HonoModule/HonoExtension.
@@ -135,6 +135,23 @@ describe("operator runtime composition", () => {
     const ari = composed.modules.find((m) => m.module.name === "pms/ari")
     expect(ari).toBeDefined()
     expect(ari?.adminRoutes).toBeDefined()
+  })
+
+  it("auto-discovers the units + front-desk modules (Phase 3) with eager admin routes", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    // Discovered via `modulesFromGlob` under composition keys `units` /
+    // `front-desk`, but named `pms/units` / `pms/front-desk` so their admin
+    // routes mount at /v1/admin/pms/units and /v1/admin/pms/front-desk (PLAN §4).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("units")
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("front-desk")
+    const units = composed.modules.find((m) => m.module.name === "pms/units")
+    const frontDesk = composed.modules.find((m) => m.module.name === "pms/front-desk")
+    expect(units?.adminRoutes).toBeDefined()
+    expect(frontDesk?.adminRoutes).toBeDefined()
   })
 
   it("every schema-migrated module (voyant.config) is actually mounted at runtime", () => {
