@@ -25,7 +25,6 @@
     "reindex": "tsx scripts/reindex.ts",
     "seed": "tsx scripts/seed.ts",
     "sync:sources": "tsx scripts/sync-sources.ts",
-    "flights:mock": "node scripts/local-flights-demo-api.mjs",
     "notifications:mock": "node scripts/mock-notifications.mjs",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "lint": "biome check src/"
@@ -95,7 +94,6 @@
     "@voyant-travel/operations-react": "^0.21.0",
     "@voyant-travel/operator-settings": "^0.2.24",
     "@voyant-travel/plugin-catalog-demo": "workspace:*",
-    "@voyant-travel/plugin-flights-demo": "workspace:*",
     "@voyant-travel/plugin-netopia": "^0.105.18",
     "@voyant-travel/plugin-smartbill": "^0.137.3",
     "@voyant-travel/plugin-voyant-connect": "^0.3.3",

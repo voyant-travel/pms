@@ -181,15 +181,6 @@ interface CloudflareBindings {
   SMARTBILL_LANGUAGE?: string
   SMARTBILL_ART_311_SPECIAL_REGIME?: string
 
-  /**
-   * Base URL of the standalone `flights-demo-api` service (e.g.
-   * `http://localhost:3320`). Required when using
-   * `@voyant-travel/plugin-flights-demo` — the plugin is a thin HTTP client and
-   * the service owns its own database. Swap to a real GDS connector by
-   * replacing the adapter in `src/api/flights.ts`.
-   */
-  FLIGHTS_DEMO_API_URL?: string
-
   // Voyant Connect source adapter. Uses VOYANT_API_KEY for authentication.
   VOYANT_CONNECT_API_URL?: string
   VOYANT_CONNECT_OPERATOR_ID?: string

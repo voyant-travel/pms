@@ -1480,7 +1480,6 @@
         "../../packages/operator-settings/dist/service.d.ts"
       ],
       "@voyant-travel/plugin-catalog-demo": ["../../packages/plugins/catalog-demo/dist/index.d.ts"],
-      "@voyant-travel/plugin-flights-demo": ["../../packages/plugins/flights-demo/dist/index.d.ts"],
       "@voyant-travel/plugin-payload-cms": ["../../packages/plugins/payload-cms/dist/index.d.ts"],
       "@voyant-travel/plugin-payload-cms/client": [
         "../../packages/plugins/payload-cms/dist/client.d.ts"

@@ -231,9 +231,6 @@ importers:
       '@voyant-travel/plugin-catalog-demo':
         specifier: workspace:*
         version: link:../../packages/plugin-catalog-demo
-      '@voyant-travel/plugin-flights-demo':
-        specifier: workspace:*
-        version: link:../../packages/plugin-flights-demo
       '@voyant-travel/plugin-netopia':
         specifier: ^0.105.18
         version: 0.105.18(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(typesense@3.0.6(@babel/runtime@7.29.7))
@@ -487,12 +484,6 @@ importers:
       '@voyant-travel/catalog':
         specifier: ^0.138.0
         version: 0.138.0(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)
-
-  packages/plugin-flights-demo:
-    dependencies:
-      '@voyant-travel/flights':
-        specifier: ^0.139.0
-        version: 0.139.0(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)
 
   packages/realtime-react:
     dependencies:
@@ -2939,9 +2930,6 @@ packages:
       sonner:
         optional: true
 
-  '@voyant-travel/catalog@0.137.1':
-    resolution: {integrity: sha512-Zzx24/ADbks8WOxDt+sA32n1UPonx2eKt2EqNFLFOdH1jaRqd02GjZGHy76CZ7MUdvNaZWWJ4zJR/Nt9NZ8Sbw==}
-
   '@voyant-travel/catalog@0.138.0':
     resolution: {integrity: sha512-QY9jmfdwP/15bUAlnK9j13a+FlRNTK+IYo3LZBDwGSaWhe+08bk8ir/mAQ2/L/lZOOmeDulzfxbd/Sk85MlVxA==}
 
@@ -3175,9 +3163,6 @@ packages:
         optional: true
       '@voyant-travel/ui':
         optional: true
-
-  '@voyant-travel/flights@0.139.0':
-    resolution: {integrity: sha512-mZ24Zmfw4BCPh0N+eNc9mz1PYQessQTUPCg9EjD5LnTbPljcBKXT8CMDLD1PSj5AqCOkXxowSO83svGmPuldoQ==}
 
   '@voyant-travel/flights@0.140.0':
     resolution: {integrity: sha512-1+VI7Mrkpk1uKMVAv0je1bVjKn2mkt84yXhEs4gSWnZrBqG50YUpiuO6JjYZsIKI3ynG5LwgXpMN2ap7LyB1Kw==}
@@ -8743,48 +8728,6 @@ snapshots:
       '@voyant-travel/ui': 0.108.10(@cloudflare/workers-types@4.20260702.1)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.7.6)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1))
       sonner: 2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
 
-  '@voyant-travel/catalog@0.137.1(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)':
-    dependencies:
-      '@hono/zod-openapi': 1.4.0(hono@4.12.27)(zod@4.4.3)
-      '@voyant-travel/catalog-contracts': 0.108.1
-      '@voyant-travel/core': 0.112.1
-      '@voyant-travel/db': 0.109.5(@cloudflare/workers-types@4.20260702.1)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)
-      '@voyant-travel/hono': 0.121.1(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)
-      '@voyant-travel/tools': 0.1.0
-      drizzle-orm: 0.45.2(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)
-      hono: 4.12.27
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-
   '@voyant-travel/catalog@0.138.0(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)':
     dependencies:
       '@hono/zod-openapi': 1.4.0(hono@4.12.27)(zod@4.4.3)
@@ -9307,47 +9250,6 @@ snapshots:
       '@voyant-travel/finance-react': 0.140.0(@tanstack/react-query@5.101.2(react@19.2.7))(@tanstack/react-table@8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@voyant-travel/admin@0.116.0(@cloudflare/workers-types@4.20260702.1)(@tanstack/react-query@5.101.2(react@19.2.7))(@tanstack/react-router@1.170.17(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/pg@8.20.0)(@voyant-travel/ui@0.108.10(@cloudflare/workers-types@4.20260702.1)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.7.6)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)))(kysely@0.29.2)(lucide-react@1.23.0(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)))(@voyant-travel/bookings-react@0.140.0)(@voyant-travel/distribution-react@0.130.0)(@voyant-travel/finance@0.140.0(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9))(@voyant-travel/inventory-react@0.22.0)(@voyant-travel/operations-react@0.21.0)(@voyant-travel/ui@0.108.10(@cloudflare/workers-types@4.20260702.1)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.7.6)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)))(react-dom@19.2.7(react@19.2.7))(react-hook-form@7.80.0(react@19.2.7))(react@19.2.7)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1))(sonner@2.0.7(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(zod@4.4.3)
       '@voyant-travel/relationships-react': 0.140.0(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@tanstack/react-query@5.101.2(react@19.2.7))(@types/pg@8.20.0)(@voyant-travel/admin@0.116.0(@cloudflare/workers-types@4.20260702.1)(@tanstack/react-query@5.101.2(react@19.2.7))(@tanstack/react-router@1.170.17(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@types/pg@8.20.0)(@voyant-travel/ui@0.108.10(@cloudflare/workers-types@4.20260702.1)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.7.6)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)))(kysely@0.29.2)(lucide-react@1.23.0(react@19.2.7))(pg@8.22.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)))(@voyant-travel/identity-react@0.140.0)(@voyant-travel/relationships@0.122.1(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9))(@voyant-travel/ui@0.108.10(@cloudflare/workers-types@4.20260702.1)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.7.6)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1)))(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
       '@voyant-travel/ui': 0.108.10(@cloudflare/workers-types@4.20260702.1)(@date-fns/tz@1.5.0)(@floating-ui/dom@1.7.6)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)(recharts@3.9.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react-is@16.13.1)(react@19.2.7)(redux@5.0.1))
-
-  '@voyant-travel/flights@0.139.0(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)':
-    dependencies:
-      '@voyant-travel/catalog': 0.137.1(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)
-      '@voyant-travel/catalog-contracts': 0.108.1
-      '@voyant-travel/db': 0.109.5(@cloudflare/workers-types@4.20260702.1)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)
-      '@voyant-travel/flights-contracts': 0.104.6
-      '@voyant-travel/hono': 0.121.1(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)
-      drizzle-orm: 0.45.2(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)
-      hono: 4.12.27
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
 
   '@voyant-travel/flights@0.140.0(@cloudflare/workers-types@4.20260702.1)(@neondatabase/serverless@1.1.0)(@types/pg@8.20.0)(kysely@0.29.2)(pg@8.22.0)(postgres@3.4.9)':
     dependencies:

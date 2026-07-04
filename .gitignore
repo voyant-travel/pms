@@ -32,8 +32,6 @@ dist
 # source of truth and must be tracked despite the global `dist` ignore.
 !packages/plugin-catalog-demo/dist
 !packages/plugin-catalog-demo/dist/**
-!packages/plugin-flights-demo/dist
-!packages/plugin-flights-demo/dist/**
 !packages/realtime-react/dist
 !packages/realtime-react/dist/**
 
