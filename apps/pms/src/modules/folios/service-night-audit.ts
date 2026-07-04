@@ -24,9 +24,27 @@ import { addDays, formatIsoDate } from "../units/dates.js"
 import type { FoliosDb } from "./db.js"
 import { type AuditStay, planNightAuditPostings, resolveNightlyAmountCents } from "./night-audit.js"
 import type { DailyReport } from "./reports.js"
-import { businessDates, folioPostings } from "./schema.js"
+import { type BusinessDateRow, businessDates, folioPostings } from "./schema.js"
 import { ensureStayFolio } from "./service-folios.js"
 import { getDailyReport } from "./service-reports.js"
+
+/**
+ * Read-only peek at the property's business-date row (no side effect). Returns
+ * `null` when the property has never been audited (unlike `getOrInitBusinessDate`,
+ * which lazily creates the row). Used by the night-audit page to display "today"
+ * without rolling or initializing anything.
+ */
+export async function readBusinessDate(
+  db: FoliosDb,
+  propertyId: string,
+): Promise<BusinessDateRow | null> {
+  const [row] = await db
+    .select()
+    .from(businessDates)
+    .where(eq(businessDates.propertyId, propertyId))
+    .limit(1)
+  return row ?? null
+}
 
 /** Read the property's current business date, initializing to today on first run. */
 export async function getOrInitBusinessDate(db: FoliosDb, propertyId: string): Promise<string> {

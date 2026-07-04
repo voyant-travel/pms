@@ -12,7 +12,7 @@ import { Hono } from "hono"
 
 import type { FoliosDb } from "./db.js"
 import { getFolioWithPostings, listFolios, openFolio } from "./service-folios.js"
-import { runNightAudit } from "./service-night-audit.js"
+import { readBusinessDate, runNightAudit } from "./service-night-audit.js"
 import { createPosting, transferPosting, voidPosting } from "./service-postings.js"
 import { getDailyReport } from "./service-reports.js"
 import { closeFolio, settleFolio } from "./service-settlement.js"
@@ -87,6 +87,10 @@ export const foliosAdminRoutes = new Hono<FoliosEnv>()
     c.json({ data: await closeFolio(dbOf(c.get("db")), c.req.param("id")) }),
   )
   // --- night audit -----------------------------------------------------------
+  .get("/business-date", async (c) => {
+    const { propertyId } = parseQuery(c, nightAuditQuerySchema)
+    return c.json({ data: await readBusinessDate(dbOf(c.get("db")), propertyId) })
+  })
   .post("/night-audit/run", async (c) => {
     const { propertyId } = parseQuery(c, nightAuditQuerySchema)
     return c.json({ data: await runNightAudit(dbOf(c.get("db")), propertyId) })
