@@ -41,12 +41,13 @@ describe("operator runtime composition", () => {
     //
     // Stays-only PMS counts (tour verticals stripped): the framework standard set
     // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
-    // plus 3 deployment-local modules (invitations, team, realtime — cruises,
-    // charters, MICE removed) = 31 manifest modules. Commerce + Distribution still
-    // expand (+5) → 36 composed modules. Extensions drop the MICE booking sidecar
-    // (16 → 15).
-    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(31)
-    expect(composed.modules).toHaveLength(36)
+    // plus 3 hand-wired deployment-local modules (invitations, team, realtime —
+    // cruises, charters, MICE removed) + 1 auto-discovered deployment-local
+    // module (pms/ari, the ARI authoring surface under src/modules/ari) = 32
+    // manifest modules. Commerce + Distribution still expand (+5) → 37 composed
+    // modules. Extensions drop the MICE booking sidecar (16 → 15).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(32)
+    expect(composed.modules).toHaveLength(37)
     expect(composed.extensions).toHaveLength(15)
 
     // Every composed unit is a real HonoModule/HonoExtension.
@@ -119,6 +120,21 @@ describe("operator runtime composition", () => {
     expect(mod("mcp")?.lazyAdminRoutes).toBeTypeOf("function")
     expect(mod("invitations")?.lazyAdminRoutes).toBeTypeOf("function")
     expect(mod("invitations")?.lazyPublicRoutes).toBeTypeOf("function")
+  })
+
+  it("auto-discovers the ARI authoring module (src/modules/ari) with eager admin routes", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    // The deployment-local ARI module is discovered via `modulesFromGlob` under
+    // the composition key `ari`, but names itself `pms/ari` so its admin routes
+    // mount at /v1/admin/pms/ari (PLAN §4.5).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("ari")
+    const ari = composed.modules.find((m) => m.module.name === "pms/ari")
+    expect(ari).toBeDefined()
+    expect(ari?.adminRoutes).toBeDefined()
   })
 
   it("every schema-migrated module (voyant.config) is actually mounted at runtime", () => {

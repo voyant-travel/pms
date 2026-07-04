@@ -85,6 +85,16 @@ describe("operator composed route mounting (smoke)", () => {
     expect(await status("/v1/admin/mice/programs")).toBe(404)
   })
 
+  it("mounts the ARI authoring module at /v1/admin/pms/ari", async () => {
+    // Auto-discovered deployment-local module (src/modules/ari), name `pms/ari`.
+    // Reached routes hit the stub db and 5xx; that still proves the mount (≠404).
+    expect(await status("/v1/admin/pms/ari/room-types")).not.toBe(404)
+    expect(await status("/v1/admin/pms/ari/rate-plans")).not.toBe(404)
+    expect(
+      await status("/v1/admin/pms/ari/calendar?propertyId=p&from=2026-07-01&to=2026-07-02"),
+    ).not.toBe(404)
+  })
+
   it("mounts multi-prefix lazyRoutes families (catalog-booking, media, settings, payment-link)", async () => {
     expect(await status("/v1/admin/catalog/orders")).not.toBe(404)
     expect(await status("/v1/admin/media/anything")).not.toBe(404)
