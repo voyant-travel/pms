@@ -57,7 +57,10 @@ export function nightsBetween(checkIn: string, checkOut: string): number {
 }
 
 /** Default tape-chart window: today through today + (span - 1). */
-export function defaultTapeChartRange(span = DEFAULT_TAPE_CHART_DAYS): { from: string; to: string } {
+export function defaultTapeChartRange(span = DEFAULT_TAPE_CHART_DAYS): {
+  from: string
+  to: string
+} {
   const from = todayIso()
   return { from, to: addDaysIso(from, span - 1) }
 }

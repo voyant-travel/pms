@@ -12,7 +12,11 @@ import {
 
 const dates = ["2026-07-01", "2026-07-02", "2026-07-03", "2026-07-04", "2026-07-05"]
 
-function cell(date: string, bookingItemId: string, over: Partial<TapeChartCell> = {}): TapeChartCell {
+function cell(
+  date: string,
+  bookingItemId: string,
+  over: Partial<TapeChartCell> = {},
+): TapeChartCell {
   return {
     date,
     bookingItemId,
@@ -27,10 +31,7 @@ function cell(date: string, bookingItemId: string, over: Partial<TapeChartCell> 
 
 describe("buildStayBars", () => {
   it("merges consecutive same-stay cells into one spanning bar", () => {
-    const bars = buildStayBars(
-      [cell("2026-07-01", "bi_1"), cell("2026-07-02", "bi_1")],
-      dates,
-    )
+    const bars = buildStayBars([cell("2026-07-01", "bi_1"), cell("2026-07-02", "bi_1")], dates)
     expect(bars).toHaveLength(1)
     expect(bars[0]).toMatchObject({ bookingItemId: "bi_1", startIndex: 0, span: 2 })
   })
