@@ -1,0 +1,39 @@
+{
+  "name": "@voyant-travel/realtime-react",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./provider": {
+      "types": "./dist/provider.d.ts",
+      "import": "./dist/provider.js",
+      "default": "./dist/provider.js"
+    },
+    "./connector": {
+      "types": "./dist/connector.d.ts",
+      "import": "./dist/connector.js",
+      "default": "./dist/connector.js"
+    },
+    "./connector-cloud": {
+      "types": "./dist/connector-cloud.d.ts",
+      "import": "./dist/connector-cloud.js",
+      "default": "./dist/connector-cloud.js"
+    },
+    "./query-keys": {
+      "types": "./dist/query-keys.d.ts",
+      "import": "./dist/query-keys.js",
+      "default": "./dist/query-keys.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^19.0.0"
+  }
+}

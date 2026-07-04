@@ -27,6 +27,24 @@ out/
 build
 dist
 
+# Vendored prebuilt demo packages carried from the operator blueprint.
+# These ship only a compiled `dist/` (no source), so their dist is the
+# source of truth and must be tracked despite the global `dist` ignore.
+!packages/plugin-catalog-demo/dist
+!packages/plugin-catalog-demo/dist/**
+!packages/plugin-flights-demo/dist
+!packages/plugin-flights-demo/dist/**
+!packages/realtime-react/dist
+!packages/realtime-react/dist/**
+
+# TanStack Start / Cloudflare Worker local build + secrets (app-level).
+.dev.vars
+.wrangler
+.voyant
+.output
+.tanstack
+.nitro
+
 
 # Debug
 npm-debug.log*

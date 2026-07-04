@@ -1,0 +1,148 @@
+import { composeFromManifest, diffManifestRegistry } from "@voyant-travel/hono/composition"
+import { describe, expect, it } from "vitest"
+
+import voyantConfig from "../../voyant.config"
+import {
+  buildOperatorProviders,
+  OPERATOR_RUNTIME_MANIFEST,
+  operatorComposition,
+} from "./composition"
+
+function entryName(entry: string | { resolve: string }): string {
+  return typeof entry === "string" ? entry : entry.resolve
+}
+
+describe("operator runtime composition", () => {
+  it("registry covers the manifest exactly (no missing factories, no orphans)", () => {
+    const modules = diffManifestRegistry(
+      OPERATOR_RUNTIME_MANIFEST.modules,
+      Object.keys(operatorComposition.modules),
+    )
+    expect(modules.missingFactories).toEqual([])
+    expect(modules.orphanFactories).toEqual([])
+
+    const extensions = diffManifestRegistry(
+      OPERATOR_RUNTIME_MANIFEST.extensions,
+      Object.keys(operatorComposition.extensions ?? {}),
+    )
+    expect(extensions.missingFactories).toEqual([])
+    expect(extensions.orphanFactories).toEqual([])
+  })
+
+  it("composes the full module + extension set in manifest order", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+
+    // Manifest entries expand to more mounted modules because Commerce and
+    // Distribution each mount multiple internal Hono modules.
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(35)
+    expect(composed.modules).toHaveLength(40)
+    expect(composed.extensions).toHaveLength(16)
+
+    // Every composed unit is a real HonoModule/HonoExtension.
+    for (const m of composed.modules) expect(m.module?.name).toBeTypeOf("string")
+    for (const e of composed.extensions) expect(e.extension?.module).toBeTypeOf("string")
+
+    // Module names are unique (no double-mount).
+    const names = composed.modules.map((m) => m.module.name)
+    expect(new Set(names).size).toBe(names.length)
+  })
+
+  it("composes the route families moved off additionalRoutes as extensions", () => {
+    // These route families moved off the additionalRoutes hop into the
+    // composition registry; createApp mounts each extension's routes under
+    // `/v1/admin/{module}` (+ publicPath for public routes), preserving URLs.
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    const byName = (name: string) => composed.extensions.find((e) => e.extension.name === name)
+
+    const channelPush = byName("channel-push")
+    expect(channelPush?.extension.module).toBe("distribution")
+    expect(channelPush?.adminRoutes).toBeDefined()
+
+    const bookingTax = byName("booking-tax")
+    expect(bookingTax?.extension.module).toBe("bookings")
+    expect(bookingTax?.lazyAdminRoutes).toBeTypeOf("function")
+
+    // Booking-schedule owns an admin route on bookings + a public route
+    // mounted at /v1/public/payment-policy via the publicPath override.
+    const bookingSchedule = byName("booking-schedule")
+    expect(bookingSchedule?.extension.module).toBe("bookings")
+    expect(bookingSchedule?.lazyAdminRoutes).toBeTypeOf("function")
+    expect(bookingSchedule?.lazyPublicRoutes).toBeTypeOf("function")
+    expect(bookingSchedule?.publicPath).toBe("payment-policy")
+
+    const snapshot = byName("quote-version-snapshot")
+    expect(snapshot?.extension.module).toBe("trips")
+    expect(snapshot?.lazyAdminRoutes).toBeTypeOf("function")
+
+    // Lazy extensions (loaded on demand, context bridged by createApp).
+    const actionLedgerHealth = byName("action-ledger-health")
+    expect(actionLedgerHealth?.extension.module).toBe("action-ledger")
+    expect(actionLedgerHealth?.lazyAdminRoutes).toBeTypeOf("function")
+
+    const proposal = byName("proposal")
+    expect(proposal?.extension.module).toBe("quote-versions")
+    expect(proposal?.publicPath).toBe("proposals")
+    expect(proposal?.lazyAdminRoutes).toBeTypeOf("function")
+    expect(proposal?.lazyPublicRoutes).toBeTypeOf("function")
+
+    expect(byName("catalog-offers")?.extension.module).toBe("catalog")
+    expect(byName("catalog-checkout")?.extension.module).toBe("catalog")
+  })
+
+  it("composes deployment-local route modules as lazy modules", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    const mod = (name: string) => composed.modules.find((m) => m.module.name === name)
+
+    // flights/mcp/invitations route bundles live in the operator and load
+    // lazily; createApp mounts + caches them with the request context bridged.
+    expect(mod("flights")?.lazyAdminRoutes).toBeTypeOf("function")
+    expect(mod("mcp")?.lazyAdminRoutes).toBeTypeOf("function")
+    expect(mod("invitations")?.lazyAdminRoutes).toBeTypeOf("function")
+    expect(mod("invitations")?.lazyPublicRoutes).toBeTypeOf("function")
+  })
+
+  it("every schema-migrated module (voyant.config) is actually mounted at runtime", () => {
+    // The dangerous drift: a module added to voyant.config (so its tables
+    // migrate) but never mounted — migrated-but-dead. Guard: voyant.config
+    // modules ⊆ runtime manifest modules. (Route-only modules like
+    // storefront is mounted-but-schema-less and lives only in the runtime
+    // manifest, which is fine.)
+    //
+    // Carve-out: modules whose API is mounted APP-LOCALLY instead of as a
+    // package Hono module. `@voyant-travel/flights` exports no Hono module — its
+    // routes live in src/api/flights.ts (adapter wiring is app-specific) —
+    // but it must sit in voyant.config `modules` so `voyant admin generate`
+    // composes its package-delivered admin surface
+    // (@voyant-travel/flights-react/admin). Not migrated-but-dead: the flights
+    // reference tables are served by those app-local routes.
+    const APP_LOCAL_API_MODULES = new Set(["@voyant-travel/flights"])
+    const runtime = new Set(OPERATOR_RUNTIME_MANIFEST.modules)
+    const schemaModules = (voyantConfig.modules ?? []).map(entryName)
+    const migratedButNotMounted = schemaModules.filter(
+      (name) => !runtime.has(name) && !APP_LOCAL_API_MODULES.has(name),
+    )
+    expect(migratedButNotMounted).toEqual([])
+  })
+
+  it("throws loudly when the manifest references an unregistered factory", () => {
+    expect(() =>
+      composeFromManifest(
+        { modules: ["@voyant-travel/does-not-exist"] },
+        operatorComposition,
+        buildOperatorProviders(),
+      ),
+    ).toThrow(/no module factory registered for "@voyant-travel\/does-not-exist"/)
+  })
+})

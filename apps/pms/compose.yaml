@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: acme-travel-admin-postgres
+    environment:
+      POSTGRES_DB: voyant
+      POSTGRES_USER: voyant
+      POSTGRES_PASSWORD: voyant
+    ports:
+      - "54329:5432"
+    volumes:
+      - acme-travel-admin-postgres:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voyant -d voyant"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  typesense:
+    image: typesense/typesense:28.0
+    container_name: acme-travel-admin-typesense
+    command:
+      - "--data-dir=/data"
+      - "--api-key=voyant-dev-typesense-key"
+      - "--enable-cors"
+    ports:
+      - "8108:8108"
+    volumes:
+      - acme-travel-admin-typesense:/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8108; printf \"GET /health HTTP/1.0\\r\\n\\r\\n\" >&3; grep -q \"\\\"ok\\\":true\" <&3'",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  acme-travel-admin-postgres:
+  acme-travel-admin-typesense:

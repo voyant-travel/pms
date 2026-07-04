@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/inter-tight";
+
+/* Local fallback for published Voyant UI orientation variants. Components emit
+   Base UI's data-orientation attribute, while their classes use shorthand
+   data-horizontal/data-vertical variants. */
+@custom-variant data-horizontal (&[data-orientation="horizontal"]);
+@custom-variant data-vertical (&[data-orientation="vertical"]);
+
+/* Tailwind v4 auto-detection does not scan published package code under
+   node_modules. Voyant UI components emit Tailwind utility classes from
+   those packages, so include them explicitly. The in-package styles.css
+   files imported below also declare @source globs, but those globs are
+   relative to src/ trees that don't ship in published tarballs (upstream
+   issue #416), so the dist scans below are still required. */
+@source "../node_modules/@voyant-travel/admin/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/auth-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/ui/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/operations-react/dist/availability/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/bookings-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/catalog-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/commerce-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/relationships-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/finance-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/flights-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/legal-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/inventory-react/dist/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/distribution-react/dist/suppliers/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/operations-react/dist/resources/**/*.{js,mjs}";
+@source "../node_modules/@voyant-travel/mice-react/dist/**/*.{js,mjs}";
+/* In the monorepo, package `exports` point at `./src/*.ts(x)` so dev/SSR
+   runs from live source, not the package `dist/`. The dist scans above
+   only help published consumers and can lag behind src during local dev,
+   so also scan workspace src trees directly. */
+@source "../../../packages/admin/src/**/*.{ts,tsx}";
+@source "../../../packages/auth-react/src/**/*.{ts,tsx}";
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../packages/operations-react/src/availability/**/*.{ts,tsx}";
+@source "../../../packages/bookings-react/src/**/*.{ts,tsx}";
+@source "../../../packages/catalog-react/src/**/*.{ts,tsx}";
+@source "../../../packages/commerce-react/src/**/*.{ts,tsx}";
+@source "../../../packages/relationships-react/src/**/*.{ts,tsx}";
+@source "../../../packages/finance-react/src/**/*.{ts,tsx}";
+@source "../../../packages/flights-react/src/**/*.{ts,tsx}";
+@source "../../../packages/legal-react/src/**/*.{ts,tsx}";
+@source "../../../packages/inventory-react/src/**/*.{ts,tsx}";
+@source "../../../packages/distribution-react/src/suppliers/**/*.{ts,tsx}";
+@source "../../../packages/operations-react/src/resources/**/*.{ts,tsx}";
+@source "../../../packages/mice-react/src/**/*.{ts,tsx}";
+
+/* Theme (palette, fonts, radius, dark variant, base layer) comes entirely
+   from @voyant-travel/ui/styles.css — the framework source of truth. This
+   app only loads the Inter Tight font files (above) and the source globs +
+   package styles needed for its build; it intentionally does NOT redefine
+   the brand tokens. */
+@import "@voyant-travel/ui/styles.css";
+@import "@voyant-travel/admin/styles.css";
+@import "@voyant-travel/auth-react/styles.css";
+@import "@voyant-travel/operations-react/availability/styles.css";
+@import "@voyant-travel/bookings-react/styles.css";
+@import "@voyant-travel/commerce-react/styles.css";
+@import "@voyant-travel/relationships-react/styles.css";
+@import "@voyant-travel/finance-react/styles.css";
+@import "@voyant-travel/legal-react/styles.css";
+@import "@voyant-travel/inventory-react/styles.css";
+@import "@voyant-travel/distribution-react/suppliers/styles.css";
+@import "@voyant-travel/operations-react/resources/styles.css";
+@import "@voyant-travel/catalog-react/styles.css";
+@import "@voyant-travel/flights-react/styles.css";
+@import "@voyant-travel/mice-react/styles.css";
+
+/* @voyant-travel/ui@0.108.3 ships this utility, but the published package's
+   styles export does not currently emit it in this starter build. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -1,0 +1,146 @@
+# Cloudflare Workers runtime secrets — loaded by wrangler in dev.
+# Copy to `.dev.vars` and fill in values. Never commit .dev.vars.
+#
+# Public vars (APP_URL, DASH_BASE_URL, PUBLIC_CHECKOUT_BASE_URL,
+# GCP_* non-key fields, EMAIL_FROM) already live in wrangler.jsonc under
+# env.dev.vars — only secrets belong here.
+
+# Database (Neon Postgres — accessed via the Neon serverless HTTP driver in
+# both dev and prod; no Hyperdrive binding required)
+DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
+
+# Auth
+BETTER_AUTH_SECRET="<generate with: openssl rand -base64 32>"
+SESSION_CLAIMS_SECRET="<generate with: openssl rand -base64 32>"
+INTERNAL_API_KEY="<generate with: openssl rand -hex 32>"
+# Local dev and self-hosted deployments use Better Auth local flows. Voyant
+# Cloud deployments set this to "voyant-cloud"; in that mode local sign-in,
+# sign-up, password reset, invites, and local OAuth are blocked server-side.
+# VOYANT_ADMIN_AUTH_MODE="local"
+# Cloud mode broker settings are injected by Voyant Cloud deployments.
+# VOYANT_CLOUD_ADMIN_AUTH_START_URL="https://dash.voyantcloud.com/admin-auth/start"
+# VOYANT_CLOUD_ADMIN_AUTH_EXCHANGE_URL="https://api.voyant.travel/cloud/v1/admin-auth/exchange"
+# VOYANT_CLOUD_ADMIN_AUTH_JWKS_URL="https://api.voyant.travel/.well-known/admin-auth/jwks.json"
+# VOYANT_CLOUD_ADMIN_AUTH_REVALIDATE_URL="https://api.voyant.travel/cloud/v1/admin-auth/revalidate"
+# VOYANT_CLOUD_ADMIN_AUTH_AUDIENCE="dep_..."
+# VOYANT_CLOUD_ADMIN_AUTH_CLIENT_TOKEN="..."
+# VOYANT_CLOUD_DEPLOYMENT_ID="dep_..."
+# VOYANT_CLOUD_APP_ID="app_..."
+# VOYANT_CLOUD_ENVIRONMENT="production"
+
+# CORS / URLs
+API_BASE_URL="http://localhost:3100/api"
+CORS_ALLOWLIST="http://localhost:3100"
+
+# Voyant API (canonical email / sms / verify / vault / connect provider).
+# Required — templates do not fall back to direct Resend/Twilio.
+# Self-hosters who want a different transport can swap the provider in
+# src/lib/notifications.ts (see @voyant-travel/notifications for the
+# NotificationProvider interface).
+VOYANT_API_KEY="vc_..."
+# VOYANT_CLOUD_API_URL="https://api.voyant.travel"
+# VOYANT_CLOUD_VAULT_SLUG="main"
+
+# Unsplash API — used by `pnpm seed` to attach realistic product images.
+# Get a key at https://unsplash.com/developers. Optional — if unset, seed
+# skips media attachment.
+UNSPLASH_ACCESS_KEY=""
+
+# KMS provider — "local" for dev, "env" for self-managed symmetric keys,
+# "gcp" for Cloud KMS, "aws" for AWS KMS, "voyant-cloud" for Vault KMS.
+# wrangler.jsonc defaults this to "local" for the dev env; override here if
+# you need to test a different provider locally.
+# KMS_PROVIDER="local"
+
+# KMS_PROVIDER=local: master key (base64-encoded 32 bytes).
+KMS_LOCAL_KEY="<generate with: openssl rand -base64 32>"
+
+# KMS_PROVIDER=env: master key (base64-encoded 32 bytes).
+KMS_ENV_KEY="<generate with: openssl rand -base64 32>"
+
+# KMS_PROVIDER=voyant-cloud only: uses VOYANT_API_KEY,
+# VOYANT_CLOUD_VAULT_SLUG, and optional VOYANT_CLOUD_API_URL above.
+
+# KMS_PROVIDER=aws only:
+# AWS_REGION=""
+# AWS_ACCESS_KEY_ID=""
+# AWS_SECRET_ACCESS_KEY=""
+# AWS_SESSION_TOKEN=""
+# AWS_KMS_ENDPOINT=""
+# AWS_KMS_PEOPLE_KEY_ID=""
+# AWS_KMS_INTEGRATIONS_KEY_ID=""
+
+# KMS_PROVIDER=gcp only: GCP service-account private key as PEM,
+# newlines escaped as \n. Not needed when KMS_PROVIDER=local.
+GCP_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+# Netopia (pay-by-link card processor). `NETOPIA_MODE` picks the API base
+# (`sandbox` → https://sandbox.netopia-payments.com/pay, `live` →
+# https://secure.mobilpay.ro/pay). Defaults to `sandbox` so a half-
+# configured prod deploy fails into the safer environment instead of
+# charging real cards. `NETOPIA_URL` overrides the resolved base — only
+# set it for staging proxies or test mocks.
+#
+# Sandbox + live both require API key + POS signature issued by Netopia.
+# `NETOPIA_NOTIFY_URL` must be a publicly reachable HTTPS endpoint that
+# proxies to `${API_BASE_URL}/v1/admin/finance/providers/netopia/callback`.
+NETOPIA_MODE="sandbox"
+# NETOPIA_URL=""
+NETOPIA_API_KEY=""
+NETOPIA_POS_SIGNATURE=""
+# Webhook receiver — genuinely deploy-wide. Netopia POSTs payment results
+# here, so it must be a single publicly reachable HTTPS endpoint resolving
+# to ${API_BASE_URL}/v1/admin/finance/providers/netopia/callback.
+NETOPIA_NOTIFY_URL=""
+# Default post-payment browser landing. Operator-initiated send-link flows
+# usually point this at our public ${APP_URL}/pay landing; storefronts
+# override per session via useCollectPayment({ returnUrl, cancelUrl }).
+NETOPIA_REDIRECT_URL=""
+# Per-session language is supplied by the operator UI at collection time
+# (CollectPaymentDialog.defaultPayerLanguage). NETOPIA_LANGUAGE is only the
+# deploy-wide fallback for callers that don't pass one.
+# NETOPIA_LANGUAGE="en"
+# Local development only: bypasses Netopia and exposes
+# `/v1/local/mock-card/:sessionId/approve` so payment links can be completed
+# end-to-end without real processor credentials.
+MOCK_CARD_PAYMENTS="true"
+
+# SmartBill (Romanian e-invoicing). When set, the operator starter listens to
+# invoice.issued / invoice.proforma.issued and creates SmartBill invoices /
+# proformas, then stores the SmartBill reference on the invoice external refs.
+# SMARTBILL_TOKEN is accepted too for Protravel-style env naming.
+SMARTBILL_USERNAME=""
+SMARTBILL_API_TOKEN=""
+# SMARTBILL_TOKEN=""
+SMARTBILL_COMPANY_VAT_CODE=""
+SMARTBILL_SERIES_NAME=""
+# SMARTBILL_INVOICE_SERIES_NAME=""
+# SMARTBILL_PROFORMA_SERIES_NAME=""
+# SMARTBILL_API_URL="https://ws.smartbill.ro/SBORO/api"
+SMARTBILL_LANGUAGE="RO"
+# SMARTBILL_ART_311_SPECIAL_REGIME="false"
+
+# Standalone flights demo service (apps/flights-demo-api). Run it with
+# `pnpm --filter flights-demo-api dev` (defaults to :3320). Owns its own
+# Postgres — orders persist there, not in this template's DB. Swap to a
+# real GDS connector by replacing the adapter in src/api/flights.ts.
+FLIGHTS_DEMO_API_URL="http://localhost:3320"
+
+# Voyant Connect catalog source adapter. Source sync discovers active
+# connections for the operator; quote/book/cancel dispatch uses the
+# source_connection_id stored on each synced catalog entry.
+# VOYANT_CONNECT_API_URL="https://api.voyant.travel"
+# VOYANT_CONNECT_OPERATOR_ID="op_..."
+# VOYANT_CONNECT_MARKET="default"
+# VOYANT_CONNECT_SYNC_LIMIT="500"
+
+# Manual bank-transfer block rendered on the public payment landing page.
+# Both BENEFICIARY and IBAN must be set, otherwise the tab is hidden.
+# Currency is NOT configurable here — it always tracks the booking's
+# invoice currency. NOTES is deploy-wide boilerplate (e.g. "Please
+# include your invoice number in the wire reference"); per-call notes
+# from useCollectPayment({ notes }) override it.
+BANK_TRANSFER_BENEFICIARY="Acme Travel SRL"
+BANK_TRANSFER_IBAN="RO49AAAA1B31007593840000"
+BANK_TRANSFER_BANK_NAME="Acme Local Test Bank"
+BANK_TRANSFER_NOTES="Local test transfer. Include the payment-session id as reference."
