@@ -71,6 +71,37 @@ pnpm --filter pms-admin seed          # seed baseline data
 `DATABASE_URL` must be set (via `.dev.vars`, `.env`, or the environment) for any
 `db:*` command.
 
+## Storefront (direct bookings)
+
+The `(storefront)` route group is the property-first, direct-booking surface
+(Phase 2). It reuses the upstream catalog booking engine end to end.
+
+- `/shop` — landing + property search: destination + check-in/check-out +
+  occupancy (adults / children / rooms). Results are accommodation **properties**
+  served by `useCatalogSearch` restricted to the `accommodations` vertical
+  (`projection: "storefront-card"`, `surface: "public"`). Occupancy + dates live
+  in URL search state (`staySearchSchema`) and flow into the detail link.
+- `/shop/products/accommodations/$id` — property detail: gallery, amenities,
+  policies, and a booking.com-style rooms table (room type × applicable rate
+  plans). Selecting a room+rate drives a live quote; **Book** navigates to the
+  journey with dates/occupancy/room/rate prefilled.
+- `/shop/book/accommodations/$id` — the `BookingJourney` wizard (Configure step
+  hidden; upstream). `/shop/confirmation/$bookingId` — post-payment landing.
+
+Pure view-model helpers (`src/components/storefront/*.ts`) are unit-tested so the
+flow is validated without a live catalog: `stay-search` (URL codec, nights,
+booking-search builder), `rooms-matrix` (room × rate-plan fan-out), and
+`property-card-model` (search → card mapping).
+
+### Single-property mode
+
+Set `STOREFRONT_SINGLE_PROPERTY_ID` (Cloudflare `vars` / `.dev.vars`) to an
+accommodation property id. The `/shop` loader then redirects straight to that
+property's detail page and the portfolio search never renders — a property
+manager pointing their own domain at one hotel. Leave it unset for
+multi-property mode (portfolio landing + search). The value is read server-side
+via `getStorefrontConfig` (`src/lib/storefront-config.ts`).
+
 ## Verify
 
 ```bash

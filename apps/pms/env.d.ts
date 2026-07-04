@@ -101,6 +101,15 @@ interface CloudflareBindings {
   GCP_SERVICE_ACCOUNT_EMAIL?: string
   GCP_PRIVATE_KEY?: string
 
+  /**
+   * Storefront single-property mode. When set to an accommodation
+   * property id, the `(storefront)` landing (`/shop`) redirects straight
+   * to that property's detail page and the portfolio search is hidden —
+   * a property manager pointing their own domain at one hotel. Leave
+   * unset for multi-property mode (portfolio landing + search).
+   */
+  STOREFRONT_SINGLE_PROPERTY_ID?: string
+
   // App URLs
   APP_URL: string
   API_BASE_URL: string

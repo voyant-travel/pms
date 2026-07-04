@@ -144,3 +144,9 @@ BANK_TRANSFER_BENEFICIARY="Acme Travel SRL"
 BANK_TRANSFER_IBAN="RO49AAAA1B31007593840000"
 BANK_TRANSFER_BANK_NAME="Acme Local Test Bank"
 BANK_TRANSFER_NOTES="Local test transfer. Include the payment-session id as reference."
+
+# Storefront single-property mode. Set to an accommodation property id to
+# make the storefront landing (/shop) redirect straight to that property's
+# detail page and hide portfolio search — a property manager pointing their
+# own domain at one hotel. Leave unset for multi-property mode.
+# STOREFRONT_SINGLE_PROPERTY_ID="acc_..."
