@@ -57,6 +57,20 @@
       "when": 1782181477556,
       "tag": "0007_square_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783198883339,
+      "tag": "0008_strip_stripped_mice_link_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783198897577,
+      "tag": "0009_pms_units_and_front_desk",
+      "breakpoints": true
     }
   ]
 }
