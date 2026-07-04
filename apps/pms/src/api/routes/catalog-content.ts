@@ -5,7 +5,6 @@
  * adopt as part of the catalog-sourced-content migration:
  *
  *   GET /v1/{admin,public}/products/:id/content
- *   GET /v1/{admin,public}/cruises/:id/content
  *   GET /v1/{admin,public}/accommodations/:id/content
  *
  * Each endpoint dispatches through the vertical's `getXxxContent`
@@ -18,7 +17,6 @@
  */
 
 import { createAccommodationContentRoutes } from "@voyant-travel/accommodations/routes-content"
-import { createCruiseContentRoutes } from "@voyant-travel/cruises/routes-content"
 import { createProductContentRoutes } from "@voyant-travel/inventory/routes-content"
 import type { Hono } from "hono"
 
@@ -56,22 +54,6 @@ export function mountCatalogContentRoutes(hono: CatalogContentMountTarget): void
 
   hono.route("/v1/admin/products", adminProductContentRoutes)
   hono.route("/v1/public/products", publicProductContentRoutes)
-
-  // ── Cruises ──────────────────────────────────────────────────
-  const adminCruiseContentRoutes = createCruiseContentRoutes({
-    resolveRegistry: (c) => getBookingEngineRegistryFromContext(c),
-    defaultAcceptMachineTranslated: false,
-    allowOwnedKeys: true,
-  })
-
-  const publicCruiseContentRoutes = createCruiseContentRoutes({
-    resolveRegistry: (c) => getBookingEngineRegistryFromContext(c),
-    defaultAcceptMachineTranslated: true,
-    allowOwnedKeys: true,
-  })
-
-  hono.route("/v1/admin/cruises", adminCruiseContentRoutes)
-  hono.route("/v1/public/cruises", publicCruiseContentRoutes)
 
   // ── Accommodations ─────────────────────────────────────────────
   const adminAccommodationContentRoutes = createAccommodationContentRoutes({

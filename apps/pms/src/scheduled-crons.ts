@@ -1,7 +1,6 @@
 export const CHANNEL_PUSH_BOOKING_LINK_CRON = "*/15 * * * *"
 export const CHANNEL_PUSH_AVAILABILITY_CRON = "0 * * * *"
 export const CHANNEL_PUSH_CONTENT_CRON = "0 3 * * *"
-export const EXTERNAL_CRUISE_CATALOG_REFRESH_CRON = "30 3 * * *"
 export const DRAFT_REAPER_CRON = "5 * * * *"
 export const PROMOTION_BOUNDARY_SCHEDULER_CRON = "*/5 * * * *"
 export const OUTBOX_DRAIN_CRON = "*/2 * * * *"

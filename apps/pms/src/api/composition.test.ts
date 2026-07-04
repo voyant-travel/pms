@@ -38,9 +38,16 @@ describe("operator runtime composition", () => {
 
     // Manifest entries expand to more mounted modules because Commerce and
     // Distribution each mount multiple internal Hono modules.
-    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(35)
-    expect(composed.modules).toHaveLength(40)
-    expect(composed.extensions).toHaveLength(16)
+    //
+    // Stays-only PMS counts (tour verticals stripped): the framework standard set
+    // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
+    // plus 3 deployment-local modules (invitations, team, realtime — cruises,
+    // charters, MICE removed) = 31 manifest modules. Commerce + Distribution still
+    // expand (+5) → 36 composed modules. Extensions drop the MICE booking sidecar
+    // (16 → 15).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(31)
+    expect(composed.modules).toHaveLength(36)
+    expect(composed.extensions).toHaveLength(15)
 
     // Every composed unit is a real HonoModule/HonoExtension.
     for (const m of composed.modules) expect(m.module?.name).toBeTypeOf("string")
@@ -105,9 +112,10 @@ describe("operator runtime composition", () => {
     )
     const mod = (name: string) => composed.modules.find((m) => m.module.name === name)
 
-    // flights/mcp/invitations route bundles live in the operator and load
-    // lazily; createApp mounts + caches them with the request context bridged.
-    expect(mod("flights")?.lazyAdminRoutes).toBeTypeOf("function")
+    // mcp/invitations route bundles live in the operator and load lazily;
+    // createApp mounts + caches them with the request context bridged. (flights
+    // is excluded from this stays-only deployment, so it is not mounted.)
+    expect(mod("flights")).toBeUndefined()
     expect(mod("mcp")?.lazyAdminRoutes).toBeTypeOf("function")
     expect(mod("invitations")?.lazyAdminRoutes).toBeTypeOf("function")
     expect(mod("invitations")?.lazyPublicRoutes).toBeTypeOf("function")
@@ -121,13 +129,9 @@ describe("operator runtime composition", () => {
     // manifest, which is fine.)
     //
     // Carve-out: modules whose API is mounted APP-LOCALLY instead of as a
-    // package Hono module. `@voyant-travel/flights` exports no Hono module — its
-    // routes live in src/api/flights.ts (adapter wiring is app-specific) —
-    // but it must sit in voyant.config `modules` so `voyant admin generate`
-    // composes its package-delivered admin surface
-    // (@voyant-travel/flights-react/admin). Not migrated-but-dead: the flights
-    // reference tables are served by those app-local routes.
-    const APP_LOCAL_API_MODULES = new Set(["@voyant-travel/flights"])
+    // package Hono module (none in this stays-only PMS — flights, which used to
+    // be the sole app-local API module, was stripped out).
+    const APP_LOCAL_API_MODULES = new Set<string>()
     const runtime = new Set(OPERATOR_RUNTIME_MANIFEST.modules)
     const schemaModules = (voyantConfig.modules ?? []).map(entryName)
     const migratedButNotMounted = schemaModules.filter(

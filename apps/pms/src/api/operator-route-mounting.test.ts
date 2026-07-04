@@ -58,9 +58,12 @@ describe("operator composed route mounting (smoke)", () => {
     expect(await status("/v1/admin/definitely-not-mounted/x")).toBe(404)
   })
 
-  it("mounts lazyAdminRoutes modules (flights, mcp)", async () => {
-    expect(await status("/v1/admin/flights/reference/airports")).not.toBe(404)
+  it("mounts lazyAdminRoutes modules (mcp)", async () => {
     expect(await status("/v1/admin/mcp/manifest")).not.toBe(404)
+  })
+
+  it("does not mount the excluded flights module (stays-only PMS)", async () => {
+    expect(await status("/v1/admin/flights/reference/airports")).toBe(404)
   })
 
   it("mounts lazy module admin + public surfaces (invitations)", async () => {
@@ -74,12 +77,12 @@ describe("operator composed route mounting (smoke)", () => {
     expect(await status("/v1/admin/catalog/package-offers", "POST")).not.toBe(404)
   })
 
-  it("mounts charters lazy admin + public surfaces (operator-local, voyant#2191)", async () => {
-    // The public charter browse list is served (local-only when no adapter is
-    // registered) — proves the operator actually mounts charters at runtime, not
-    // just that it surfaces in the spec.
-    expect(await status("/v1/public/charters")).not.toBe(404)
-    expect(await status("/v1/admin/charters/products")).not.toBe(404)
+  it("does not mount the stripped tour verticals (cruises, charters, mice)", async () => {
+    // These verticals were removed in the stays-only PMS strip pass.
+    expect(await status("/v1/public/charters")).toBe(404)
+    expect(await status("/v1/admin/charters/products")).toBe(404)
+    expect(await status("/v1/public/cruises")).toBe(404)
+    expect(await status("/v1/admin/mice/programs")).toBe(404)
   })
 
   it("mounts multi-prefix lazyRoutes families (catalog-booking, media, settings, payment-link)", async () => {

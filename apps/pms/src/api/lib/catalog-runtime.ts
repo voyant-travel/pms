@@ -22,7 +22,6 @@ import {
   type TypesenseSearchQuery,
   type TypesenseSearchResponse,
 } from "@voyant-travel/catalog"
-import { charterCatalogPolicy } from "@voyant-travel/charters/catalog-policy"
 import {
   createProductPricingProjectionExtension,
   createProductPromotionsProjectionExtension,
@@ -30,12 +29,6 @@ import {
   marketLocales,
   markets,
 } from "@voyant-travel/commerce"
-import { cruiseCabinFacetsCatalogPolicy } from "@voyant-travel/cruises/catalog-policy-cabins"
-import {
-  createCruiseDocumentBuilder,
-  createCruisesRegistry,
-} from "@voyant-travel/cruises/service-catalog-plane"
-import { createCruiseCabinFacetProjectionExtension } from "@voyant-travel/cruises/service-catalog-plane-cabins"
 import type { AnyDrizzleDb } from "@voyant-travel/db"
 import { channelProductMappings, channels } from "@voyant-travel/distribution"
 import { productCatalogPolicy } from "@voyant-travel/inventory/catalog-policy"
@@ -54,13 +47,7 @@ import { createProductTaxonomyProjectionExtension } from "@voyant-travel/invento
 import { createProductDeparturesProjectionExtension } from "@voyant-travel/operations"
 import { and, asc, eq } from "drizzle-orm"
 
-export const CATALOG_VERTICALS = [
-  "products",
-  "extras",
-  "cruises",
-  "charters",
-  "accommodations",
-] as const
+export const CATALOG_VERTICALS = ["products", "extras", "accommodations"] as const
 
 const INDEXED_AUDIENCES = ["staff", "customer"] as const
 
@@ -75,10 +62,6 @@ export const DEFAULT_SLICES: ReadonlyArray<IndexerSlice> = [
   { vertical: "products", locale: "en-GB", audience: "customer", market: "default" },
   { vertical: "extras", locale: "en-GB", audience: "staff", market: "default" },
   { vertical: "extras", locale: "en-GB", audience: "customer", market: "default" },
-  { vertical: "cruises", locale: "en-GB", audience: "staff", market: "default" },
-  { vertical: "cruises", locale: "en-GB", audience: "customer", market: "default" },
-  { vertical: "charters", locale: "en-GB", audience: "staff", market: "default" },
-  { vertical: "charters", locale: "en-GB", audience: "customer", market: "default" },
   { vertical: "accommodations", locale: "en-GB", audience: "staff", market: "default" },
   { vertical: "accommodations", locale: "en-GB", audience: "customer", market: "default" },
 ]
@@ -346,8 +329,6 @@ export function getFieldPolicyRegistries(): Map<string, FieldPolicyRegistry> {
         ]),
       ],
       ["extras", createFieldPolicyRegistry(extrasCatalogPolicy)],
-      ["cruises", createCruisesRegistry(cruiseCabinFacetsCatalogPolicy)],
-      ["charters", createFieldPolicyRegistry(charterCatalogPolicy)],
       ["accommodations", createFieldPolicyRegistry(accommodationCatalogPolicy)],
     ])
   }
@@ -398,23 +379,6 @@ export function createProductsDocumentBuilder(
       createProductPromotionsProjectionExtension({ loadOriginalPrice: loadProductPriceFrom }),
     ],
     isPublicAudienceListable: ({ db, product }) => hasActiveSalesChannelMapping(db, product.id),
-  })
-}
-
-/**
- * Build the cruises `DocumentBuilder` with cabin/deck facets wired in.
- * The registry and projection extension are paired: the registry admits
- * the denormalized cabin/deck fields, and the extension supplies them.
- */
-export function createCruisesDocumentBuilder(
-  db: AnyDrizzleDb,
-  context: { sellerOperatorId: string },
-): DocumentBuilder {
-  const registry = getFieldPolicyRegistries().get("cruises")
-  return createCruiseDocumentBuilder(db, {
-    sellerOperatorId: context.sellerOperatorId,
-    registry,
-    extensions: [createCruiseCabinFacetProjectionExtension()],
   })
 }
 

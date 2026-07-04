@@ -13,10 +13,8 @@ import { createBookingsAdminExtension } from "@voyant-travel/bookings-react/admi
 import { createFinanceAdminExtension } from "@voyant-travel/finance-react/admin"
 import { createOperationsAdminExtension } from "@voyant-travel/operations-react/admin"
 import { createNotificationsAdminExtension } from "@voyant-travel/notifications-react/admin"
-import { createFlightsAdminExtension } from "@voyant-travel/flights-react/admin"
 import { createLegalAdminExtension } from "@voyant-travel/legal-react/admin"
 import { createTripsAdminExtension } from "@voyant-travel/trips-react/admin"
-import { createMiceAdminExtension } from "@voyant-travel/mice-react/admin"
 
 /**
  * Admin extension factories keyed by module domain. Factories, not
@@ -35,8 +33,6 @@ export const generatedAdminExtensionFactories = {
   finance: createFinanceAdminExtension,
   operations: createOperationsAdminExtension,
   notifications: createNotificationsAdminExtension,
-  flights: createFlightsAdminExtension,
   legal: createLegalAdminExtension,
   trips: createTripsAdminExtension,
-  mice: createMiceAdminExtension,
 } as const

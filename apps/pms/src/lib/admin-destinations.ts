@@ -7,7 +7,6 @@ import type { AdminDestinationResolvers } from "@voyant-travel/admin"
 // module binds the rest.
 import type {} from "@voyant-travel/bookings-react/admin"
 import type {} from "@voyant-travel/catalog-react/admin"
-import type {} from "@voyant-travel/flights-react/admin"
 import type {} from "@voyant-travel/legal-react/admin"
 
 import { generatedAdminDestinations } from "@/admin.destinations.generated"
@@ -68,16 +67,6 @@ export const operatorAdminDestinations = {
   "catalog.browse": ({ surface }) => `/catalog/${surface}`,
   "catalog.detail": ({ surface, id, adults, nights }) =>
     `/catalog/${surface}/${encodeURIComponent(id)}${searchString({ adults, nights })}`,
-  "flightBooking.start": ({ offerId, returnOfferId, adults, children, infants, cabin }) =>
-    `/flights/book/${encodeURIComponent(offerId)}${searchString({
-      return: returnOfferId,
-      pax_a: adults,
-      pax_c: children,
-      pax_i: infants,
-      cabin,
-    })}`,
-  "flight.orders": () => "/flights/orders",
-  "flightOrder.detail": ({ orderId }) => `/flights/orders/${encodeURIComponent(orderId)}`,
   "legal.home": () => "/legal",
   "product.detail": ({ productId }) => `/products/${encodeURIComponent(productId)}`,
   // The packaged /bookings/compose alias forwards here; the trips composer

@@ -29,11 +29,6 @@ export default defineVoyantConfig({
     "@voyant-travel/finance",
     "@voyant-travel/operations",
     "@voyant-travel/notifications",
-    // Flights: schema is migrated and the admin surface is package-delivered
-    // (@voyant-travel/flights-react/admin); the API routes are still mounted
-    // app-locally in src/api/flights.ts rather than as the package's Hono
-    // module.
-    "@voyant-travel/flights",
     "@voyant-travel/legal",
     "@voyant-travel/storefront",
     "@voyant-travel/trips",
@@ -44,23 +39,13 @@ export default defineVoyantConfig({
     // are mounted via the framework composition (accommodationsHonoModule), and
     // its schema (incl. room_blocks) is migrated.
     "@voyant-travel/accommodations",
-    // MICE group-program spine (voyant#1489) — deployment-local (niche),
-    // mounted via createVoyantApp's deploymentLocalModules. Listed here so its
-    // schema (mice_programs) is discovered for migration generation.
-    "@voyant-travel/mice",
   ],
   plugins: ["@voyant-travel/plugin-smartbill"],
   // Mounted Hono extensions that own migrated schema.
   extensions: ["@voyant-travel/catalog-authoring"],
   // Schema this template migrates but does not mount as a module or extension:
   //  - workflow-runs: only its admin routes are mounted, not a module
-  //  - charters / cruises: schema migrated ahead of route mounting
-  additionalSchemas: [
-    "@voyant-travel/availability",
-    "@voyant-travel/workflow-runs",
-    "@voyant-travel/charters",
-    "@voyant-travel/cruises",
-  ],
+  additionalSchemas: ["@voyant-travel/availability", "@voyant-travel/workflow-runs"],
   // Template-local Drizzle schema(s) owned by no package: the generated
   // cross-module link tables (folded into the migration history instead of
   // applied out-of-band via sync-links — regenerate with

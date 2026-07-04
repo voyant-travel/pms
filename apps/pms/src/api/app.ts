@@ -13,6 +13,7 @@ import {
   buildOperatorProviders,
   deploymentLocalExtensions,
   deploymentLocalModules,
+  OPERATOR_EXCLUDED,
 } from "./composition"
 import { dbFromEnvForApp, httpDbFromEnvForApp } from "./lib/db"
 import { bookingScheduleBundle } from "./routes/booking-schedule"
@@ -48,6 +49,9 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
   providers: buildOperatorProviders(),
   modules: deploymentLocalModules,
   extensions: deploymentLocalExtensions,
+  // Stays-only PMS: drop the standard flights module (ADR-0007 subsetting).
+  // cruises/charters/MICE were deployment-local and are simply not registered.
+  exclude: OPERATOR_EXCLUDED,
   // Observability seam (RFC voyant#1553): stamp this app's name on emitted
   // error events and forward unhandled 5xx exceptions — each tagged with the
   // same `requestId` shown to the user on `X-Request-Id` — to the Workers log

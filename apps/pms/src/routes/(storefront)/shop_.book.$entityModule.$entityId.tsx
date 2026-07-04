@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useParams, useSearch } from "@tanstack/react-router"
 import type { AccommodationContent } from "@voyant-travel/accommodations/content-shape"
 import type { BookingEntitySummary } from "@voyant-travel/bookings-react/journey"
-import type { CruiseContent } from "@voyant-travel/cruises/content-shape"
 import type { ProductContent } from "@voyant-travel/inventory/content-shape"
 import { useMemo } from "react"
 import { z } from "zod"
@@ -127,13 +126,11 @@ function useEntitySummary(
   search: ShopBookSearch,
 ): BookingEntitySummary | undefined {
   const url =
-    entityModule === "cruises"
-      ? `${getApiUrl()}/v1/public/cruises/${encodeURIComponent(entityId)}/content`
-      : entityModule === "accommodations"
-        ? `${getApiUrl()}/v1/public/accommodations/${encodeURIComponent(entityId)}/content`
-        : entityModule === "products"
-          ? `${getApiUrl()}/v1/public/products/${encodeURIComponent(entityId)}/content`
-          : null
+    entityModule === "accommodations"
+      ? `${getApiUrl()}/v1/public/accommodations/${encodeURIComponent(entityId)}/content`
+      : entityModule === "products"
+        ? `${getApiUrl()}/v1/public/products/${encodeURIComponent(entityId)}/content`
+        : null
 
   const { data } = useQuery({
     queryKey: ["public-entity-summary", entityModule, entityId],
@@ -169,32 +166,6 @@ function useEntitySummary(
         startDate: dep?.starts_at ?? undefined,
         endDate: dep?.ends_at ?? undefined,
         destination: c.product.country ?? c.product.departure_city ?? undefined,
-      }
-    }
-    if (entityModule === "cruises") {
-      const c = data as CruiseContent
-      const sailing = c.sailings.find((s) => s.id === search.departureSlotId)
-      const subtitleParts = [
-        c.cruise.duration_nights
-          ? `${c.cruise.duration_nights} night${c.cruise.duration_nights === 1 ? "" : "s"}`
-          : null,
-        c.ship?.name ?? null,
-      ].filter(Boolean) as string[]
-      const route = sailing
-        ? sailing.embarkation_port && sailing.disembarkation_port
-          ? `${sailing.embarkation_port} → ${sailing.disembarkation_port}`
-          : (sailing.embarkation_port ?? null)
-        : null
-      return {
-        name: c.cruise.name,
-        subtitle: subtitleParts.join(" · ") || undefined,
-        heroImageUrl: c.cruise.hero_image_url ?? undefined,
-        vertical: "cruises",
-        whenLabel: sailing ? formatDate(sailing.start_date) : undefined,
-        locationLabel: route ?? undefined,
-        startDate: sailing?.start_date ?? undefined,
-        endDate: sailing?.end_date ?? undefined,
-        destination: route ?? undefined,
       }
     }
     if (entityModule === "accommodations") {

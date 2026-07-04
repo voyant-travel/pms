@@ -1,63 +1,33 @@
 /**
- * Operator (deployment) wiring for non-catalog (flight) trip components.
+ * Operator (deployment) wiring for non-catalog trip components.
  *
- * The reusable flight-component orchestration (preflight price-change detection,
- * passenger-roster building, reserve) now lives in
- * `@voyant-travel/trips/flight-component`. This file supplies the
- * deployment-specific dependency the package can't import statically: the
- * concrete flight adapter (which provider, which base URL).
+ * This is a stays-only PMS: the flights vertical (and its demo adapter) is not
+ * part of the composition, so there is no non-catalog (flight) component
+ * provider. Trips remains available for catalog-backed components; a
+ * non-catalog component simply has no reservation handler here and resolves to
+ * `null`, which `trips-runtime.ts` treats as "not reservable".
  *
- * Each exported function keeps the `(c, input)` signature the trips route wiring
- * (`trips-runtime.ts`) already imports.
+ * If a flight (or other non-catalog) connector is added later, build its
+ * component adapter here (see `@voyant-travel/trips/flight-component`) and
+ * return real preflight/reserve results.
  */
-import { createDemoFlightAdapter } from "@voyant-travel/plugin-flights-demo"
 import type {
   ReserveComponentInput,
   ReserveComponentPreflightResult,
   ReserveComponentResult,
 } from "@voyant-travel/trips"
-import {
-  createFlightComponentAdapter,
-  type FlightAdapterContext,
-} from "@voyant-travel/trips/flight-component"
 import type { Context } from "hono"
 
-/** Build the trips flight-component adapter for a request, injecting the
- * deployment's concrete flight adapter + adapter context. */
-function flightComponentAdapter(c: Context) {
-  return createFlightComponentAdapter({
-    adapter: getFlightAdapter(c),
-    adapterContext: buildFlightAdapterContext(c),
-  })
-}
-
 export function validateNonCatalogComponentBeforeReserve(
-  c: Context,
-  input: ReserveComponentInput,
+  _c: Context,
+  _input: ReserveComponentInput,
 ): Promise<ReserveComponentPreflightResult | null> {
-  return flightComponentAdapter(c).validateBeforeReserve(input)
+  return Promise.resolve(null)
 }
 
 export function reserveNonCatalogComponent(
-  c: Context,
-  input: ReserveComponentInput,
+  _c: Context,
+  _input: ReserveComponentInput,
 ): Promise<ReserveComponentResult | null> {
-  return flightComponentAdapter(c).reserve(input)
-}
-
-function getFlightAdapter(c: Context) {
-  const baseUrl = (c.env as { FLIGHTS_DEMO_API_URL?: string }).FLIGHTS_DEMO_API_URL
-  if (!baseUrl) {
-    throw new Error(
-      "FLIGHTS_DEMO_API_URL is not set. Start `apps/flights-demo-api` and point this env at it.",
-    )
-  }
-  return createDemoFlightAdapter({ baseUrl })
-}
-
-function buildFlightAdapterContext(c: Context): FlightAdapterContext {
-  return {
-    connectionId: "demo",
-    correlationId: c.req.header("x-request-id") ?? undefined,
-  }
+  return Promise.resolve(null)
 }

@@ -12,15 +12,7 @@ import {
 } from "@voyant-travel/admin/extensions"
 import { createAdminCoreExtension } from "@voyant-travel/admin-app/core-extension"
 import { Button } from "@voyant-travel/ui/components/button"
-import {
-  Building,
-  CalendarRange,
-  FileText,
-  Route,
-  ScrollText,
-  SlidersHorizontal,
-  Tag,
-} from "lucide-react"
+import { Building, FileText, Route, ScrollText, SlidersHorizontal, Tag } from "lucide-react"
 import { generatedAdminExtensionFactories } from "@/admin.extensions.generated"
 import type { AdminMessages } from "@/lib/admin-i18n"
 
@@ -62,10 +54,8 @@ type AdminExtensionNavMessages = Pick<
   | "contractNumberSeries"
   | "contractTemplates"
   | "contracts"
-  | "flights"
   | "invoiceNumberSeries"
   | "invoices"
-  | "mice"
   | "newTrip"
   | "notificationDeliveries"
   | "notificationPreview"
@@ -146,10 +136,6 @@ const financeMessagesProvider = loadProvider(
   () => import("@voyant-travel/finance-react/i18n"),
   (module) => module.FinanceUiMessagesProvider,
 )
-const flightsMessagesProvider = loadProvider(
-  () => import("@voyant-travel/flights-react/i18n"),
-  (module) => module.FlightsUiMessagesProvider,
-)
 const productsMessagesProvider = loadProvider(
   () => import("@voyant-travel/inventory-react/i18n"),
   (module) => module.ProductsUiMessagesProvider,
@@ -223,7 +209,6 @@ const extensionRouteMessagesProviders: Record<string, RouteMessagesProviderLoade
   commerce: commerceMessagesProvider,
   distribution: distributionRouteMessagesProvider,
   finance: financeMessagesProvider,
-  flights: flightsMessagesProvider,
   inventory: productsMessagesProvider,
   legal: legalMessagesProvider,
   notifications: notificationsMessagesProvider,
@@ -454,20 +439,6 @@ function createFinanceExtension(messages: AdminExtensionNavMessages) {
   })
 }
 
-// Flights is package-delivered (packaged-admin RFC Phase 3 + §4.8): the
-// extension contributes NO navigation — the Flights item is part of the BASE
-// operator navigation (createOperatorAdminNavigation in @voyant-travel/admin), so
-// an entry here would duplicate it. It's registered for the routes seam: the
-// contributions carry the package-owned route implementations + search
-// contracts (flightsIndexSearchSchema / flightsBookSearchSchema), and the
-// host assembles them into its code-based route tree — no route files. The
-// booking wizard mounts as a flat sibling of the search page (the old
-// file-based tree's `flights_.book` escape), and its hand-written
-// `flightBooking.start` resolver lives in src/lib/admin-destinations.ts.
-function createFlightsExtension(messages: AdminExtensionNavMessages) {
-  return generatedAdminExtensionFactories.flights({ labels: { flights: messages.flights } })
-}
-
 // Distribution is package-delivered (packaged-admin RFC Phase 3 + §4.8): the
 // extension contributes NO navigation — the Channel sync item is part of the
 // BASE operator navigation (createOperatorAdminNavigation in
@@ -631,20 +602,6 @@ function createQuotesExtension(messages: AdminExtensionNavMessages) {
   })
 }
 
-// MICE is package-delivered (packaged-admin RFC Phase 3): nav AND the route
-// implementations come from @voyant-travel/mice-react/admin — the Programs nav
-// item (spliced after Bookings via `insertAfter`, since a group program is an
-// operationally-managed booking pipeline of rooms, function space, and
-// delegates), the programs list, and the program detail page where that
-// program's per-currency cost sheet lives. The app only supplies the localized
-// label and the icon.
-function createMiceExtension(messages: AdminExtensionNavMessages) {
-  return generatedAdminExtensionFactories.mice({
-    labels: { programs: messages.mice },
-    icon: CalendarRange,
-  })
-}
-
 const defaultExtensionNavMessages: AdminExtensionNavMessages = {
   actionLedger: "Logs",
   allTrips: "All trips",
@@ -660,10 +617,8 @@ const defaultExtensionNavMessages: AdminExtensionNavMessages = {
   contractNumberSeries: "Number Series",
   contractTemplates: "Contract Templates",
   contracts: "Contracts",
-  flights: "Flights",
   invoiceNumberSeries: "Number Series",
   invoices: "Invoices",
-  mice: "Programs",
   newTrip: "New trip",
   notificationDeliveries: "Deliveries",
   notificationPreview: "Preview",
@@ -711,13 +666,11 @@ export function createOperatorAdminExtensions(
       createRelationshipsExtension(messages),
       createDistributionExtension(messages),
       createFinanceExtension(messages),
-      createFlightsExtension(messages),
       createLegalExtension(messages),
       createNotificationsExtension(messages),
       createPromotionsExtension(messages),
       createTripsExtension(messages),
       createQuotesExtension(messages),
-      createMiceExtension(messages),
       createActionLedgerExtension(messages),
       ...discoveredAdminExtensions,
     ),

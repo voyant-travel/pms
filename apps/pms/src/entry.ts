@@ -7,7 +7,6 @@ import {
   CHANNEL_PUSH_BOOKING_LINK_CRON,
   CHANNEL_PUSH_CONTENT_CRON,
   DRAFT_REAPER_CRON,
-  EXTERNAL_CRUISE_CATALOG_REFRESH_CRON,
   OUTBOX_DRAIN_CRON,
   PROMOTION_BOUNDARY_SCHEDULER_CRON,
 } from "./scheduled-crons"
@@ -74,17 +73,6 @@ export default {
         import("./api/jobs/channel-push-scheduled")
           .then((mod) => mod.runScheduledChannelPushReconciler(event, env))
           .catch((err) => reportBackgroundFailure("channel-push", err)),
-      )
-      return
-    }
-    if (event.cron === EXTERNAL_CRUISE_CATALOG_REFRESH_CRON) {
-      ctx.waitUntil(
-        import("./api/jobs/external-cruise-refresh-scheduled")
-          .then((mod) => mod.runScheduledExternalCruiseCatalogRefresh(event, env))
-          .then((result) => {
-            console.info("[external-cruise-refresh] result", result)
-          })
-          .catch((err) => reportBackgroundFailure("external-cruise-refresh", err)),
       )
       return
     }

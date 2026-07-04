@@ -19,8 +19,6 @@
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { chartersModule } from "@voyant-travel/charters"
-import { cruisesModule } from "@voyant-travel/cruises"
 import {
   extensionsFromGlob,
   FRAMEWORK_RUNTIME_MANIFEST,
@@ -35,8 +33,6 @@ import type {
   ExtensionFactory,
   ModuleFactory,
 } from "@voyant-travel/hono/composition"
-import { miceHonoModule } from "@voyant-travel/mice"
-import { miceBookingExtension } from "@voyant-travel/mice/booking-extension"
 import { createNetopiaCheckoutStarter } from "@voyant-travel/plugin-netopia"
 import { createRealtimeHonoModule } from "@voyant-travel/realtime"
 import { relationshipsService } from "@voyant-travel/relationships"
@@ -133,8 +129,10 @@ export function buildOperatorProviders(): OperatorCapabilities {
     createChannelPushExtension,
     // Lazy route-bundle loaders for the `operator/*` standard families — each
     // wires this deployment's providers into the package-owned route bundle.
-    loadFlightAdminRoutes: () =>
-      import("./runtime/flights-runtime").then((m) => m.buildFlightAdminRoutes()),
+    // Flights is excluded from this stays-only deployment (see OPERATOR_EXCLUDED
+    // below), so the framework's flights factory never runs — this required
+    // provider port stays as an inert stub only to satisfy `FrameworkProviders`.
+    loadFlightAdminRoutes: async () => new OpenAPIHono(),
     loadMcpAdminRoutes: () => import("./runtime/mcp-runtime").then((m) => m.buildMcpAdminRoutes()),
     loadCatalogBookingRoutes: () =>
       import("./runtime/catalog-booking-runtime").then((m) => {
@@ -260,38 +258,6 @@ export const deploymentLocalModules: Record<string, ModuleFactory<OperatorCapabi
     module: { name: "team" },
     lazyAdminRoutes: () => import("./routes/team").then((m) => m.createTeamAdminRoutes()),
   }),
-  // Cruise admin/public routes mounted at /v1/{admin,public}/cruises with the
-  // booking-engine SourceAdapterRegistry injected into context. Provider-neutral:
-  // external cruise providers are wired in `lib/cruise-adapters-runtime.ts`.
-  // Reuse the package's `cruisesModule` metadata (not a bare `{ name }`) so the
-  // `requiresTransactionalDb` flag survives — createApp routes these prefixes to
-  // the transactional DB, which the cruise mutation/booking handlers need.
-  "operator/cruises": () => ({
-    module: cruisesModule,
-    lazyAdminRoutes: () => import("./routes/cruises").then((m) => m.createCruiseAdminRoutes()),
-    lazyPublicRoutes: () => import("./routes/cruises").then((m) => m.createCruisePublicRoutes()),
-    // Storefront cruise detail/search is part of the auth-less journey (ADR-0008).
-    anonymous: true,
-  }),
-  // Charter admin/public routes mounted at /v1/{admin,public}/charters. Charters
-  // is operator-local (niche luxury-yacht vertical) — NOT in the framework
-  // standard set; the operator is the only deployment that surfaces it
-  // (voyant#2191). External charter providers resolve through the package's
-  // process-global adapter registry, so — unlike cruises — no
-  // SourceAdapterRegistry injection is needed; local charters work unconditionally
-  // and external keys 501 with no adapter registered. Reuse the package's
-  // `chartersModule` metadata (not a bare `{ name }`) so `requiresTransactionalDb`
-  // survives — createApp routes these prefixes to the transactional DB the charter
-  // mutation/booking/quote handlers need. The public `chartersPublicRoutes`
-  // bundle is an OpenAPIHono, so its `.openapi()` defs surface in the operator
-  // storefront spec via the build-time lazy-merge (voyant#2114).
-  "operator/charters": () => ({
-    module: chartersModule,
-    lazyAdminRoutes: () => import("./routes/charters").then((m) => m.createCharterAdminRoutes()),
-    lazyPublicRoutes: () => import("./routes/charters").then((m) => m.createCharterPublicRoutes()),
-    // Storefront charter browse/detail is part of the auth-less journey (ADR-0008).
-    anonymous: true,
-  }),
   // Realtime channels (voyant#1695). Mints scoped client tokens at
   // /v1/{admin,public}/realtime/token and bridges domain events to channels as
   // invalidation hints. Provider-agnostic and fully optional: inert until
@@ -301,10 +267,6 @@ export const deploymentLocalModules: Record<string, ModuleFactory<OperatorCapabi
       resolveProviders: resolveRealtimeProviders,
       bridgeRoutes: operatorRealtimeBridgeRoutes,
     }),
-  // MICE group-program spine (voyant#1489). Operator-local (niche) — NOT in the
-  // framework standard set. Room blocks (the standard allotment primitive it
-  // links to) ship in accommodations via the framework composition.
-  "@voyant-travel/mice": () => miceHonoModule,
 }
 
 /**
@@ -323,22 +285,49 @@ const discoveredExtensions = extensionsFromGlob<OperatorCapabilities>(
 
 export const deploymentLocalExtensions: Record<string, ExtensionFactory<OperatorCapabilities>> = {
   ...discoveredExtensions,
-  // MICE booking sidecar (booking_mice_details) — operator-local (voyant#1489).
-  "@voyant-travel/mice/booking-extension": () => miceBookingExtension,
 }
 
 /**
+ * Standard framework modules this stays-only PMS deployment does NOT run.
+ * `app.ts` passes this to `createVoyantApp({ exclude })`, which filters the
+ * runtime manifest and validates the exclusion against the framework capability
+ * graph (ADR-0007 — dropping a required/depended-on module fails loudly at boot).
+ *
+ * The tour-operator verticals cruises / charters / MICE were deployment-local
+ * (never in the framework standard set) and are simply no longer registered
+ * above, so they need no `exclude` entry. Flights IS a standard framework module,
+ * so it must be excluded here to stop mounting its routes (and to keep the
+ * derived manifest/registry below honest for the drift tests + `db doctor`).
+ * trips + quotes are retained: their provider ports are required by
+ * `FrameworkProviders` and they mount by default (see docs/PLAN.md §7 verdict).
+ */
+export const OPERATOR_EXCLUDED = ["@voyant-travel/flights"] as const
+
+const excludedStandardModules = new Set<string>(OPERATOR_EXCLUDED)
+
+const subsettedFrameworkModules = FRAMEWORK_RUNTIME_MANIFEST.modules.filter(
+  (name) => !excludedStandardModules.has(name),
+)
+
+const subsettedFrameworkModuleFactories = Object.fromEntries(
+  Object.entries(frameworkComposition.modules).filter(
+    ([name]) => !excludedStandardModules.has(name),
+  ),
+) as CompositionRegistry<OperatorCapabilities>["modules"]
+
+/**
  * The full composed manifest + registry — DERIVED from the framework-owned
- * standard set plus the deployment-local additions. `app.ts` builds the app via
- * `createVoyantApp` (which assembles the same internally); these exports remain
- * for `voyant db doctor` parity inspection and the composition tests.
+ * standard set (minus {@link OPERATOR_EXCLUDED}) plus the deployment-local
+ * additions. `app.ts` builds the app via `createVoyantApp` (which assembles the
+ * same internally, applying the same `exclude`); these exports remain for
+ * `voyant db doctor` parity inspection and the composition tests.
  */
 export const OPERATOR_RUNTIME_MANIFEST = {
-  modules: [...FRAMEWORK_RUNTIME_MANIFEST.modules, ...Object.keys(deploymentLocalModules)],
+  modules: [...subsettedFrameworkModules, ...Object.keys(deploymentLocalModules)],
   extensions: [...FRAMEWORK_RUNTIME_MANIFEST.extensions, ...Object.keys(deploymentLocalExtensions)],
 } satisfies CompositionManifest
 
 export const operatorComposition: CompositionRegistry<OperatorCapabilities> = {
-  modules: { ...frameworkComposition.modules, ...deploymentLocalModules },
+  modules: { ...subsettedFrameworkModuleFactories, ...deploymentLocalModules },
   extensions: { ...frameworkComposition.extensions, ...deploymentLocalExtensions },
 }

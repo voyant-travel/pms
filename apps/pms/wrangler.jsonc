@@ -62,10 +62,6 @@
       "*/15 * * * *",
       "0 * * * *",
       "0 3 * * *",
-      // External cruise catalog refresh — runs after the generic nightly
-      // content push so adapter projections are visible in cruise browse
-      // and catalog search surfaces.
-      "30 3 * * *",
       // Draft reaper (per booking-journey-architecture.md §5.7) — drops
       // expired booking_drafts hourly at :05 to avoid colliding with the
       // hourly availability reconciler at :00.

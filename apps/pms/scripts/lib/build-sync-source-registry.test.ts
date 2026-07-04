@@ -1,16 +1,7 @@
-import {
-  clearCruiseAdapters,
-  MockCruiseAdapter,
-  resolveCruiseAdapter,
-} from "@voyant-travel/cruises"
-import { cruiseAdapterToSourceAdapter } from "@voyant-travel/cruises/adapters"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { resetConfiguredCruiseAdapters } from "../../src/api/lib/cruise-adapters-runtime.js"
-
-// The Connect mock returns a real cruise shim (so the seam's `.cruiseAdapter`
-// back-fill works and the kind is `cruise:connect`). The factory runs lazily at
-// dynamic-import time, after the top-level imports above have initialized.
+// This stays-only PMS carries no cruise vertical: the sync registry wires the
+// demo catalog adapter plus any Connect connection-scoped adapters.
 vi.mock("@voyant-travel/plugin-catalog-demo", () => ({
   createDemoCatalogAdapter: ({ baseUrl }: { baseUrl: string }) => ({
     kind: `demo:${baseUrl}`,
@@ -21,7 +12,7 @@ vi.mock("@voyant-travel/plugin-voyant-connect", () => ({
   prepareVoyantConnectSources: vi.fn(async () => [
     {
       connectionId: "conn_1",
-      adapter: cruiseAdapterToSourceAdapter(new MockCruiseAdapter({ name: "connect" })),
+      adapter: { kind: "connect:conn_1" },
     },
   ]),
   registerVoyantConnectSources: (
@@ -36,28 +27,22 @@ vi.mock("@voyant-travel/plugin-voyant-connect", () => ({
 }))
 
 beforeEach(() => {
-  clearCruiseAdapters()
-  resetConfiguredCruiseAdapters()
+  vi.clearAllMocks()
 })
 
 describe("buildSyncSourceRegistry", () => {
-  it("registers demo + Connect cruise adapters and back-fills the vertical plane", async () => {
+  it("registers the demo adapter and the enumerated Connect sources", async () => {
     const { buildSyncSourceRegistry } = await import("./build-sync-source-registry")
 
     const registry = await buildSyncSourceRegistry({
       CATALOG_DEMO_API_URL: "http://demo.test",
     } as NodeJS.ProcessEnv)
 
-    // Catalog plane: demo + the Connect cruise kind are present.
     expect(registry.hasKind("demo:http://demo.test")).toBe(true)
-    expect(registry.hasKind("cruise:connect")).toBe(true)
-    // Vertical plane: the Connect cruise adapter was back-filled via the shared
-    // `registerCruiseAdapters` seam — sync covers the same providers as the
-    // admin/public/content/booking paths.
-    expect(resolveCruiseAdapter("connect")).toBeDefined()
+    expect(registry.hasKind("connect:conn_1")).toBe(true)
   })
 
-  it("is a no-op for cruises when only the demo source is configured", async () => {
+  it("registers only the demo adapter when Connect enumerates nothing", async () => {
     const { prepareVoyantConnectSources } = await import("@voyant-travel/plugin-voyant-connect")
     vi.mocked(prepareVoyantConnectSources).mockResolvedValueOnce([])
 
@@ -67,7 +52,6 @@ describe("buildSyncSourceRegistry", () => {
     } as NodeJS.ProcessEnv)
 
     expect(registry.hasKind("demo:http://demo.test")).toBe(true)
-    expect(registry.kinds().some((k) => k.startsWith("cruise:"))).toBe(false)
-    expect(resolveCruiseAdapter("connect")).toBeUndefined()
+    expect(registry.hasKind("connect:conn_1")).toBe(false)
   })
 })

@@ -19,10 +19,6 @@ import {
   bookingsIndexSearchSchema,
 } from "@voyant-travel/bookings-react/admin"
 import { catalogSearchSchema, productDetailSearchSchema } from "@voyant-travel/catalog-react/admin"
-import {
-  flightsBookSearchSchema,
-  flightsIndexSearchSchema,
-} from "@voyant-travel/flights-react/admin"
 
 import { adminExtensions } from "@/lib/admin-extensions"
 import { getApiUrl } from "@/lib/env"
@@ -386,26 +382,6 @@ export const FinanceProfitabilityRoute = createRoute({
 })
 
 // ---------------------------------------------------------------------------
-// flights
-// ---------------------------------------------------------------------------
-
-const flightsExtension = extension("flights")
-
-export const FlightsIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/flights",
-  validateSearch: flightsIndexSearchSchema,
-  ...adminExtensionRouteOptions(flightsExtension, "flights-index", runtime),
-})
-
-export const FlightsBookRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/flights/book/$offerId",
-  validateSearch: flightsBookSearchSchema,
-  ...adminExtensionRouteOptions(flightsExtension, "flights-book", runtime),
-})
-
-// ---------------------------------------------------------------------------
 // inventory
 // ---------------------------------------------------------------------------
 
@@ -481,24 +457,6 @@ export const LegalNumberSeriesRoute = createRoute({
   getParentRoute: workspace,
   path: "/legal/number-series",
   ...adminExtensionRouteOptions(legalExtension, "legal-number-series", runtime),
-})
-
-// ---------------------------------------------------------------------------
-// mice
-// ---------------------------------------------------------------------------
-
-const miceExtension = extension("mice")
-
-export const MiceProgramsIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/mice",
-  ...adminExtensionRouteOptions(miceExtension, "mice-programs-index", runtime),
-})
-
-export const MiceProgramsDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/mice/$id",
-  ...adminExtensionRouteOptions(miceExtension, "mice-programs-detail", runtime),
 })
 
 // ---------------------------------------------------------------------------
@@ -741,8 +699,6 @@ export const adminExtensionRoutes = [
   FinanceSupplierInvoicesIndexRoute,
   FinanceSupplierInvoicesDetailRoute,
   FinanceProfitabilityRoute,
-  FlightsIndexRoute,
-  FlightsBookRoute,
   ProductsIndexRoute,
   ProductsCategoriesRoute,
   ProductsDetailRoute,
@@ -754,8 +710,6 @@ export const adminExtensionRoutes = [
   LegalPoliciesIndexRoute,
   LegalPoliciesDetailRoute,
   LegalNumberSeriesRoute,
-  MiceProgramsIndexRoute,
-  MiceProgramsDetailRoute,
   NotificationsIndexRoute,
   NotificationsTemplatesIndexRoute,
   NotificationsTemplatesDetailRoute,
@@ -828,8 +782,6 @@ export interface AdminExtensionRoutesByFullPath {
   "/finance/supplier-invoices": typeof FinanceSupplierInvoicesIndexRoute
   "/finance/supplier-invoices/$id": typeof FinanceSupplierInvoicesDetailRoute
   "/finance/profitability": typeof FinanceProfitabilityRoute
-  "/flights": typeof FlightsIndexRoute
-  "/flights/book/$offerId": typeof FlightsBookRoute
   "/products": typeof ProductsIndexRoute
   "/products/categories": typeof ProductsCategoriesRoute
   "/products/$id": typeof ProductsDetailRoute
@@ -841,8 +793,6 @@ export interface AdminExtensionRoutesByFullPath {
   "/legal/policies": typeof LegalPoliciesIndexRoute
   "/legal/policies/$id": typeof LegalPoliciesDetailRoute
   "/legal/number-series": typeof LegalNumberSeriesRoute
-  "/mice": typeof MiceProgramsIndexRoute
-  "/mice/$id": typeof MiceProgramsDetailRoute
   "/notifications": typeof NotificationsIndexRoute
   "/notifications/templates": typeof NotificationsTemplatesIndexRoute
   "/notifications/templates/$id": typeof NotificationsTemplatesDetailRoute
@@ -914,8 +864,6 @@ export interface AdminExtensionRoutesByTo {
   "/finance/supplier-invoices": typeof FinanceSupplierInvoicesIndexRoute
   "/finance/supplier-invoices/$id": typeof FinanceSupplierInvoicesDetailRoute
   "/finance/profitability": typeof FinanceProfitabilityRoute
-  "/flights": typeof FlightsIndexRoute
-  "/flights/book/$offerId": typeof FlightsBookRoute
   "/products": typeof ProductsIndexRoute
   "/products/categories": typeof ProductsCategoriesRoute
   "/products/$id": typeof ProductsDetailRoute
@@ -927,8 +875,6 @@ export interface AdminExtensionRoutesByTo {
   "/legal/policies": typeof LegalPoliciesIndexRoute
   "/legal/policies/$id": typeof LegalPoliciesDetailRoute
   "/legal/number-series": typeof LegalNumberSeriesRoute
-  "/mice": typeof MiceProgramsIndexRoute
-  "/mice/$id": typeof MiceProgramsDetailRoute
   "/notifications": typeof NotificationsIndexRoute
   "/notifications/templates": typeof NotificationsTemplatesIndexRoute
   "/notifications/templates/$id": typeof NotificationsTemplatesDetailRoute
@@ -1001,8 +947,6 @@ export interface AdminExtensionRoutesById {
   "/_workspace/finance/supplier-invoices": typeof FinanceSupplierInvoicesIndexRoute
   "/_workspace/finance/supplier-invoices/$id": typeof FinanceSupplierInvoicesDetailRoute
   "/_workspace/finance/profitability": typeof FinanceProfitabilityRoute
-  "/_workspace/flights": typeof FlightsIndexRoute
-  "/_workspace/flights/book/$offerId": typeof FlightsBookRoute
   "/_workspace/products": typeof ProductsIndexRoute
   "/_workspace/products/categories": typeof ProductsCategoriesRoute
   "/_workspace/products/$id": typeof ProductsDetailRoute
@@ -1014,8 +958,6 @@ export interface AdminExtensionRoutesById {
   "/_workspace/legal/policies": typeof LegalPoliciesIndexRoute
   "/_workspace/legal/policies/$id": typeof LegalPoliciesDetailRoute
   "/_workspace/legal/number-series": typeof LegalNumberSeriesRoute
-  "/_workspace/mice": typeof MiceProgramsIndexRoute
-  "/_workspace/mice/$id": typeof MiceProgramsDetailRoute
   "/_workspace/notifications": typeof NotificationsIndexRoute
   "/_workspace/notifications/templates": typeof NotificationsTemplatesIndexRoute
   "/_workspace/notifications/templates/$id": typeof NotificationsTemplatesDetailRoute

@@ -40,7 +40,6 @@ const ENTITY_INVALIDATIONS: Record<string, ReadonlyArray<QueryKey>> = {
   quote: [["voyant", "quotes"]],
   invoice: [["voyant", "finance"], DASH_FINANCE],
   contract: [["legal", "contracts"]],
-  cruise: [["voyant", "cruises"]],
   // A pricing-rule change also moves the product's pricing surfaces.
   pricing: [
     ["voyant", "pricing"],

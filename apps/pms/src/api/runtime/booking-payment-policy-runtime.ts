@@ -6,9 +6,8 @@
  * lives in `@voyant-travel/finance` (`createPaymentPolicyCascade`). What stays
  * here are the vertical schema WALKS the cascade reads — supplier policy off the
  * booking's supplier link, category policy off `product_categories`, and the
- * per-listing policy off accommodation rate plans / cruise cabin→sailing→cruise
- * layers / product rows. Those reads import `@voyant-travel/inventory`,
- * `@voyant-travel/accommodations`, `@voyant-travel/cruises`, and
+ * per-listing policy off accommodation rate plans / product rows. Those reads
+ * import `@voyant-travel/inventory`, `@voyant-travel/accommodations`, and
  * `@voyant-travel/distribution` schemas, which finance MUST NOT import (it's a
  * retail-spine root and the spine closure gate forbids those edges). So the
  * readers are defined here and injected into the finance cascade factory.
@@ -22,8 +21,6 @@
 
 import { ratePlans, stayBookingItems } from "@voyant-travel/accommodations/schema"
 import { bookingItems, bookingSupplierStatuses } from "@voyant-travel/bookings/schema"
-import { bookingCruiseDetails } from "@voyant-travel/cruises/booking-extension"
-import { cruiseCabinCategories, cruiseSailings, cruises } from "@voyant-travel/cruises/schema"
 import { supplierServices, suppliers } from "@voyant-travel/distribution"
 import {
   createPaymentPolicyCascade,
@@ -126,11 +123,8 @@ export async function resolveCategoryPolicy(
  * Resolve the per-listing policy (if any) for a booking. Tries each
  * vertical's listing-shape in order:
  *
- *   1. Cruise — cabin category > sailing > cruise (most-specific
- *      first, since cabin-category overrides are common in cruise
- *      pricing).
- *   2. Accommodation — the booking's selected rate-plan policy.
- *   3. Product — the booking's first non-null product policy.
+ *   1. Accommodation — the booking's selected rate-plan policy.
+ *   2. Product — the booking's first non-null product policy.
  *
  * Returns the first non-null policy found across the verticals.
  * `null` falls through to the category / supplier / operator
@@ -140,9 +134,6 @@ export async function resolveListingPolicy(
   db: PostgresJsDatabase,
   bookingId: string,
 ): Promise<PaymentPolicy | null> {
-  const cruisePolicy = await resolveCruiseListingPolicy(db, bookingId)
-  if (cruisePolicy) return cruisePolicy
-
   const stayPolicy = await resolveAccommodationListingPolicy(db, bookingId)
   if (stayPolicy) return stayPolicy
 
@@ -184,72 +175,6 @@ async function resolveAccommodationListingPolicy(
 }
 
 /**
- * Cruise-vertical listing resolver.
- *
- * Reads `booking_cruise_details.{sailingId, cabinCategoryId}` and
- * walks the three cruise layers in most-specific order:
- *
- *   cabin_category.customerPaymentPolicy
- *     falls back to
- *   cruise_sailings.customerPaymentPolicy
- *     falls back to
- *   cruises.customerPaymentPolicy
- *
- * Returns `null` when this isn't a cruise booking (no
- * booking_cruise_details row) or when none of the three cruise
- * layers carry a policy — letting the caller fall through to the
- * product / category / supplier / operator-default cascade.
- */
-async function resolveCruiseListingPolicy(
-  db: PostgresJsDatabase,
-  bookingId: string,
-): Promise<PaymentPolicy | null> {
-  const [details] = await db
-    .select({
-      sailingId: bookingCruiseDetails.sailingId,
-      cabinCategoryId: bookingCruiseDetails.cabinCategoryId,
-    })
-    .from(bookingCruiseDetails)
-    .where(eq(bookingCruiseDetails.bookingId, bookingId))
-    .limit(1)
-  if (!details) return null
-
-  if (details.cabinCategoryId) {
-    const [cabin] = await db
-      .select({ policy: cruiseCabinCategories.customerPaymentPolicy })
-      .from(cruiseCabinCategories)
-      .where(eq(cruiseCabinCategories.id, details.cabinCategoryId))
-      .limit(1)
-    const cabinPolicy = (cabin?.policy as PaymentPolicy | null | undefined) ?? null
-    if (cabinPolicy) return cabinPolicy
-  }
-
-  if (details.sailingId) {
-    const [sailing] = await db
-      .select({
-        policy: cruiseSailings.customerPaymentPolicy,
-        cruiseId: cruiseSailings.cruiseId,
-      })
-      .from(cruiseSailings)
-      .where(eq(cruiseSailings.id, details.sailingId))
-      .limit(1)
-    const sailingPolicy = (sailing?.policy as PaymentPolicy | null | undefined) ?? null
-    if (sailingPolicy) return sailingPolicy
-
-    if (sailing?.cruiseId) {
-      const [cruise] = await db
-        .select({ policy: cruises.customerPaymentPolicy })
-        .from(cruises)
-        .where(eq(cruises.id, sailing.cruiseId))
-        .limit(1)
-      return (cruise?.policy as PaymentPolicy | null | undefined) ?? null
-    }
-  }
-
-  return null
-}
-
-/**
  * Products-vertical listing resolver.
  *
  * Multi-product bookings: takes the first product (ordered by
@@ -286,33 +211,6 @@ export async function resolveListingPolicyForEntity(
   db: PostgresJsDatabase,
   ctx: PaymentPolicyEntityContext,
 ): Promise<PaymentPolicy | null> {
-  if (ctx.entityModule === "cruises") {
-    if (ctx.cabinCategoryId) {
-      const [cabin] = await db
-        .select({ policy: cruiseCabinCategories.customerPaymentPolicy })
-        .from(cruiseCabinCategories)
-        .where(eq(cruiseCabinCategories.id, ctx.cabinCategoryId))
-        .limit(1)
-      const cabinPolicy = (cabin?.policy as PaymentPolicy | null | undefined) ?? null
-      if (cabinPolicy) return cabinPolicy
-    }
-    if (ctx.sailingId) {
-      const [sailing] = await db
-        .select({ policy: cruiseSailings.customerPaymentPolicy })
-        .from(cruiseSailings)
-        .where(eq(cruiseSailings.id, ctx.sailingId))
-        .limit(1)
-      const sailingPolicy = (sailing?.policy as PaymentPolicy | null | undefined) ?? null
-      if (sailingPolicy) return sailingPolicy
-    }
-    const [cruise] = await db
-      .select({ policy: cruises.customerPaymentPolicy })
-      .from(cruises)
-      .where(eq(cruises.id, ctx.entityId))
-      .limit(1)
-    return (cruise?.policy as PaymentPolicy | null | undefined) ?? null
-  }
-
   if (ctx.entityModule === "accommodations") {
     if (ctx.ratePlanId) {
       const [plan] = await db
@@ -365,9 +263,8 @@ export async function resolveCategoryPolicyForEntity(
 
 /**
  * Per-entity supplier resolver. Reads the supplier id off the entity
- * row directly (products.supplierId, cruises.lineSupplierId, etc.)
- * and looks up the supplier's policy. Owned products may have a null
- * supplier — falls through.
+ * row directly (products.supplierId) and looks up the supplier's
+ * policy. Owned products may have a null supplier — falls through.
  */
 export async function resolveSupplierPolicyForEntity(
   db: PostgresJsDatabase,
@@ -380,13 +277,6 @@ export async function resolveSupplierPolicyForEntity(
       .select({ supplierId: products.supplierId })
       .from(products)
       .where(eq(products.id, ctx.entityId))
-      .limit(1)
-    supplierId = row?.supplierId ?? null
-  } else if (ctx.entityModule === "cruises") {
-    const [row] = await db
-      .select({ supplierId: cruises.lineSupplierId })
-      .from(cruises)
-      .where(eq(cruises.id, ctx.entityId))
       .limit(1)
     supplierId = row?.supplierId ?? null
   }

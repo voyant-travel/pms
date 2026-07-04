@@ -21,7 +21,7 @@ import { useStorefrontMessagesOrDefault } from "@/lib/storefront-i18n"
  */
 const shopSearchSchema = z.object({
   q: z.string().optional(),
-  vertical: z.enum(["products", "cruises", "accommodations", "charters", "flights"]).optional(),
+  vertical: z.enum(["products", "accommodations"]).optional(),
 })
 
 export const Route = createFileRoute("/(storefront)/shop")({
@@ -78,9 +78,7 @@ function StorefrontIndex(): React.ReactElement {
           }
         >
           <option value="products">{t.verticalProducts}</option>
-          <option value="cruises">{t.verticalCruises}</option>
           <option value="accommodations">{t.verticalAccommodations}</option>
-          <option value="charters">{t.verticalCharters}</option>
         </select>
       </div>
 

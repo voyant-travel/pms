@@ -78,11 +78,6 @@ export const operatorRealtimeBridgeRoutes: RealtimeRoutes = {
   "contract.executed": (e) => adminHint("contract", firstId(e, "contractId", "id")),
   "contract.voided": (e) => adminHint("contract", firstId(e, "contractId", "id")),
 
-  // Cruises
-  "cruise.created": (e) => adminHint("cruise", firstId(e, "id")),
-  "cruise.updated": (e) => adminHint("cruise", firstId(e, "id")),
-  "cruise.deleted": (e) => adminHint("cruise", firstId(e, "id")),
-
   // Pricing & promotions
   "pricing.rule.changed": (e) => adminHint("pricing", firstId(e, "productId")),
   "promotion.changed": (e) => adminHint("promotion", firstId(e, "offerId")),

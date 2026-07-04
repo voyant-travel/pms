@@ -38,9 +38,6 @@ import {
   type EmbeddingProvider,
   type IndexerDocument,
 } from "@voyant-travel/catalog"
-import { charterProducts } from "@voyant-travel/charters/schema"
-import { createCharterDocumentBuilder } from "@voyant-travel/charters/service-catalog-plane"
-import { cruises } from "@voyant-travel/cruises/schema"
 import { createDbClient } from "@voyant-travel/db"
 import { createExtraDocumentBuilder, productExtras } from "@voyant-travel/inventory/extras"
 import { products } from "@voyant-travel/inventory/schema"
@@ -50,7 +47,6 @@ import { Client as TypesenseSdkClient } from "typesense"
 
 import {
   CATALOG_VERTICALS,
-  createCruisesDocumentBuilder,
   createProductsDocumentBuilder,
   getFieldPolicyRegistries,
   loadCatalogSlices,
@@ -171,16 +167,6 @@ const VERTICAL_CONFIGS: VerticalConfig[] = [
     vertical: "extras",
     table: asVerticalTable(productExtras),
     builder: createExtraDocumentBuilder(db, { sellerOperatorId }),
-  },
-  {
-    vertical: "cruises",
-    table: asVerticalTable(cruises),
-    builder: createCruisesDocumentBuilder(db, { sellerOperatorId }),
-  },
-  {
-    vertical: "charters",
-    table: asVerticalTable(charterProducts),
-    builder: createCharterDocumentBuilder(db, { sellerOperatorId }),
   },
   {
     vertical: "accommodations",
