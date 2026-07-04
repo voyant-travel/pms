@@ -127,4 +127,23 @@ describe("operator composed route mounting (smoke)", () => {
     expect(await status("/v1/public/operator-profile")).not.toBe(404)
     expect(await status("/v1/public/payment-link-config")).not.toBe(404)
   })
+
+  it("mounts the channels module admin + public webhook (Phase 6)", async () => {
+    // Auto-discovered deployment-local module (src/modules/channels).
+    // Reached routes hit the stub db and 5xx; that still proves the mount (≠404).
+    expect(await status("/v1/admin/pms/channels/reservations")).not.toBe(404)
+    expect(await status("/v1/admin/pms/channels/ari-events")).not.toBe(404)
+    // The inbound webhook is anonymous (customer actor) — it is reached and
+    // rejected 401 by the shared-secret gate (secret unset in this env), proving
+    // the public mount resolves rather than 404s.
+    expect(await status("/v1/public/pms/channels/mock/webhook", "POST")).not.toBe(404)
+  })
+
+  it("mounts the public catalog booking surface a Voyant Connect supplier exposes", async () => {
+    // PLAN §4.7 outbound-Connect verification: the PMS's owned accommodation
+    // inventory is already searchable/bookable over /v1/public/catalog (the
+    // accommodations booking engine) — the surface a Connect adapter would front.
+    expect(await status("/v1/public/catalog/quote", "POST")).not.toBe(404)
+    expect(await status("/v1/public/catalog/book", "POST")).not.toBe(404)
+  })
 })

@@ -42,13 +42,13 @@ describe("operator runtime composition", () => {
     // Stays-only PMS counts (tour verticals stripped): the framework standard set
     // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
     // plus 3 hand-wired deployment-local modules (invitations, team, realtime —
-    // cruises, charters, MICE removed) + 5 auto-discovered deployment-local
+    // cruises, charters, MICE removed) + 6 auto-discovered deployment-local
     // modules under src/modules (pms/ari authoring, pms/units, pms/front-desk,
-    // pms/housekeeping, pms/folios) = 36 manifest modules. Commerce + Distribution
-    // still expand (+5) → 41 composed modules. Extensions drop the MICE booking
-    // sidecar (16 → 15).
-    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(36)
-    expect(composed.modules).toHaveLength(41)
+    // pms/housekeeping, pms/folios, pms/channels) = 37 manifest modules. Commerce +
+    // Distribution still expand (+5) → 42 composed modules. Extensions drop the MICE
+    // booking sidecar (16 → 15).
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(37)
+    expect(composed.modules).toHaveLength(42)
     expect(composed.extensions).toHaveLength(15)
 
     // Every composed unit is a real HonoModule/HonoExtension.
@@ -180,6 +180,23 @@ describe("operator runtime composition", () => {
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("folios")
     const folios = composed.modules.find((m) => m.module.name === "pms/folios")
     expect(folios?.adminRoutes).toBeDefined()
+  })
+
+  it("auto-discovers the channels module (Phase 6) with admin + anonymous public routes", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    // Discovered via `modulesFromGlob` under composition key `channels`, but named
+    // `pms/channels` so its admin routes mount at /v1/admin/pms/channels and its
+    // public webhook at /v1/public/pms/channels (PLAN §4.7). The public mount is
+    // anonymous (ADR-0008) — an OTA posts it with no session.
+    expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("channels")
+    const channels = composed.modules.find((m) => m.module.name === "pms/channels")
+    expect(channels?.adminRoutes).toBeDefined()
+    expect(channels?.publicRoutes).toBeDefined()
+    expect(channels?.anonymous).toBe(true)
   })
 
   it("every schema-migrated module (voyant.config) is actually mounted at runtime", () => {
