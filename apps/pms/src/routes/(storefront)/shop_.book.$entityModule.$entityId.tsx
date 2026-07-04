@@ -47,6 +47,8 @@ const shopBookSearchSchema = z.object({
   adult: z.coerce.number().int().min(0).optional(),
   child: z.coerce.number().int().min(0).optional(),
   infant: z.coerce.number().int().min(0).optional(),
+  /** Number of rooms of the selected room type (accommodations). */
+  rooms: z.coerce.number().int().min(1).optional(),
   draftId: z.string().optional(),
 })
 
@@ -86,7 +88,7 @@ function ShopBookRouteComponent(): React.ReactElement {
         rooms: [
           {
             optionUnitId: search.roomTypeId,
-            quantity: 1,
+            quantity: search.rooms ?? 1,
             ...(search.ratePlanId ? { ratePlanId: search.ratePlanId } : {}),
           },
         ],

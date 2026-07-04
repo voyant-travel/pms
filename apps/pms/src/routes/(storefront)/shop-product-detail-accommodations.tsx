@@ -11,6 +11,14 @@ import { Input } from "@voyant-travel/ui/components/input"
 import { Label } from "@voyant-travel/ui/components/label"
 import { useEffect, useMemo, useState } from "react"
 
+import { firstSelectablePair } from "@/components/storefront/rooms-matrix"
+import { RoomsTable } from "@/components/storefront/rooms-table"
+import {
+  defaultStayDates,
+  resolveOccupancy,
+  type StaySearch,
+  toBookingJourneySearch,
+} from "@/components/storefront/stay-search"
 import { getApiUrl } from "@/lib/env"
 import { useStorefrontMessagesOrDefault } from "@/lib/storefront-i18n"
 import { type ContentResolution, fetchContent } from "./shop-product-detail-content"
@@ -23,9 +31,16 @@ import {
   DetailLayout,
   HeroImage,
   PaxBlock,
+  PaxStepper,
 } from "./shop-product-detail-shared"
 
-export function AccommodationDetailPage({ entityId }: { entityId: string }): React.ReactElement {
+export function AccommodationDetailPage({
+  entityId,
+  stay,
+}: {
+  entityId: string
+  stay: StaySearch
+}): React.ReactElement {
   const navigate = useNavigate()
   const t = useStorefrontMessagesOrDefault().shopDetailAccommodations
 
@@ -38,37 +53,24 @@ export function AccommodationDetailPage({ entityId }: { entityId: string }): Rea
     staleTime: 30_000,
   })
 
-  const today = new Date().toISOString().slice(0, 10)
-  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const [checkIn, setCheckIn] = useState(today)
-  const [checkOut, setCheckOut] = useState(
-    new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-  )
+  const fallbackDates = defaultStayDates()
+  const occupancy = resolveOccupancy(stay)
+  const [checkIn, setCheckIn] = useState(stay.checkIn ?? fallbackDates.checkIn)
+  const [checkOut, setCheckOut] = useState(stay.checkOut ?? fallbackDates.checkOut)
   const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(undefined)
   const [selectedRatePlanId, setSelectedRatePlanId] = useState<string | undefined>(undefined)
-  const [adultCount, setAdultCount] = useState(2)
-  const [childCount, setChildCount] = useState(0)
+  const [adultCount, setAdultCount] = useState(occupancy.adults)
+  const [childCount, setChildCount] = useState(occupancy.children)
+  const [roomCount, setRoomCount] = useState(occupancy.rooms)
 
-  const firstRoomId = content.data?.content.room_types[0]?.id
+  // Seed the initial (room, rate) selection from the first bookable pair.
+  const initialPair = content.data ? firstSelectablePair(content.data.content) : null
   useEffect(() => {
-    if (firstRoomId && !selectedRoomId) setSelectedRoomId(firstRoomId)
-  }, [firstRoomId, selectedRoomId])
-
-  const ratePlansForRoom = useMemo(() => {
-    if (!content.data || !selectedRoomId) return []
-    return content.data.content.rate_plans.filter(
-      (rp) =>
-        !rp.applies_to_room_type_ids ||
-        rp.applies_to_room_type_ids.length === 0 ||
-        rp.applies_to_room_type_ids.includes(selectedRoomId),
-    )
-  }, [content.data, selectedRoomId])
-
-  useEffect(() => {
-    if (ratePlansForRoom.length > 0 && !selectedRatePlanId) {
-      setSelectedRatePlanId(ratePlansForRoom[0]?.id)
+    if (initialPair && !selectedRoomId) {
+      setSelectedRoomId(initialPair.roomTypeId)
+      setSelectedRatePlanId(initialPair.ratePlanId)
     }
-  }, [ratePlansForRoom, selectedRatePlanId])
+  }, [initialPair, selectedRoomId])
 
   const probeDraft = useMemo<BookingDraftV1 | null>(() => {
     if (!selectedRoomId || !checkIn || !checkOut) return null
@@ -82,14 +84,23 @@ export function AccommodationDetailPage({ entityId }: { entityId: string }): Rea
         rooms: [
           {
             optionUnitId: selectedRoomId,
-            quantity: 1,
+            quantity: roomCount,
             ...(selectedRatePlanId ? { ratePlanId: selectedRatePlanId } : {}),
           },
         ],
         travelerAssignments: {},
       },
     })
-  }, [entityId, checkIn, checkOut, selectedRoomId, selectedRatePlanId, adultCount, childCount])
+  }, [
+    entityId,
+    checkIn,
+    checkOut,
+    selectedRoomId,
+    selectedRatePlanId,
+    adultCount,
+    childCount,
+    roomCount,
+  ])
 
   const quote = useBookingQuote({ surface: "public", draft: probeDraft })
   const totalCents = quote.data?.pricing?.total ?? 0
@@ -110,13 +121,11 @@ export function AccommodationDetailPage({ entityId }: { entityId: string }): Rea
             content={content.data.content}
             resolution={content.data.resolution}
             selectedRoomId={selectedRoomId}
-            onSelectRoom={(id) => {
-              setSelectedRoomId(id)
-              setSelectedRatePlanId(undefined)
-            }}
             selectedRatePlanId={selectedRatePlanId}
-            onSelectRatePlan={setSelectedRatePlanId}
-            ratePlansForRoom={ratePlansForRoom}
+            onSelect={(roomId, ratePlanId) => {
+              setSelectedRoomId(roomId)
+              setSelectedRatePlanId(ratePlanId)
+            }}
           />
         )
       }
@@ -135,18 +144,16 @@ export function AccommodationDetailPage({ entityId }: { entityId: string }): Rea
             quote.data?.available === false
           }
           onBook={() => {
-            if (!selectedRoomId || !selectedRatePlanId || !datesValid) return
+            if (!selectedRoomId || !selectedRatePlanId) return
+            const bookingSearch = toBookingJourneySearch(
+              { checkIn, checkOut, adults: adultCount, children: childCount, rooms: roomCount },
+              { roomTypeId: selectedRoomId, ratePlanId: selectedRatePlanId },
+            )
+            if (!bookingSearch) return
             navigate({
               to: "/shop/book/$entityModule/$entityId",
               params: { entityModule: "accommodations", entityId },
-              search: {
-                checkIn,
-                checkOut,
-                roomTypeId: selectedRoomId,
-                ratePlanId: selectedRatePlanId,
-                adult: adultCount,
-                ...(childCount > 0 ? { child: childCount } : {}),
-              } as never,
+              search: bookingSearch as never,
             })
           }}
         >
@@ -156,7 +163,6 @@ export function AccommodationDetailPage({ entityId }: { entityId: string }): Rea
               <Input
                 id="hp-checkin"
                 type="date"
-                min={today}
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
               />
@@ -166,7 +172,7 @@ export function AccommodationDetailPage({ entityId }: { entityId: string }): Rea
               <Input
                 id="hp-checkout"
                 type="date"
-                min={tomorrow}
+                min={checkIn}
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
               />
@@ -182,6 +188,14 @@ export function AccommodationDetailPage({ entityId }: { entityId: string }): Rea
             setInfant={() => {}}
             showInfants={false}
           />
+          <PaxStepper
+            label={t.availableRooms}
+            hint=""
+            value={roomCount}
+            setValue={setRoomCount}
+            min={1}
+            max={8}
+          />
         </BookingSidebar>
       }
     />
@@ -192,18 +206,14 @@ function AccommodationDetailBody({
   content,
   resolution,
   selectedRoomId,
-  onSelectRoom,
   selectedRatePlanId,
-  onSelectRatePlan,
-  ratePlansForRoom,
+  onSelect,
 }: {
   content: AccommodationContent
   resolution: ContentResolution | null
   selectedRoomId: string | undefined
-  onSelectRoom: (id: string) => void
   selectedRatePlanId: string | undefined
-  onSelectRatePlan: (id: string) => void
-  ratePlansForRoom: ReadonlyArray<AccommodationContent["rate_plans"][number]>
+  onSelect: (roomTypeId: string, ratePlanId: string) => void
 }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().shopDetailAccommodations
   return (
@@ -222,6 +232,11 @@ function AccommodationDetailBody({
               </span>
             ) : null}
           </CardTitle>
+          {content.hotel.city || content.hotel.country ? (
+            <p className="text-muted-foreground text-sm">
+              {[content.hotel.city, content.hotel.country].filter(Boolean).join(", ")}
+            </p>
+          ) : null}
           <ContentResolutionHint resolution={resolution} />
         </CardHeader>
         <CardContent className="space-y-3">
@@ -236,69 +251,52 @@ function AccommodationDetailBody({
 
       <Card>
         <CardHeader>
-          <CardTitle>{t.chooseRoom}</CardTitle>
+          <CardTitle>{t.availableRooms}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          {content.room_types.map((room) => {
-            const selected = room.id === selectedRoomId
-            return (
-              <button
-                key={room.id}
-                type="button"
-                className={`w-full rounded border p-3 text-left ${
-                  selected ? "border-primary ring-2 ring-primary" : ""
-                }`}
-                onClick={() => onSelectRoom(room.id)}
-              >
-                <div className="font-medium">{room.name}</div>
-                {room.description ? (
-                  <div className="text-muted-foreground text-xs">{room.description}</div>
-                ) : null}
-                {room.max_occupancy ? (
-                  <div className="text-muted-foreground text-xs">
-                    {t.sleepsUpTo.replace("{count}", String(room.max_occupancy))}
-                  </div>
-                ) : null}
-              </button>
-            )
-          })}
+        <CardContent>
+          <RoomsTable
+            content={content}
+            selectedRoomId={selectedRoomId}
+            selectedRatePlanId={selectedRatePlanId}
+            onSelect={onSelect}
+          />
         </CardContent>
       </Card>
 
-      {selectedRoomId && ratePlansForRoom.length > 0 ? (
+      {content.amenities.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>{t.ratePlan}</CardTitle>
+            <CardTitle>{t.amenities}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {ratePlansForRoom.map((plan) => {
-              const selected = plan.id === selectedRatePlanId
-              return (
-                <button
-                  key={plan.id}
-                  type="button"
-                  className={`w-full rounded border p-3 text-left ${
-                    selected ? "border-primary ring-2 ring-primary" : ""
-                  }`}
-                  onClick={() => onSelectRatePlan(plan.id)}
-                >
-                  <div className="font-medium">{plan.name}</div>
-                  {plan.description ? (
-                    <div className="text-muted-foreground text-xs">{plan.description}</div>
+          <CardContent>
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
+              {content.amenities.map((a) => (
+                <li key={a.id} className="text-muted-foreground">
+                  {a.name}
+                  {a.is_free ? (
+                    <span className="ml-1 text-emerald-600 text-xs">{t.freeLabel}</span>
                   ) : null}
-                  {plan.cancellation_policy ? (
-                    <div className="text-muted-foreground text-xs">
-                      {t.cancellation.replace("{policy}", plan.cancellation_policy)}
-                    </div>
-                  ) : null}
-                  {plan.inclusions && plan.inclusions.length > 0 ? (
-                    <div className="text-muted-foreground text-xs">
-                      {t.includes.replace("{inclusions}", plan.inclusions.join(", "))}
-                    </div>
-                  ) : null}
-                </button>
-              )
-            })}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {content.policies.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t.policies}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            {content.policies.map((p) => (
+              <div key={p.kind}>
+                <div className="font-medium capitalize">{p.kind.replace(/_/g, " ")}</div>
+                {p.body ? (
+                  <p className="whitespace-pre-line text-muted-foreground">{p.body}</p>
+                ) : null}
+              </div>
+            ))}
           </CardContent>
         </Card>
       ) : null}
