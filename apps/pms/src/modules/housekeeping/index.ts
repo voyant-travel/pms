@@ -53,7 +53,11 @@ export {
   type MaintenanceBlockResult,
 } from "./service-maintenance.js"
 export { getUnitReadiness, type UnitReadinessLookup } from "./service-readiness.js"
-export { getUnitRoomStatuses, listRoomStatusForProperty } from "./service-room-status.js"
+export {
+  getUnitRoomStatuses,
+  listRoomStatusForProperty,
+  type RoomStatusEntry,
+} from "./service-room-status.js"
 export {
   assessUnitReadiness,
   type RoomStatus,
