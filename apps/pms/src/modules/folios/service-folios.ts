@@ -11,7 +11,7 @@
  */
 
 import { type ListResponse, listResponse } from "@voyant-travel/types"
-import { and, asc, count, desc, eq, type SQL } from "drizzle-orm"
+import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm"
 import { summarizeFolio } from "./balance.js"
 import type { FoliosDb } from "./db.js"
 import { type FolioRow, folioPostings, folios } from "./schema.js"
@@ -47,6 +47,40 @@ export async function listFolios(
     db.select({ total: count() }).from(folios).where(where),
   ])
   return listResponse(rows, { total, limit: query.limit, offset: query.offset })
+}
+
+/** A folio list row enriched with its signed posting balance (minor units). */
+export interface FolioWithBalance extends FolioRow {
+  balanceCents: number
+}
+
+/**
+ * List folios with each row's current balance (the signed sum of its postings),
+ * resolved in ONE grouped query over the page's folio ids. Additive over
+ * `listFolios`: the list route serves this so the admin table can show a live
+ * balance column without an N+1 of per-folio detail reads.
+ */
+export async function listFoliosWithBalances(
+  db: FoliosDb,
+  query: FolioListQuery,
+): Promise<ListResponse<FolioWithBalance>> {
+  const page = await listFolios(db, query)
+  const ids = page.data.map((f) => f.id)
+  const sums = ids.length
+    ? await db
+        .select({
+          folioId: folioPostings.folioId,
+          total: sql<number>`coalesce(sum(${folioPostings.amountCents}), 0)`,
+        })
+        .from(folioPostings)
+        .where(inArray(folioPostings.folioId, ids))
+        .groupBy(folioPostings.folioId)
+    : []
+  const byId = new Map(sums.map((s) => [s.folioId, Number(s.total)]))
+  return listResponse(
+    page.data.map((f) => ({ ...f, balanceCents: byId.get(f.id) ?? 0 })),
+    { total: page.total, limit: query.limit, offset: query.offset },
+  )
 }
 
 export async function getFolio(db: FoliosDb, id: string): Promise<FolioRow | null> {

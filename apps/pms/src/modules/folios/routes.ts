@@ -11,7 +11,7 @@ import { parseJsonBody, parseQuery } from "@voyant-travel/hono"
 import { Hono } from "hono"
 
 import type { FoliosDb } from "./db.js"
-import { getFolioWithPostings, listFolios, openFolio } from "./service-folios.js"
+import { getFolioWithPostings, listFoliosWithBalances, openFolio } from "./service-folios.js"
 import { readBusinessDate, runNightAudit } from "./service-night-audit.js"
 import { createPosting, transferPosting, voidPosting } from "./service-postings.js"
 import { getDailyReport } from "./service-reports.js"
@@ -34,7 +34,7 @@ const dbOf = (db: VoyantDb): FoliosDb => db
 export const foliosAdminRoutes = new Hono<FoliosEnv>()
   // --- folios ----------------------------------------------------------------
   .get("/folios", async (c) =>
-    c.json(await listFolios(dbOf(c.get("db")), parseQuery(c, folioListQuerySchema))),
+    c.json(await listFoliosWithBalances(dbOf(c.get("db")), parseQuery(c, folioListQuerySchema))),
   )
   .post("/folios", async (c) =>
     c.json(

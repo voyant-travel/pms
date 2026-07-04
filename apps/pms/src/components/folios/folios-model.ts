@@ -88,7 +88,10 @@ export function canCloseFolio(status: FolioStatus): boolean {
  * reversal itself nor already reversed — voiding those is a no-op server-side, so
  * the UI hides the action to avoid confusion.
  */
-export function canVoidPosting(status: FolioStatus, row: Pick<LedgerRow, "isReversal" | "isReversed">): boolean {
+export function canVoidPosting(
+  status: FolioStatus,
+  row: Pick<LedgerRow, "isReversal" | "isReversed">,
+): boolean {
   return status === "open" && !row.isReversal && !row.isReversed
 }
 
@@ -110,6 +113,16 @@ export interface ReportLike {
   revParCents: number
   totalRevenueCents: number
   revenueByType: Record<string, number>
+}
+
+/**
+ * Minor units as a bare major-unit string (no currency code), e.g. `120` or
+ * `120.50`. Used by the daily report, whose KPIs aggregate postings that may
+ * carry different currencies, so a single symbol would be misleading.
+ */
+export function formatMajor(cents: number): string {
+  const major = cents / 100
+  return Number.isInteger(major) ? major.toString() : major.toFixed(2)
 }
 
 /** Occupancy ratio (0..1) as a rounded percentage string, e.g. `72.5%`. */

@@ -62,8 +62,10 @@ export type {
 export {
   type EnsureStayFolioInput,
   ensureStayFolio,
+  type FolioWithBalance,
   type FolioWithPostings,
   getFolioWithPostings,
+  listFoliosWithBalances,
   nextFolioNumber,
 } from "./service-folios.js"
 export {

@@ -11,7 +11,9 @@ import {
   toLedgerRows,
 } from "./folios-model"
 
-function posting(over: Partial<LedgerPosting> & { id: string; amountCents: number }): LedgerPosting {
+function posting(
+  over: Partial<LedgerPosting> & { id: string; amountCents: number },
+): LedgerPosting {
   return {
     reversalOfId: null,
     businessDate: "2026-07-05",
