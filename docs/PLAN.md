@@ -324,6 +324,18 @@ The repo is currently a stock `create-turbo` scaffold. Deltas:
 
 Phases are sequential-ish; each ends deployable.
 
+> **Status (2026-07-05):** Phases 0–6 are code-complete on `main` and verified
+> by typecheck/lint/unit tests/build. Deviations from the descriptions below:
+> Phase 0 scaffolded by copying the acme-travel consumer blueprint (the CLI
+> tarball was stale) and no dev deploy has happened yet (needs DB + Cloudflare
+> resources — see apps/pms/README.md); trips/quotes could not be cleanly
+> excluded (framework-mandatory ports) and remain composed; Phase 4 gating is
+> warn-not-block by design; Phase 6 shipped the connector seam, mock
+> connector, ledgers, ingest and docs — a real OTA connector, automatic ARI
+> fan-out from bulk upserts, and the Connect provider surface are follow-ups
+> (docs/architecture/connect-exposure.md). End-to-end runtime validation
+> against a live database is the immediate next step.
+
 **Phase 0 — Skeleton (repo bootstrap)**
 `voyant new pms` → `apps/pms`; strip non-stay verticals via `exclude` +
 omit operator-local modules; wire auth, DB, migrations; deploy to a dev
