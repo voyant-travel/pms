@@ -7,6 +7,7 @@ import { useState } from "react"
 import { buildRoomsMatrix } from "@/components/storefront/rooms-matrix"
 import { Stars } from "./primitives"
 import { picsum, resolveAcmeContent } from "./property-content"
+import { describeRate } from "./rate-plan-label"
 
 /**
  * Presentational building blocks for the elevated Acme property page.
@@ -117,24 +118,10 @@ export function AmenityList({
   )
 }
 
-/**
- * Derive a human meal-plan + cancellation label from the rate-plan name.
- * The seeded rate plans encode both in the name
- * (e.g. "Flexible — Bed & Breakfast", "Non-refundable — Room Only").
- */
-export function describeRate(name: string): { board: string; cancellation: string | null } {
-  const [flexPart, boardPart] = name.split(/\s*—\s*/)
-  const board = boardPart?.trim() || "Room only"
-  const flex = (flexPart ?? "").toLowerCase()
-  const cancellation = flex.includes("non-refundable")
-    ? "Non-refundable"
-    : flex.includes("flexible")
-      ? "Free cancellation"
-      : flex.includes("weekly")
-        ? "7-night minimum"
-        : null
-  return { board, cancellation }
-}
+// Rate-plan label parsing lives in a pure, order-independent helper so it
+// stays unit-testable and handles the seed's inconsistent name ordering
+// (e.g. "Half Board — Flexible" vs "Flexible — Bed & Breakfast").
+export { describeRate }
 
 /** Branded room + rate selector — drives the sidebar live quote. */
 export function RoomList({
