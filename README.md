@@ -45,9 +45,10 @@ connectivity. See [docs/PLAN.md](docs/PLAN.md) for the full architecture plan.
 ## Repository layout
 
 ```
-apps/
-  pms/            the deployment: Cloudflare Worker (admin + API + storefront),
-                  composition, auth, migrations, crons — see starters/pms/README.md
+starters/
+  pms/            the deployment starter: Cloudflare Worker (admin + API +
+                  storefront), composition, auth, migrations, crons —
+                  see starters/pms/README.md
 packages/
   ari/            @voyant-travel/pms-ari          ARI authoring (writes upstream tables)
   units/          @voyant-travel/pms-units        room units + assignments + derived inventory
