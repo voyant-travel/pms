@@ -7,7 +7,7 @@
  * a live OTA connector is added to `channel-connectors.ts`.
  */
 
-import { processPendingAriEvents } from "../../modules/channels/service-ari"
+import { processPendingAriEvents } from "@voyant-travel/pms-channels"
 import { getChannelConnectors } from "../lib/channel-connectors"
 import { withDbFromEnv } from "../lib/db"
 
@@ -16,6 +16,6 @@ export { CHANNEL_ARI_PUSH_CRON } from "../../scheduled-crons"
 export async function runScheduledChannelAriPush(
   _event: ScheduledController,
   env: CloudflareBindings,
-): Promise<import("../../modules/channels/service-ari").ProcessAriResult> {
+): Promise<import("@voyant-travel/pms-channels").ProcessAriResult> {
   return withDbFromEnv(env, async (db) => processPendingAriEvents(db, getChannelConnectors()))
 }

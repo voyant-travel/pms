@@ -1,7 +1,7 @@
 /**
  * Client-side data layer for the ARI (availability, rates & inventory)
  * authoring admin pages. Thin wrappers over the deployment-local module mounted
- * at `/v1/admin/pms/ari/*` (see `src/modules/ari`), plus the query keys the
+ * at `/v1/admin/pms/ari/*` (see `packages/ari`), plus the query keys the
  * pages share so a mutation in one place can invalidate the right reads.
  *
  * Request/response shapes come from the module's exported zod-inferred input
@@ -9,7 +9,6 @@
  * stored rows are those inputs plus the server-assigned `id` and audit columns.
  */
 
-import { api } from "@/lib/api-client"
 import type {
   BulkInventoryOperation,
   BulkRateOperation,
@@ -23,7 +22,8 @@ import type {
   UpdateMealPlanInput,
   UpdateRatePlanInput,
   UpdateRoomTypeInput,
-} from "../../modules/ari"
+} from "@voyant-travel/pms-ari"
+import { api } from "@/lib/api-client"
 
 const BASE = "/v1/admin/pms/ari"
 

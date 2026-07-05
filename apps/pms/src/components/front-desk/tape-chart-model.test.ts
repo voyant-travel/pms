@@ -1,6 +1,5 @@
+import type { TapeChartCell } from "@voyant-travel/pms-front-desk"
 import { describe, expect, it } from "vitest"
-
-import type { TapeChartCell } from "../../modules/front-desk"
 import {
   assignLanes,
   buildRowLanes,

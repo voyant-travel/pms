@@ -1,6 +1,5 @@
+import type { BoardEntry } from "@voyant-travel/pms-front-desk"
 import { describe, expect, it } from "vitest"
-
-import type { BoardEntry } from "../../modules/front-desk"
 import {
   boardEntryState,
   boardEntryView,

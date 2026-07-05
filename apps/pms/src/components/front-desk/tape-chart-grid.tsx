@@ -8,7 +8,7 @@
  * individual cells so weekend tinting survives.
  */
 
-import type { TapeChart, TapeChartUnitRow } from "../../modules/front-desk"
+import type { TapeChart, TapeChartUnitRow } from "@voyant-travel/pms-front-desk"
 import { dayOfMonth, isoWeekdayOf, isWeekend } from "./front-desk-dates"
 import { frontDeskMessages } from "./front-desk-messages"
 import { buildRowLanes, type StayBar, statusBarClass } from "./tape-chart-model"

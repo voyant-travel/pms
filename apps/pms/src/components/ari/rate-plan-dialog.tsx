@@ -1,6 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { InsertRatePlanInput } from "@voyant-travel/pms-ari"
 import { Button } from "@voyant-travel/ui/components/button"
 import {
   Dialog,
@@ -20,8 +21,6 @@ import {
 import { Textarea } from "@voyant-travel/ui/components/textarea"
 import { useState } from "react"
 import { toast } from "sonner"
-
-import type { InsertRatePlanInput } from "../../modules/ari"
 import { ariKeys, createRatePlan, listMealPlans, type RatePlan, updateRatePlan } from "./ari-client"
 import { CHARGE_FREQUENCY_OPTIONS, CURRENCY_OPTIONS, GUARANTEE_MODE_OPTIONS } from "./ari-constants"
 import { Field, SwitchRow } from "./ari-form"

@@ -9,7 +9,7 @@
  * server coupling), matching `ari-constants.ts`.
  */
 
-import type { TapeChartCell } from "../../modules/front-desk"
+import type { TapeChartCell } from "@voyant-travel/pms-front-desk"
 
 /** A contiguous occupancy run for one stay, spanning `span` date columns. */
 export interface StayBar {

@@ -10,8 +10,7 @@
  * touching the `channels` module's routes or services.
  */
 
-import type { ChannelConnectorRegistry } from "../../modules/channels/connector.js"
-import { createMockConnector } from "../../modules/channels/mock-connector.js"
+import { type ChannelConnectorRegistry, createMockConnector } from "@voyant-travel/pms-channels"
 
 let _registry: ChannelConnectorRegistry | undefined
 

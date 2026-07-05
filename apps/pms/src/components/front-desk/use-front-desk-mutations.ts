@@ -10,9 +10,9 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { CheckInInput, CheckOutInput, NoShowInput } from "@voyant-travel/pms-front-desk"
+import type { InsertAssignmentInput, UpdateAssignmentInput } from "@voyant-travel/pms-units"
 import { toast } from "sonner"
-import type { CheckInInput, CheckOutInput, NoShowInput } from "../../modules/front-desk"
-import type { InsertAssignmentInput, UpdateAssignmentInput } from "../../modules/units"
 import {
   assignUnit,
   checkIn,

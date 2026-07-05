@@ -8,7 +8,7 @@
 
 import { properties } from "@voyant-travel/operations/places"
 
-import { runNightAudit } from "../../modules/folios/service-night-audit"
+import { runNightAudit } from "@voyant-travel/pms-folios"
 import { withDbFromEnv } from "../lib/db"
 
 export { NIGHT_AUDIT_CRON } from "../../scheduled-crons"

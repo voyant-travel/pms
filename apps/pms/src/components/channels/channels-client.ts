@@ -1,7 +1,7 @@
 /**
  * Client-side data layer for the Channels ledger admin page. Thin wrappers over
  * the deployment-local `pms/channels` module mounted at
- * `/v1/admin/pms/channels/*` (see `src/modules/channels`), plus the shared query
+ * `/v1/admin/pms/channels/*` (see `packages/channels`), plus the shared query
  * keys so a retry invalidates the right reads. Read-only ledgers + a retry action;
  * request/response shapes mirror the module's row + list-envelope types.
  */

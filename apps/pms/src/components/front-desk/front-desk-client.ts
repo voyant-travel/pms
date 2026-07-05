@@ -1,7 +1,7 @@
 /**
  * Client-side data layer for the Front Desk admin pages. Thin wrappers over the
  * two deployment-local modules mounted at `/v1/admin/pms/units/*` and
- * `/v1/admin/pms/front-desk/*` (see `src/modules/units`, `src/modules/front-desk`),
+ * `/v1/admin/pms/front-desk/*` (see `packages/units`, `packages/front-desk`),
  * plus the shared query keys so a mutation invalidates the right reads.
  *
  * Request/response shapes come from the modules' zod-inferred input types and
@@ -10,7 +10,6 @@
  * audit columns, mirroring `ari-client.ts`.
  */
 
-import { api } from "@/lib/api-client"
 import type {
   Boards,
   CheckInInput,
@@ -18,14 +17,15 @@ import type {
   NoShowInput,
   StayOpsRow,
   TapeChart,
-} from "../../modules/front-desk"
+} from "@voyant-travel/pms-front-desk"
 import type {
   InsertAssignmentInput,
   InsertRoomUnitInput,
   RecomputeResult,
   UpdateAssignmentInput,
   UpdateRoomUnitInput,
-} from "../../modules/units"
+} from "@voyant-travel/pms-units"
+import { api } from "@/lib/api-client"
 
 const UNITS = "/v1/admin/pms/units"
 const FRONT_DESK = "/v1/admin/pms/front-desk"

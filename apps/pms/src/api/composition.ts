@@ -34,14 +34,28 @@ import type {
   ModuleFactory,
 } from "@voyant-travel/hono/composition"
 import { createNetopiaCheckoutStarter } from "@voyant-travel/plugin-netopia"
+// PMS domain packages — graduated from `src/modules/*` deployment-local prototypes
+// into published workspace packages (PLAN §3.1). Registered EXPLICITLY below (the
+// `src/modules/*` glob stays wired for future app-local prototypes). Five default-
+// export a ready `ModuleFactory`; channels exports a factory taking its two app-
+// injected deps (connector registry + stay-booking write path).
+import ariModule from "@voyant-travel/pms-ari"
+import { createChannelsModule } from "@voyant-travel/pms-channels"
+import foliosModule from "@voyant-travel/pms-folios"
+import frontDeskModule from "@voyant-travel/pms-front-desk"
+import housekeepingModule from "@voyant-travel/pms-housekeeping"
+import unitsModule from "@voyant-travel/pms-units"
 import { createRealtimeHonoModule } from "@voyant-travel/realtime"
 import { relationshipsService } from "@voyant-travel/relationships"
 import { Hono } from "hono"
 import { resolveOperatorCustomFields } from "../lib/custom-fields"
 import { resolveNotificationProviders } from "../lib/notifications"
 import { operatorRealtimeBridgeRoutes, resolveRealtimeProviders } from "../lib/realtime"
+import { asPostgresDb } from "./lib/booking-engine-db"
 import { resolveBookingRequirementsProductSnapshot } from "./lib/booking-requirements-product-snapshot"
 import { buildCatalogContext } from "./lib/catalog-context"
+import { getChannelConnectors } from "./lib/channel-connectors"
+import { persistStayBooking } from "./lib/persist-stay-booking"
 import { createBookingScheduleExtension } from "./routes/booking-schedule"
 import { createChannelPushExtension } from "./routes/channel-push"
 import { createOperatorQuoteVersionSnapshotExtension } from "./routes/quote-version-snapshot-routes"
@@ -229,17 +243,42 @@ export function buildOperatorProviders(): OperatorCapabilities {
  * and mounted — the "build your own module without forking" seam. Vite compiles
  * this `import.meta.glob` to static imports at build time (Workers-safe); each
  * module's default export is a `HonoModule`/`ModuleFactory` (see
- * `defineDeploymentModule`), keyed by its `<name>` directory. Empty until a
- * deployment adds one. Schema for a custom module (`src/modules/<name>/schema.ts`)
- * is picked up by the deployment drizzle configs and migrated as a deployment
- * source after the framework bundle. See docs/architecture/custom-modules.md.
+ * `defineDeploymentModule`), keyed by its `<name>` directory. The seam stays
+ * wired for future app-local PROTOTYPES; `src/modules/` is currently empty because
+ * the six PMS domains graduated into published `@voyant-travel/pms-*` packages
+ * (PLAN §3.1) — they register EXPLICITLY below. Schema for a custom module
+ * (`src/modules/<name>/schema.ts`) is picked up by the deployment drizzle configs
+ * and migrated as a deployment source after the framework bundle. See
+ * docs/architecture/custom-modules.md and packages/README.md.
  */
 const discoveredModules = modulesFromGlob<OperatorCapabilities>(
   import.meta.glob("../modules/*/index.ts", { eager: true }),
 )
 
+/**
+ * The graduated PMS domain packages, registered explicitly under the same
+ * composition keys the `src/modules/*` glob used to produce (so counts + mounted
+ * URLs are unchanged — only the code's provenance moved to `packages/*`). Five
+ * default-export a ready factory; `channels` is built with its two app-injected
+ * deps: the connector registry (`getChannelConnectors`) and the accommodation
+ * stay-booking write path (`persistStayBooking`), which stays app-side. The
+ * `asPostgresDb` adapter bridges the request `db` to the write path's signature.
+ */
+const pmsDomainModules: Record<string, ModuleFactory<OperatorCapabilities>> = {
+  ari: ariModule,
+  units: unitsModule,
+  "front-desk": frontDeskModule,
+  housekeeping: housekeepingModule,
+  folios: foliosModule,
+  channels: createChannelsModule({
+    getConnectors: getChannelConnectors,
+    persistStayBooking: (db, input, opts) => persistStayBooking(asPostgresDb(db), input, opts),
+  }),
+}
+
 export const deploymentLocalModules: Record<string, ModuleFactory<OperatorCapabilities>> = {
   ...discoveredModules,
+  ...pmsDomainModules,
   "operator/invitations": () => ({
     module: { name: "invitations" },
     lazyAdminRoutes: () =>

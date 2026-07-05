@@ -1,7 +1,7 @@
 /**
  * Client-side data layer for the Housekeeping admin pages. Thin wrappers over the
  * deployment-local `pms/housekeeping` module mounted at
- * `/v1/admin/pms/housekeeping/*` (see `src/modules/housekeeping`), plus the shared
+ * `/v1/admin/pms/housekeeping/*` (see `packages/housekeeping`), plus the shared
  * query keys so a mutation invalidates the right reads.
  *
  * Request/response shapes come from the module's zod-inferred input types and pure
@@ -10,7 +10,6 @@
  * mirroring `front-desk-client.ts` / `ari-client.ts`.
  */
 
-import { api } from "@/lib/api-client"
 import type {
   GenerationResult,
   InsertMaintenanceBlockInput,
@@ -20,7 +19,8 @@ import type {
   TaskStatus,
   UpdateMaintenanceBlockInput,
   UpdateTaskInput,
-} from "../../modules/housekeeping"
+} from "@voyant-travel/pms-housekeeping"
+import { api } from "@/lib/api-client"
 
 const BASE = "/v1/admin/pms/housekeeping"
 

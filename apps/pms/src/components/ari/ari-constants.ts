@@ -6,7 +6,7 @@
  * the backend enum surfaces here as a type error.
  */
 
-import type { InsertRatePlanInput, InsertRoomTypeInput } from "../../modules/ari"
+import type { InsertRatePlanInput, InsertRoomTypeInput } from "@voyant-travel/pms-ari"
 
 interface Option<T extends string> {
   value: T

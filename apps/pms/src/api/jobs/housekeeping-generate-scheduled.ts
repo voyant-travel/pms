@@ -7,8 +7,8 @@
  */
 
 import { properties } from "@voyant-travel/operations/places"
-import { generateTasksForDate } from "../../modules/housekeeping/service-generation"
-import { formatIsoDate } from "../../modules/units/dates"
+import { generateTasksForDate } from "@voyant-travel/pms-housekeeping"
+import { formatIsoDate } from "@voyant-travel/pms-units"
 import { withDbFromEnv } from "../lib/db"
 
 export { HOUSEKEEPING_GENERATE_CRON } from "../../scheduled-crons"

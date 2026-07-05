@@ -1,5 +1,6 @@
 "use client"
 
+import type { TapeChartGroup, UnassignedArrival } from "@voyant-travel/pms-front-desk"
 import { Button } from "@voyant-travel/ui/components/button"
 import {
   Select,
@@ -9,8 +10,6 @@ import {
   SelectValue,
 } from "@voyant-travel/ui/components/select"
 import { useState } from "react"
-
-import type { TapeChartGroup, UnassignedArrival } from "../../modules/front-desk"
 import { nightsBetween } from "./front-desk-dates"
 import { frontDeskMessages } from "./front-desk-messages"
 import { useFrontDeskMutations } from "./use-front-desk-mutations"

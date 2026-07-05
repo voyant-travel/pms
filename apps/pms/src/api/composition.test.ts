@@ -42,11 +42,11 @@ describe("operator runtime composition", () => {
     // Stays-only PMS counts (tour verticals stripped): the framework standard set
     // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
     // plus 3 hand-wired deployment-local modules (invitations, team, realtime —
-    // cruises, charters, MICE removed) + 6 auto-discovered deployment-local
-    // modules under src/modules (pms/ari authoring, pms/units, pms/front-desk,
-    // pms/housekeeping, pms/folios, pms/channels) = 37 manifest modules. Commerce +
-    // Distribution still expand (+5) → 42 composed modules. Extensions drop the MICE
-    // booking sidecar (16 → 15).
+    // cruises, charters, MICE removed) + 6 graduated PMS domain packages registered
+    // EXPLICITLY (keys ari, units, front-desk, housekeeping, folios, channels →
+    // @voyant-travel/pms-* → module names pms/ari, pms/units … pms/channels) = 37
+    // manifest modules. Commerce + Distribution still expand (+5) → 42 composed
+    // modules. Extensions drop the MICE booking sidecar (16 → 15).
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(37)
     expect(composed.modules).toHaveLength(42)
     expect(composed.extensions).toHaveLength(15)
@@ -123,30 +123,30 @@ describe("operator runtime composition", () => {
     expect(mod("invitations")?.lazyPublicRoutes).toBeTypeOf("function")
   })
 
-  it("auto-discovers the ARI authoring module (src/modules/ari) with eager admin routes", () => {
+  it("registers the ARI authoring package (@voyant-travel/pms-ari) with eager admin routes", () => {
     const composed = composeFromManifest(
       OPERATOR_RUNTIME_MANIFEST,
       operatorComposition,
       buildOperatorProviders(),
     )
-    // The deployment-local ARI module is discovered via `modulesFromGlob` under
-    // the composition key `ari`, but names itself `pms/ari` so its admin routes
-    // mount at /v1/admin/pms/ari (PLAN §4.5).
+    // The graduated ARI package is registered explicitly under the composition key
+    // `ari`, but names itself `pms/ari` so its admin routes mount at
+    // /v1/admin/pms/ari (PLAN §4.5).
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("ari")
     const ari = composed.modules.find((m) => m.module.name === "pms/ari")
     expect(ari).toBeDefined()
     expect(ari?.adminRoutes).toBeDefined()
   })
 
-  it("auto-discovers the units + front-desk modules (Phase 3) with eager admin routes", () => {
+  it("registers the units + front-desk packages (Phase 3) with eager admin routes", () => {
     const composed = composeFromManifest(
       OPERATOR_RUNTIME_MANIFEST,
       operatorComposition,
       buildOperatorProviders(),
     )
-    // Discovered via `modulesFromGlob` under composition keys `units` /
-    // `front-desk`, but named `pms/units` / `pms/front-desk` so their admin
-    // routes mount at /v1/admin/pms/units and /v1/admin/pms/front-desk (PLAN §4).
+    // Registered explicitly under composition keys `units` / `front-desk`, but
+    // named `pms/units` / `pms/front-desk` so their admin routes mount at
+    // /v1/admin/pms/units and /v1/admin/pms/front-desk (PLAN §4).
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("units")
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("front-desk")
     const units = composed.modules.find((m) => m.module.name === "pms/units")
@@ -155,43 +155,45 @@ describe("operator runtime composition", () => {
     expect(frontDesk?.adminRoutes).toBeDefined()
   })
 
-  it("auto-discovers the housekeeping module (Phase 4) with eager admin routes", () => {
+  it("registers the housekeeping package (Phase 4) with eager admin routes", () => {
     const composed = composeFromManifest(
       OPERATOR_RUNTIME_MANIFEST,
       operatorComposition,
       buildOperatorProviders(),
     )
-    // Discovered via `modulesFromGlob` under composition key `housekeeping`, but
-    // named `pms/housekeeping` so its admin routes mount at
+    // Registered explicitly under composition key `housekeeping`, but named
+    // `pms/housekeeping` so its admin routes mount at
     // /v1/admin/pms/housekeeping (PLAN §4.3).
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("housekeeping")
     const housekeeping = composed.modules.find((m) => m.module.name === "pms/housekeeping")
     expect(housekeeping?.adminRoutes).toBeDefined()
   })
 
-  it("auto-discovers the folios module (Phase 5) with eager admin routes", () => {
+  it("registers the folios package (Phase 5) with eager admin routes", () => {
     const composed = composeFromManifest(
       OPERATOR_RUNTIME_MANIFEST,
       operatorComposition,
       buildOperatorProviders(),
     )
-    // Discovered via `modulesFromGlob` under composition key `folios`, but named
+    // Registered explicitly under composition key `folios`, but named
     // `pms/folios` so its admin routes mount at /v1/admin/pms/folios (PLAN §4.4).
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("folios")
     const folios = composed.modules.find((m) => m.module.name === "pms/folios")
     expect(folios?.adminRoutes).toBeDefined()
   })
 
-  it("auto-discovers the channels module (Phase 6) with admin + anonymous public routes", () => {
+  it("registers the channels package (Phase 6) with admin + anonymous public routes", () => {
     const composed = composeFromManifest(
       OPERATOR_RUNTIME_MANIFEST,
       operatorComposition,
       buildOperatorProviders(),
     )
-    // Discovered via `modulesFromGlob` under composition key `channels`, but named
-    // `pms/channels` so its admin routes mount at /v1/admin/pms/channels and its
-    // public webhook at /v1/public/pms/channels (PLAN §4.7). The public mount is
-    // anonymous (ADR-0008) — an OTA posts it with no session.
+    // Registered explicitly under composition key `channels` (built by
+    // `createChannelsModule` with the app-injected connector registry + stay-
+    // booking write path), but named `pms/channels` so its admin routes mount at
+    // /v1/admin/pms/channels and its public webhook at /v1/public/pms/channels
+    // (PLAN §4.7). The public mount is anonymous (ADR-0008) — an OTA posts it with
+    // no session.
     expect(OPERATOR_RUNTIME_MANIFEST.modules).toContain("channels")
     const channels = composed.modules.find((m) => m.module.name === "pms/channels")
     expect(channels?.adminRoutes).toBeDefined()

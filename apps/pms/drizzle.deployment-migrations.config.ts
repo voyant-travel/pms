@@ -16,6 +16,12 @@ import { defineConfig } from "drizzle-kit"
 export default defineConfig({
   schema: [
     "./drizzle.links.generated.ts",
+    // Graduated PMS domain packages (PLAN §3.1). `packages/ari` owns no schema
+    // (it authors upstream accommodations tables), so the glob simply skips it.
+    "../../packages/*/src/schema.ts",
+    // App-local module/extension prototypes (the "build your own module" seam) —
+    // empty until a deployment adds one; graduate them to `packages/*` when they
+    // settle.
     "./src/modules/*/schema.ts",
     "./src/extensions/*/schema.ts",
   ],

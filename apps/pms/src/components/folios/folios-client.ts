@@ -1,7 +1,7 @@
 /**
  * Client-side data layer for the Folios admin pages. Thin wrappers over the
  * deployment-local `pms/folios` module mounted at `/v1/admin/pms/folios/*` (see
- * `src/modules/folios`), plus the shared query keys so a mutation invalidates the
+ * `packages/folios`), plus the shared query keys so a mutation invalidates the
  * right reads.
  *
  * Request/response shapes come from the module's zod-inferred input types and pure
@@ -10,7 +10,6 @@
  * `housekeeping-client.ts` / `front-desk-client.ts`.
  */
 
-import { api } from "@/lib/api-client"
 import type {
   CreatePostingInput,
   DailyReport,
@@ -19,7 +18,8 @@ import type {
   OpenFolioInput,
   SettleFolioInput,
   TransferPostingInput,
-} from "../../modules/folios"
+} from "@voyant-travel/pms-folios"
+import { api } from "@/lib/api-client"
 
 const BASE = "/v1/admin/pms/folios"
 

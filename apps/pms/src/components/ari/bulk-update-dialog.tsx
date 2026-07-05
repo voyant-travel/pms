@@ -8,6 +8,7 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { CalendarGrid } from "@voyant-travel/pms-ari"
 import { Button } from "@voyant-travel/ui/components/button"
 import { Checkbox } from "@voyant-travel/ui/components/checkbox"
 import {
@@ -27,8 +28,6 @@ import {
 } from "@voyant-travel/ui/components/select"
 import { useState } from "react"
 import { toast } from "sonner"
-
-import type { CalendarGrid } from "../../modules/ari"
 import { ariKeys, bulkUpsertInventory, bulkUpsertRates } from "./ari-client"
 import { Field, SwitchRow } from "./ari-form"
 import { ariMessages } from "./ari-messages"

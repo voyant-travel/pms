@@ -1,6 +1,7 @@
 "use client"
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import type { InsertRoomTypeInput } from "@voyant-travel/pms-ari"
 import { Button } from "@voyant-travel/ui/components/button"
 import {
   Dialog,
@@ -20,8 +21,6 @@ import {
 import { Textarea } from "@voyant-travel/ui/components/textarea"
 import { useState } from "react"
 import { toast } from "sonner"
-
-import type { InsertRoomTypeInput } from "../../modules/ari"
 import { ariKeys, createRoomType, type RoomType, updateRoomType } from "./ari-client"
 import { INVENTORY_MODE_OPTIONS } from "./ari-constants"
 import { Field, SwitchRow } from "./ari-form"

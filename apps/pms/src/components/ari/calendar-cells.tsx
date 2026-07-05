@@ -6,9 +6,8 @@
  * cancels. Inventory cells also carry an open/closed toggle.
  */
 
+import type { CalendarInventoryCell, CalendarRateCell } from "@voyant-travel/pms-ari"
 import { useEffect, useRef, useState } from "react"
-
-import type { CalendarInventoryCell, CalendarRateCell } from "../../modules/ari"
 import { centsToInput, inputToCents } from "./calendar-grid-model"
 
 function EditableValue({

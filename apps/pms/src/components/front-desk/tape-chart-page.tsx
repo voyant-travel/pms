@@ -1,12 +1,11 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import type { TapeChart } from "@voyant-travel/pms-front-desk"
 import { Button } from "@voyant-travel/ui/components/button"
 import { Input } from "@voyant-travel/ui/components/input"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
-
-import type { TapeChart } from "../../modules/front-desk"
 import { frontDeskKeys, getTapeChart } from "./front-desk-client"
 import {
   addDaysIso,

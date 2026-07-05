@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
+import type { BoardEntry, Boards } from "@voyant-travel/pms-front-desk"
 import { Badge } from "@voyant-travel/ui/components/badge"
 import { Button } from "@voyant-travel/ui/components/button"
 import { ConfirmActionButton } from "@voyant-travel/ui/components/confirm-action-button"
@@ -16,7 +17,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@voyant-travel/ui/components/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
-import type { BoardEntry, Boards } from "../../modules/front-desk"
 import { ariKeys, listRoomTypes } from "../ari/ari-client"
 import {
   type BoardTab,

@@ -1,6 +1,5 @@
+import type { CalendarGrid } from "@voyant-travel/pms-ari"
 import { describe, expect, it } from "vitest"
-
-import type { CalendarGrid } from "../../modules/ari"
 import {
   buildDateColumns,
   centsToInput,

@@ -15,7 +15,7 @@
  * bundle never pulls the server-only schema — mirrors `boards-model.ts`.
  */
 
-import type { RoomStatus, TaskStatus } from "../../modules/housekeeping"
+import type { RoomStatus, TaskStatus } from "@voyant-travel/pms-housekeeping"
 
 // --- task board --------------------------------------------------------------
 

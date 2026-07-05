@@ -7,7 +7,7 @@
  * one-day upsert via {@link useCalendarMutations}.
  */
 
-import type { CalendarGrid } from "../../modules/ari"
+import type { CalendarGrid } from "@voyant-travel/pms-ari"
 import { ariMessages } from "./ari-messages"
 import { InventoryCell, RateCell } from "./calendar-cells"
 import { buildDateColumns, indexCalendar, isoWeekdayOf, isWeekend } from "./calendar-grid-model"

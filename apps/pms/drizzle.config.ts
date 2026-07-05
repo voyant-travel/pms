@@ -18,7 +18,14 @@ import { schema } from "./drizzle.schemas.generated.ts"
 // `push`/`studio`/`check` and the migration-replay oracle see them too. Empty
 // until a deployment adds one; their migrations are emitted into the deployment
 // source (`./migrations`).
-const customDeploymentSchemas = ["./src/modules/*/schema.ts", "./src/extensions/*/schema.ts"]
+const customDeploymentSchemas = [
+  // Graduated PMS domain packages (PLAN §3.1). `packages/ari` owns no schema, so
+  // the glob skips it.
+  "../../packages/*/src/schema.ts",
+  // App-local module/extension prototypes — empty until a deployment adds one.
+  "./src/modules/*/schema.ts",
+  "./src/extensions/*/schema.ts",
+]
 
 // An explicitly-provided DATABASE_URL (CI, the migration-replay oracle, ad-hoc
 // `DATABASE_URL=… pnpm db:push`) must WIN — `.dev.vars` is loaded with

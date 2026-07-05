@@ -8,7 +8,7 @@
  * Dependency-free and unit-tested.
  */
 
-import type { BoardEntry, Boards } from "../../modules/front-desk"
+import type { BoardEntry, Boards } from "@voyant-travel/pms-front-desk"
 import { nightsBetween } from "./front-desk-dates"
 
 export type BoardTab = "arrivals" | "departures" | "inHouse"

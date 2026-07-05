@@ -5,7 +5,7 @@
  * date)` are the part most likely to regress.
  */
 
-import type { CalendarGrid, CalendarInventoryCell, CalendarRateCell } from "../../modules/ari"
+import type { CalendarGrid, CalendarInventoryCell, CalendarRateCell } from "@voyant-travel/pms-ari"
 
 /** Inclusive list of ISO `YYYY-MM-DD` dates from `from` to `to`. */
 export function buildDateColumns(from: string, to: string): string[] {
