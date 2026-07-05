@@ -1,6 +1,7 @@
 "use client"
 
 import type { QueryKey } from "@tanstack/react-query"
+import { useRouterState } from "@tanstack/react-router"
 import type { AdminChildProvider } from "@voyant-travel/admin/providers/operator-admin-shell"
 import { RealtimeChannel } from "@voyant-travel/cloud-sdk"
 import {
@@ -69,10 +70,24 @@ function AdminLiveRegion() {
  * scoped token minted by `POST /v1/admin/realtime/token`.
  */
 export const RealtimeLiveProvider: AdminChildProvider = ({ children }) => {
+  // This provider mints an admin-scoped realtime token. The provider tree is
+  // mounted at the router root (so the storefront can share the query client),
+  // but the admin realtime channel must only connect on authenticated admin
+  // (`_workspace`) routes — otherwise the public storefront fires a doomed
+  // `POST /v1/admin/realtime/token` (500, no admin session) on every page.
+  const isAdminRoute = useRouterState({
+    select: (state) => state.matches.some((match) => match.routeId.startsWith("/_workspace")),
+  })
+
   const connector = useMemo(
     () => createRealtimeChannelConnector(RealtimeChannel, { baseUrl: getApiUrl() }),
     [],
   )
+
+  if (!isAdminRoute) {
+    return <>{children}</>
+  }
+
   return (
     <RealtimeReactProvider
       connector={connector}
