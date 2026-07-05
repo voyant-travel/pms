@@ -42,6 +42,7 @@ import {
   propertyGroupMembers,
   propertyGroups,
 } from "@voyant-travel/operations/places"
+import { financeService } from "@voyant-travel/finance"
 import { businessDates, folios } from "@voyant-travel/pms-folios/schema"
 import { and, eq, inArray } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/postgres-js"
@@ -185,6 +186,8 @@ function nightlyCents(
 // ───────────────────────── Reset ─────────────────────────
 
 const WIPE_TABLES = [
+  // Finance reference data (invoice number series)
+  "invoice_number_series",
   // PMS overlays first (loose refs to bookings/units/properties)
   "pms_folio_postings",
   "pms_folios",
@@ -1450,11 +1453,49 @@ async function seedFolios() {
   }
 }
 
+// ───────────────────────── Finance ─────────────────────────
+
+/**
+ * Seed one active default invoice-number series per scope.
+ *
+ * Storefront checkout allocates invoice numbers at finalize
+ * (`issueInvoiceFromBooking` → scope `invoice`) and the bank-transfer path
+ * issues a proforma up-front (scope `proforma`); both throw
+ * `InvoiceNumberAllocationError: no_active_series_for_scope` when no active
+ * series exists. Ship a sensible default per scope so a fresh Acme dataset can
+ * take a booking through to a real invoice out of the box. `credit_note` is
+ * seeded too so refunds/cancellations can allocate.
+ */
+async function seedFinance() {
+  const series = [
+    { code: "INV", name: "Invoices", prefix: "INV-", scope: "invoice" },
+    { code: "PRO", name: "Proformas", prefix: "PRO-", scope: "proforma" },
+    { code: "CN", name: "Credit notes", prefix: "CN-", scope: "credit_note" },
+  ] as const
+  for (const s of series) {
+    await financeService.createInvoiceNumberSeries(db, {
+      code: s.code,
+      name: s.name,
+      prefix: s.prefix,
+      separator: "",
+      padLength: 5,
+      currentSequence: 0,
+      resetStrategy: "annual",
+      resetAt: null,
+      scope: s.scope,
+      isDefault: true,
+      active: true,
+    })
+  }
+  console.log(`  invoice number series: ${series.map((s) => `${s.prefix}#####(${s.scope})`).join(", ")}`)
+}
+
 // ───────────────────────── Main ─────────────────────────
 
 async function main() {
   console.log(`\nSeeding Acme Hotels demo dataset → ${DATABASE_URL}\n`)
   await reset()
+  await seedFinance()
   await seedOperations()
   await seedAri()
   await seedRates()
