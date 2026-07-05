@@ -113,7 +113,9 @@ function Panel({
 function ReferenceBlock({ label, value }: { label: string; value: string }): React.ReactElement {
   return (
     <div className="rounded-sm border border-[var(--acme-line)] bg-[var(--acme-paper)] px-5 py-4">
-      <div className="text-[var(--acme-ink-faint)] text-xs uppercase tracking-[0.14em]">{label}</div>
+      <div className="text-[var(--acme-ink-faint)] text-xs uppercase tracking-[0.14em]">
+        {label}
+      </div>
       <div className="acme-serif mt-1 text-2xl tracking-wide">{value}</div>
     </div>
   )
@@ -150,7 +152,10 @@ function BankTransferPanel({ bookingId }: { bookingId: string }): React.ReactEle
           <Row label={t.bank} value={instructions.bankName} />
           <Row label={t.iban} value={instructions.iban} />
           <Row label={t.reference} value={instructions.reference} />
-          <Row label={t.amount} value={formatMoney(instructions.amountCents, instructions.currency)} />
+          <Row
+            label={t.amount}
+            value={formatMoney(instructions.amountCents, instructions.currency)}
+          />
           {instructions.dueAt ? <Row label={t.dueBy} value={instructions.dueAt} /> : null}
         </dl>
       ) : (

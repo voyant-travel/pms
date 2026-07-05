@@ -3,8 +3,8 @@
 import { Link } from "@tanstack/react-router"
 
 import { defaultStayDates, type StaySearch } from "@/components/storefront/stay-search"
-import { picsum } from "./property-content"
 import { Stars } from "./primitives"
+import { picsum } from "./property-content"
 import { PropertyFromPrice } from "./property-from-price"
 import type { PropertyPortfolioItem } from "./use-property-portfolio"
 

@@ -104,13 +104,15 @@ export function Stars({
 }): React.ReactElement | null {
   if (!rating || rating < 1) return null
   const filled = Math.round(rating)
+  const positions = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"].slice(0, filled)
   return (
     <span
+      role="img"
       className={`inline-flex items-center gap-0.5 text-[var(--acme-accent)] ${className}`}
       aria-label={`${filled}-star hotel`}
     >
-      {Array.from({ length: filled }, (_, i) => (
-        <span key={`s-${i}`} aria-hidden="true" className="text-[0.7em] leading-none">
+      {positions.map((k) => (
+        <span key={k} aria-hidden="true" className="text-[0.7em] leading-none">
           ★
         </span>
       ))}

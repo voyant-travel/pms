@@ -12,7 +12,7 @@ export function PropertyBookingPanel({
   checkIn,
   checkOut,
   adults,
-  children,
+  childCount,
   rooms,
   selectedRoomName,
   selectedBoard,
@@ -31,7 +31,7 @@ export function PropertyBookingPanel({
   checkIn: string
   checkOut: string
   adults: number
-  children: number
+  childCount: number
   rooms: number
   selectedRoomName: string | null
   selectedBoard: string | null
@@ -80,7 +80,13 @@ export function PropertyBookingPanel({
 
         <div className="mt-4 space-y-2.5 rounded-sm border border-[var(--acme-line)] p-3.5">
           <PanelStepper label="Adults" value={adults} setValue={onAdults} min={1} max={16} />
-          <PanelStepper label="Children" value={children} setValue={onChildren} min={0} max={12} />
+          <PanelStepper
+            label="Children"
+            value={childCount}
+            setValue={onChildren}
+            min={0}
+            max={12}
+          />
           <PanelStepper label="Rooms" value={rooms} setValue={onRooms} min={1} max={8} />
         </div>
 
@@ -98,7 +104,7 @@ export function PropertyBookingPanel({
             <div className="text-[var(--acme-ink-faint)] text-xs">
               {nights ? `${nights} night${nights === 1 ? "" : "s"}` : "Select dates"}
             </div>
-            {perNight ? (
+            {perNight && currency ? (
               <div className="text-[var(--acme-ink-faint)] text-xs">
                 {formatMoney(perNight, currency)} / night
               </div>
@@ -154,11 +160,19 @@ function PanelStepper({
     <div className="flex items-center justify-between">
       <span className="text-[var(--acme-ink)] text-sm">{label}</span>
       <div className="flex items-center gap-3">
-        <StepButton disabled={value <= min} onClick={() => setValue(value - 1)} label={`Fewer ${label}`}>
+        <StepButton
+          disabled={value <= min}
+          onClick={() => setValue(value - 1)}
+          label={`Fewer ${label}`}
+        >
           −
         </StepButton>
         <span className="min-w-5 text-center text-sm tabular-nums">{value}</span>
-        <StepButton disabled={value >= max} onClick={() => setValue(value + 1)} label={`More ${label}`}>
+        <StepButton
+          disabled={value >= max}
+          onClick={() => setValue(value + 1)}
+          label={`More ${label}`}
+        >
           +
         </StepButton>
       </div>

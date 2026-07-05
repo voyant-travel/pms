@@ -1,13 +1,17 @@
 "use client"
 
 import { createFileRoute, Link } from "@tanstack/react-router"
-
+import {
+  Container,
+  Eyebrow,
+  Section,
+  SectionHeading,
+} from "@/components/storefront/site/primitives"
 import {
   ACME_DIRECTORY,
   ACME_PROPERTY_CONTENT,
   picsum,
 } from "@/components/storefront/site/property-content"
-import { Container, Eyebrow, Section, SectionHeading } from "@/components/storefront/site/primitives"
 
 /**
  * About the group — a branded static page telling the Acme Hotels
@@ -55,11 +59,10 @@ function AboutPage(): React.ReactElement {
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.4fr_1fr]">
             <div className="space-y-5 text-[var(--acme-ink-soft)] text-lg leading-relaxed">
               <p>
-                Acme Hotels began in 1924 with a single address on Calea Victoriei, when a
-                Bucharest family opened their doors to travellers arriving by rail from across
-                Europe. A century later we are still family-owned and still independent — three
-                hotels across Romania, each chosen for its setting and looked after by people who
-                live nearby.
+                Acme Hotels began in 1924 with a single address on Calea Victoriei, when a Bucharest
+                family opened their doors to travellers arriving by rail from across Europe. A
+                century later we are still family-owned and still independent — three hotels across
+                Romania, each chosen for its setting and looked after by people who live nearby.
               </p>
               <p>
                 We have never wanted to be the biggest. We would rather be the place you come back
@@ -91,10 +94,7 @@ function AboutPage(): React.ReactElement {
               const editorial = ACME_PROPERTY_CONTENT[entry.key]
               const flip = i % 2 === 1
               return (
-                <div
-                  key={entry.key}
-                  className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2"
-                >
+                <div key={entry.key} className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2">
                   <div
                     className={`relative aspect-[4/3] overflow-hidden rounded-sm ${
                       flip ? "lg:order-2" : ""
@@ -114,7 +114,11 @@ function AboutPage(): React.ReactElement {
                     <p className="mt-4 text-[var(--acme-ink-soft)] leading-relaxed">
                       {editorial.intro}
                     </p>
-                    <Link to="/shop/hotels" search={{ city: entry.city }} className="acme-btn acme-btn-outline mt-6">
+                    <Link
+                      to="/shop/hotels"
+                      search={{ city: entry.city }}
+                      className="acme-btn acme-btn-outline mt-6"
+                    >
                       View hotel
                     </Link>
                   </div>

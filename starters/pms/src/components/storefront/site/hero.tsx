@@ -1,8 +1,8 @@
 "use client"
 
 import { AvailabilityBar } from "./availability-bar"
-import { picsum } from "./property-content"
 import { Container } from "./primitives"
+import { picsum } from "./property-content"
 import type { PropertyPortfolioItem } from "./use-property-portfolio"
 
 /**
@@ -32,8 +32,8 @@ export function Hero({
             Stay somewhere with a story
           </h1>
           <p className="mt-5 max-w-lg text-lg text-white/85 leading-relaxed">
-            Three distinct addresses — a Belle Époque landmark in Bucharest, a beachfront resort
-            on the Black Sea, and serviced apartments in Cluj-Napoca. Book direct for our best rate.
+            Three distinct addresses — a Belle Époque landmark in Bucharest, a beachfront resort on
+            the Black Sea, and serviced apartments in Cluj-Napoca. Book direct for our best rate.
           </p>
         </div>
 

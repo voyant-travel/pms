@@ -7,10 +7,7 @@ import { useCatalogSearch } from "@voyant-travel/catalog-react"
 import { ratePlansForRoom } from "@/components/storefront/rooms-matrix"
 import { getApiUrl } from "@/lib/env"
 import { fetchContent } from "@/routes/(storefront)/shop-product-detail-content"
-import {
-  type AcmePropertyContent,
-  resolveAcmeContent,
-} from "./property-content"
+import { type AcmePropertyContent, resolveAcmeContent } from "./property-content"
 import { groupHitsByProperty } from "./property-portfolio"
 
 /**
@@ -81,9 +78,7 @@ export function usePropertyPortfolio(destination?: string): PropertyPortfolio {
     const content = resolved.content
     const hotel = content.hotel
     const firstRoom = content.room_types[0]
-    const firstRate = firstRoom
-      ? ratePlansForRoom(content, firstRoom.id)[0]
-      : undefined
+    const firstRate = firstRoom ? ratePlansForRoom(content, firstRoom.id)[0] : undefined
     return [
       {
         entityId: group.representativeRoomId,

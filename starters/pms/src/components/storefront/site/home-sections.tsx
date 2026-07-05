@@ -3,9 +3,9 @@
 import { Link } from "@tanstack/react-router"
 
 import type { StaySearch } from "@/components/storefront/stay-search"
-import { picsum } from "./property-content"
 import { Container, Eyebrow, Section, SectionHeading } from "./primitives"
 import { PropertyCard } from "./property-card"
+import { picsum } from "./property-content"
 import type { PropertyPortfolioItem } from "./use-property-portfolio"
 
 /** The three properties as an editorial showcase. */
@@ -30,10 +30,7 @@ export function PropertyShowcase({
               of comfort, service and design.
             </p>
           </div>
-          <Link
-            to="/shop/hotels"
-            className="acme-btn acme-btn-outline shrink-0"
-          >
+          <Link to="/shop/hotels" className="acme-btn acme-btn-outline shrink-0">
             View all hotels
           </Link>
         </div>
@@ -90,9 +87,7 @@ export function WhyBookDirect(): React.ReactElement {
           <div className="grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-3">
             {BENEFITS.map((b, i) => (
               <div key={b.title}>
-                <div className="acme-serif text-2xl text-[var(--acme-accent-soft)]">
-                  0{i + 1}
-                </div>
+                <div className="acme-serif text-2xl text-[var(--acme-accent-soft)]">0{i + 1}</div>
                 <div className="mt-3 h-px w-8 bg-white/25" />
                 <h3 className="mt-4 font-medium text-[var(--acme-paper)]">{b.title}</h3>
                 <p className="mt-2 text-sm text-white/60 leading-relaxed">{b.body}</p>
@@ -125,9 +120,9 @@ export function AboutStrip(): React.ReactElement {
             </SectionHeading>
             <div className="mt-5 space-y-4 text-[var(--acme-ink-soft)] leading-relaxed">
               <p>
-                Acme Hotels began in 1924 with a single address on Calea Victoriei. A century on,
-                we remain independent and family-run — three hotels across Romania, each chosen for
-                its setting and looked after by people who live nearby.
+                Acme Hotels began in 1924 with a single address on Calea Victoriei. A century on, we
+                remain independent and family-run — three hotels across Romania, each chosen for its
+                setting and looked after by people who live nearby.
               </p>
               <p>
                 We believe a good stay is made of small things done well: a warm welcome, a

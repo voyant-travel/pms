@@ -1,12 +1,11 @@
 "use client"
 
 import { createFileRoute, Link } from "@tanstack/react-router"
-
+import { Container, Eyebrow, SectionHeading, Stars } from "@/components/storefront/site/primitives"
 import {
   ACME_DIRECTORY,
   ACME_PROPERTY_CONTENT,
 } from "@/components/storefront/site/property-content"
-import { Container, Eyebrow, SectionHeading, Stars } from "@/components/storefront/site/primitives"
 
 /**
  * Contact — a branded static page. Central reservations plus a card per
@@ -82,7 +81,10 @@ function ContactPage(): React.ReactElement {
                     <div className="flex justify-between gap-2">
                       <dt className="text-[var(--acme-ink-faint)]">Phone</dt>
                       <dd>
-                        <a href={`tel:${editorial.phone.replace(/\s/g, "")}`} className="hover:text-[var(--acme-accent)]">
+                        <a
+                          href={`tel:${editorial.phone.replace(/\s/g, "")}`}
+                          className="hover:text-[var(--acme-accent)]"
+                        >
                           {editorial.phone}
                         </a>
                       </dd>
@@ -90,7 +92,10 @@ function ContactPage(): React.ReactElement {
                     <div className="flex justify-between gap-2">
                       <dt className="text-[var(--acme-ink-faint)]">Email</dt>
                       <dd className="truncate">
-                        <a href={`mailto:${editorial.email}`} className="hover:text-[var(--acme-accent)]">
+                        <a
+                          href={`mailto:${editorial.email}`}
+                          className="hover:text-[var(--acme-accent)]"
+                        >
                           {editorial.email}
                         </a>
                       </dd>

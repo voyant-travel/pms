@@ -127,7 +127,11 @@ export function AvailabilityBar({
         </details>
       </Field>
 
-      <button type="submit" className="acme-btn acme-btn-primary rounded-none" disabled={!datesValid}>
+      <button
+        type="submit"
+        className="acme-btn acme-btn-primary rounded-none"
+        disabled={!datesValid}
+      >
         {entityId ? "View hotel" : "Search"}
       </button>
 
@@ -148,10 +152,10 @@ function Field({
   children: React.ReactNode
 }): React.ReactElement {
   return (
-    <label className="block bg-[var(--acme-surface)] px-4 py-2.5">
+    <div className="block bg-[var(--acme-surface)] px-4 py-2.5">
       <span className="acme-field-label">{label}</span>
       {children}
-    </label>
+    </div>
   )
 }
 
@@ -172,11 +176,19 @@ function Stepper({
     <div className="flex items-center justify-between">
       <span className="text-[var(--acme-ink)] text-sm">{label}</span>
       <div className="flex items-center gap-3">
-        <StepButton disabled={value <= min} onClick={() => setValue(value - 1)} label={`Fewer ${label}`}>
+        <StepButton
+          disabled={value <= min}
+          onClick={() => setValue(value - 1)}
+          label={`Fewer ${label}`}
+        >
           −
         </StepButton>
         <span className="min-w-5 text-center text-sm tabular-nums">{value}</span>
-        <StepButton disabled={value >= max} onClick={() => setValue(value + 1)} label={`More ${label}`}>
+        <StepButton
+          disabled={value >= max}
+          onClick={() => setValue(value + 1)}
+          label={`More ${label}`}
+        >
           +
         </StepButton>
       </div>

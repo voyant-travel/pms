@@ -53,11 +53,7 @@ function StorefrontHome(): React.ReactElement {
   return (
     <>
       <Hero items={portfolio.items} />
-      <PropertyShowcase
-        items={portfolio.items}
-        stay={search}
-        isLoading={portfolio.isLoading}
-      />
+      <PropertyShowcase items={portfolio.items} stay={search} isLoading={portfolio.isLoading} />
       <WhyBookDirect />
       <AboutStrip />
     </>

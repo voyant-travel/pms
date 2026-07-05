@@ -59,9 +59,7 @@ export function PropertyFromPrice({
   return (
     <span className={className}>
       <span className="text-[var(--acme-ink-faint)]">from </span>
-      <span className="font-medium text-[var(--acme-ink)]">
-        {formatMoney(perNight, currency)}
-      </span>
+      <span className="font-medium text-[var(--acme-ink)]">{formatMoney(perNight, currency)}</span>
       <span className="text-[var(--acme-ink-faint)]"> / night</span>
     </span>
   )

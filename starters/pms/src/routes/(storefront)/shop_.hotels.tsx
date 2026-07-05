@@ -53,7 +53,11 @@ function HotelsPage(): React.ReactElement {
 
         {cities.length > 1 ? (
           <div className="mt-10 flex flex-wrap items-center gap-2">
-            <FilterChip label="All destinations" active={city === null} onClick={() => setCity(null)} />
+            <FilterChip
+              label="All destinations"
+              active={city === null}
+              onClick={() => setCity(null)}
+            />
             {cities.map((c) => (
               <FilterChip key={c} label={c} active={city === c} onClick={() => setCity(c)} />
             ))}

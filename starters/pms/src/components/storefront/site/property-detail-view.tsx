@@ -5,8 +5,8 @@ import type { AccommodationContent } from "@voyant-travel/accommodations/content
 import { useState } from "react"
 
 import { buildRoomsMatrix } from "@/components/storefront/rooms-matrix"
-import { picsum, resolveAcmeContent } from "./property-content"
 import { Stars } from "./primitives"
+import { picsum, resolveAcmeContent } from "./property-content"
 
 /**
  * Presentational building blocks for the elevated Acme property page.
@@ -49,9 +49,7 @@ export function PropertyGallery({
           <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="acme-serif text-4xl text-white leading-tight sm:text-5xl">{name}</h1>
-              {location ? (
-                <p className="mt-2 text-sm text-white/80">{location}</p>
-              ) : null}
+              {location ? <p className="mt-2 text-sm text-white/80">{location}</p> : null}
             </div>
             <Stars rating={stars} className="pb-2 text-lg" />
           </div>
@@ -70,11 +68,7 @@ export function PropertyGallery({
               }`}
               aria-label={`View image ${i + 1}`}
             >
-              <img
-                src={picsum(seed, 240, 160)}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <img src={picsum(seed, 240, 160)} alt="" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
@@ -198,10 +192,7 @@ export function RoomList({
                   const active = room.id === selectedRoomId && plan.id === selectedRatePlanId
                   const { board, cancellation } = describeRate(plan.name)
                   return (
-                    <li
-                      key={plan.id}
-                      className="flex items-center justify-between gap-4 py-3"
-                    >
+                    <li key={plan.id} className="flex items-center justify-between gap-4 py-3">
                       <div>
                         <div className="font-medium text-sm">{board}</div>
                         {cancellation ? (

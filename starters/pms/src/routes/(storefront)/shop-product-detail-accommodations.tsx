@@ -7,9 +7,10 @@ import {
 } from "@voyant-travel/catalog-contracts/booking-engine/contracts"
 import { useBookingQuote } from "@voyant-travel/catalog-react/booking-engine"
 import { useEffect, useMemo, useState } from "react"
-
-import { resolveAcmeContent } from "@/components/storefront/site/property-content"
+import { firstSelectablePair } from "@/components/storefront/rooms-matrix"
+import { Container, Eyebrow, SectionHeading } from "@/components/storefront/site/primitives"
 import { PropertyBookingPanel } from "@/components/storefront/site/property-booking-panel"
+import { resolveAcmeContent } from "@/components/storefront/site/property-content"
 import {
   AmenityList,
   describeRate,
@@ -17,8 +18,6 @@ import {
   PropertyGallery,
   RoomList,
 } from "@/components/storefront/site/property-detail-view"
-import { Container, Eyebrow, SectionHeading } from "@/components/storefront/site/primitives"
-import { firstSelectablePair } from "@/components/storefront/rooms-matrix"
 import {
   defaultStayDates,
   resolveOccupancy,
@@ -197,7 +196,7 @@ export function AccommodationDetailPage({
               checkIn={checkIn}
               checkOut={checkOut}
               adults={adultCount}
-              children={childCount}
+              childCount={childCount}
               rooms={roomCount}
               selectedRoomName={selectedRoom?.name ?? null}
               selectedBoard={selectedRate ? describeRate(selectedRate.name).board : null}

@@ -1,9 +1,8 @@
 "use client"
 
 import { Link } from "@tanstack/react-router"
-
-import { ACME_PROPERTY_CONTENT } from "./property-content"
 import { Container } from "./primitives"
+import { ACME_PROPERTY_CONTENT } from "./property-content"
 
 /**
  * Acme Hotels storefront footer — the hotel directory, company links,
@@ -96,6 +95,7 @@ export function SiteFooter(): React.ReactElement {
             {["Instagram", "Facebook", "LinkedIn"].map((s) => (
               <span
                 key={s}
+                role="img"
                 title={s}
                 aria-label={s}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 text-[0.6rem] text-white/60 uppercase tracking-wide"
