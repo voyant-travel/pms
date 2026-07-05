@@ -1,32 +1,30 @@
 "use client"
 
 import { createFileRoute, redirect } from "@tanstack/react-router"
-import { useCatalogSearch } from "@voyant-travel/catalog-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@voyant-travel/ui/components/card"
-import { Skeleton } from "@voyant-travel/ui/components/skeleton"
 
+import { Hero } from "@/components/storefront/site/hero"
 import {
-  buildPropertyCards,
-  type PropertyCardVM,
-} from "@/components/storefront/property-card-model"
-import { PropertyResults } from "@/components/storefront/property-results"
-import { type StaySearch, staySearchSchema } from "@/components/storefront/stay-search"
-import { StaySearchBar } from "@/components/storefront/stay-search-bar"
+  AboutStrip,
+  PropertyShowcase,
+  WhyBookDirect,
+} from "@/components/storefront/site/home-sections"
+import { usePropertyPortfolio } from "@/components/storefront/site/use-property-portfolio"
+import { staySearchSchema } from "@/components/storefront/stay-search"
 import { getStorefrontConfig } from "@/lib/storefront-config"
-import { useStorefrontMessagesOrDefault } from "@/lib/storefront-i18n"
 
 /**
- * Property-first storefront landing. Search = destination + dates +
- * occupancy; results are accommodation properties served by the catalog
- * search API restricted to the `accommodations` vertical (storefront-card
- * projection, public surface).
+ * Acme Hotels home page — a full-bleed hero with the availability bar,
+ * the three properties as an editorial showcase, a "why book direct"
+ * strip, and an about-the-group teaser. Portfolio data comes from the
+ * catalog search (accommodations vertical, public surface) grouped into
+ * properties and hydrated with content.
  *
  * Single-property mode: when `STOREFRONT_SINGLE_PROPERTY_ID` is set the
- * loader redirects straight to that property's detail page and the search
- * UI never renders — a property manager pointing their domain at one hotel.
+ * loader redirects straight to that property's page — a property manager
+ * pointing their own domain at one hotel.
  */
 export const Route = createFileRoute("/(storefront)/shop")({
-  component: StorefrontIndex,
+  component: StorefrontHome,
   validateSearch: staySearchSchema,
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => {
@@ -48,92 +46,20 @@ export const Route = createFileRoute("/(storefront)/shop")({
   },
 })
 
-function StorefrontIndex(): React.ReactElement {
+function StorefrontHome(): React.ReactElement {
   const search = Route.useSearch()
-  const navigate = Route.useNavigate()
-  const t = useStorefrontMessagesOrDefault().staySearch
-
-  const result = useCatalogSearch({
-    surface: "public",
-    vertical: "accommodations",
-    query: search.destination ?? "",
-    mode: "keyword",
-    projection: "storefront-card",
-    pagination: { limit: 24 },
-    enabled: true,
-  })
-
-  const cards: PropertyCardVM[] = buildPropertyCards(result.data)
+  const portfolio = usePropertyPortfolio()
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-semibold text-3xl tracking-tight">{t.heading}</h1>
-        <p className="text-muted-foreground">{t.intro}</p>
-      </div>
-
-      <StaySearchBar
-        initial={search}
-        onSearch={(next) => {
-          navigate({ search: (s: StaySearch) => ({ ...s, ...next }) })
-        }}
+    <>
+      <Hero items={portfolio.items} />
+      <PropertyShowcase
+        items={portfolio.items}
+        stay={search}
+        isLoading={portfolio.isLoading}
       />
-
-      {result.isError ? (
-        <SearchUnavailable />
-      ) : result.isLoading ? (
-        <SearchSkeleton />
-      ) : cards.length > 0 ? (
-        <div className="space-y-3">
-          <h2 className="font-medium text-lg">
-            {t.resultsCount.replace("{count}", String(cards.length))}
-          </h2>
-          <PropertyResults cards={cards} stay={search} />
-        </div>
-      ) : (
-        <SearchEmpty />
-      )}
-    </div>
-  )
-}
-
-function SearchUnavailable(): React.ReactElement {
-  const t = useStorefrontMessagesOrDefault().staySearch
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.unavailableTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-muted-foreground text-sm">
-        <p>{t.unavailableBody}</p>
-      </CardContent>
-    </Card>
-  )
-}
-
-function SearchSkeleton(): React.ReactElement {
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }, (_, i) => `skel-${i}`).map((key) => (
-        <Card key={key}>
-          <Skeleton className="aspect-[4/3] w-full" />
-          <CardContent className="space-y-2 pt-4">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  )
-}
-
-function SearchEmpty(): React.ReactElement {
-  const t = useStorefrontMessagesOrDefault().staySearch
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-muted-foreground text-sm">{t.noResults}</p>
-      </CardContent>
-    </Card>
+      <WhyBookDirect />
+      <AboutStrip />
+    </>
   )
 }

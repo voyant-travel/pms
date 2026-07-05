@@ -79,3 +79,209 @@
     display: none;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   Acme Hotels storefront theme
+
+   Scoped entirely under `.acme-site` so the brand palette + serif
+   display type never leak into the operator admin shell (which keeps
+   the Voyant tokens from @voyant-travel/ui). Quiet-luxury direction:
+   warm paper ground, near-black ink, a single brass accent, refined
+   serif headings, hairline rules, sharp controls, generous space.
+   ────────────────────────────────────────────────────────────────── */
+.acme-site {
+  --acme-paper: #f6f2ea;
+  --acme-paper-deep: #efe8db;
+  --acme-surface: #ffffff;
+  --acme-ink: #1b1712;
+  --acme-ink-soft: #574e43;
+  --acme-ink-faint: #8a7f70;
+  --acme-line: #e5dccb;
+  --acme-line-strong: #d6c9b2;
+  --acme-accent: #9c6b3c;
+  --acme-accent-strong: #7d5330;
+  --acme-accent-soft: #efe4d2;
+  --acme-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, ui-serif, serif;
+
+  background-color: var(--acme-paper);
+  color: var(--acme-ink);
+  font-feature-settings: "kern", "liga";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.acme-serif {
+  font-family: var(--acme-serif);
+  font-weight: 400;
+  letter-spacing: -0.012em;
+}
+
+.acme-site ::selection {
+  background: var(--acme-accent);
+  color: #fff;
+}
+
+.acme-container {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 78rem;
+  padding-inline: 1.5rem;
+}
+
+.acme-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--acme-accent);
+}
+
+.acme-hairline {
+  height: 1px;
+  width: 100%;
+  background: var(--acme-line);
+}
+
+.acme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 2px;
+  font-size: 0.75rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  font-weight: 500;
+  line-height: 1;
+  padding: 0.95rem 1.7rem;
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.acme-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.acme-btn-primary {
+  background: var(--acme-accent);
+  color: #fff;
+}
+.acme-btn-primary:not(:disabled):hover {
+  background: var(--acme-accent-strong);
+}
+
+.acme-btn-ink {
+  background: var(--acme-ink);
+  color: #fff;
+}
+.acme-btn-ink:not(:disabled):hover {
+  background: #000;
+}
+
+.acme-btn-outline {
+  border: 1px solid var(--acme-ink);
+  color: var(--acme-ink);
+  background: transparent;
+}
+.acme-btn-outline:not(:disabled):hover {
+  background: var(--acme-ink);
+  color: #fff;
+}
+
+.acme-btn-ghost-light {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #fff;
+  background: transparent;
+}
+.acme-btn-ghost-light:not(:disabled):hover {
+  background: #fff;
+  color: var(--acme-ink);
+}
+
+.acme-input {
+  width: 100%;
+  background: var(--acme-surface);
+  border: 1px solid var(--acme-line-strong);
+  border-radius: 2px;
+  padding: 0.7rem 0.8rem;
+  font-size: 0.9rem;
+  color: var(--acme-ink);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.acme-input:focus {
+  outline: none;
+  border-color: var(--acme-accent);
+  box-shadow: 0 0 0 1px var(--acme-accent);
+}
+
+.acme-field-label {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--acme-ink-faint);
+  margin-bottom: 0.4rem;
+}
+
+.acme-nav-link {
+  position: relative;
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  color: inherit;
+  padding-block: 0.25rem;
+  transition: color 0.2s ease;
+}
+.acme-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 1px;
+  width: 0;
+  background: currentColor;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.acme-nav-link:hover::after,
+.acme-nav-link[data-active="true"]::after {
+  width: 100%;
+}
+
+.acme-card-media {
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.acme-card:hover .acme-card-media {
+  transform: scale(1.045);
+}
+
+@keyframes acme-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.acme-rise {
+  animation: acme-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acme-rise,
+  .acme-card-media {
+    animation: none;
+    transition: none;
+  }
+}
