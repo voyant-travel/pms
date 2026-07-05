@@ -76,7 +76,10 @@ export interface RoomUnitListQueryInput {
 }
 
 export function listRoomUnits(query: RoomUnitListQueryInput): Promise<ListEnvelope<RoomUnit>> {
-  const params = new URLSearchParams({ limit: "500", offset: "0" })
+  // `limit` is capped at 200 by the shared paginationSchema; requesting more
+  // (e.g. 500) makes the route reject the query with a 400, which silently
+  // breaks every caller that builds a unit id → number map (boards, unit list).
+  const params = new URLSearchParams({ limit: "200", offset: "0" })
   if (query.propertyId) params.set("propertyId", query.propertyId)
   if (query.roomTypeId) params.set("roomTypeId", query.roomTypeId)
   if (query.status) params.set("status", query.status)
