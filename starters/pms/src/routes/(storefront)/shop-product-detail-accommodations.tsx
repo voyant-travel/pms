@@ -6,13 +6,19 @@ import {
   bookingDraftV1,
 } from "@voyant-travel/catalog-contracts/booking-engine/contracts"
 import { useBookingQuote } from "@voyant-travel/catalog-react/booking-engine"
-import { Card, CardContent, CardHeader, CardTitle } from "@voyant-travel/ui/components/card"
-import { Input } from "@voyant-travel/ui/components/input"
-import { Label } from "@voyant-travel/ui/components/label"
 import { useEffect, useMemo, useState } from "react"
 
+import { resolveAcmeContent } from "@/components/storefront/site/property-content"
+import { PropertyBookingPanel } from "@/components/storefront/site/property-booking-panel"
+import {
+  AmenityList,
+  describeRate,
+  HighlightList,
+  PropertyGallery,
+  RoomList,
+} from "@/components/storefront/site/property-detail-view"
+import { Container, Eyebrow, SectionHeading } from "@/components/storefront/site/primitives"
 import { firstSelectablePair } from "@/components/storefront/rooms-matrix"
-import { RoomsTable } from "@/components/storefront/rooms-table"
 import {
   defaultStayDates,
   resolveOccupancy,
@@ -20,20 +26,15 @@ import {
   toBookingJourneySearch,
 } from "@/components/storefront/stay-search"
 import { getApiUrl } from "@/lib/env"
-import { useStorefrontMessagesOrDefault } from "@/lib/storefront-i18n"
 import { type ContentResolution, fetchContent } from "./shop-product-detail-content"
-import {
-  BackLink,
-  BodyMissing,
-  BodySkeleton,
-  BookingSidebar,
-  ContentResolutionHint,
-  DetailLayout,
-  HeroImage,
-  PaxBlock,
-  PaxStepper,
-} from "./shop-product-detail-shared"
 
+/**
+ * Elevated Acme property page. The presentation is fully branded (hero
+ * gallery, intro, amenities, room cards, a sticky booking panel and a
+ * location block) but the live-quote + Book wiring is unchanged from the
+ * storefront machinery: a probe `BookingDraftV1` drives `useBookingQuote`,
+ * and Book hands the locked-in room/rate/dates to the booking journey.
+ */
 export function AccommodationDetailPage({
   entityId,
   stay,
@@ -42,7 +43,6 @@ export function AccommodationDetailPage({
   stay: StaySearch
 }): React.ReactElement {
   const navigate = useNavigate()
-  const t = useStorefrontMessagesOrDefault().shopDetailAccommodations
 
   const content = useQuery({
     queryKey: ["public-accommodations-content", entityId],
@@ -105,201 +105,230 @@ export function AccommodationDetailPage({
   const quote = useBookingQuote({ surface: "public", draft: probeDraft })
   const totalCents = quote.data?.pricing?.total ?? 0
   const currency = quote.data?.pricing?.currency
-
   const totalPax = adultCount + childCount
   const datesValid = checkIn && checkOut && new Date(checkOut) > new Date(checkIn)
 
+  if (content.isLoading) return <DetailSkeleton />
+  if (!content.data) return <DetailMissing entityId={entityId} />
+
+  const c = content.data.content
+  const editorial = resolveAcmeContent({ name: c.hotel.name })
+  const location = [c.hotel.city, c.hotel.country].filter(Boolean).join(", ") || null
+  const selectedRoom = c.room_types.find((r) => r.id === selectedRoomId) ?? null
+  const selectedRate = c.rate_plans.find((r) => r.id === selectedRatePlanId) ?? null
+
+  function onBook() {
+    if (!selectedRoomId || !selectedRatePlanId) return
+    const bookingSearch = toBookingJourneySearch(
+      { checkIn, checkOut, adults: adultCount, children: childCount, rooms: roomCount },
+      { roomTypeId: selectedRoomId, ratePlanId: selectedRatePlanId },
+    )
+    if (!bookingSearch) return
+    navigate({
+      to: "/shop/book/$entityModule/$entityId",
+      params: { entityModule: "accommodations", entityId },
+      search: bookingSearch as never,
+    })
+  }
+
   return (
-    <DetailLayout
-      body={
-        content.isLoading ? (
-          <BodySkeleton />
-        ) : !content.data ? (
-          <BodyMissing entityModule="accommodations" entityId={entityId} />
-        ) : (
-          <AccommodationDetailBody
-            content={content.data.content}
-            resolution={content.data.resolution}
-            selectedRoomId={selectedRoomId}
-            selectedRatePlanId={selectedRatePlanId}
-            onSelect={(roomId, ratePlanId) => {
-              setSelectedRoomId(roomId)
-              setSelectedRatePlanId(ratePlanId)
-            }}
-          />
-        )
-      }
-      sidebar={
-        <BookingSidebar
-          totalPax={totalPax}
-          totalCents={totalCents}
-          currency={currency}
-          isQuoting={quote.isQuoting}
-          quoteData={quote.data}
-          disabled={
-            !selectedRoomId ||
-            !selectedRatePlanId ||
-            !datesValid ||
-            totalPax < 1 ||
-            quote.data?.available === false
-          }
-          onBook={() => {
-            if (!selectedRoomId || !selectedRatePlanId) return
-            const bookingSearch = toBookingJourneySearch(
-              { checkIn, checkOut, adults: adultCount, children: childCount, rooms: roomCount },
-              { roomTypeId: selectedRoomId, ratePlanId: selectedRatePlanId },
-            )
-            if (!bookingSearch) return
-            navigate({
-              to: "/shop/book/$entityModule/$entityId",
-              params: { entityModule: "accommodations", entityId },
-              search: bookingSearch as never,
-            })
-          }}
-        >
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="hp-checkin">{t.checkIn}</Label>
-              <Input
-                id="hp-checkin"
-                type="date"
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="hp-checkout">{t.checkOut}</Label>
-              <Input
-                id="hp-checkout"
-                type="date"
-                min={checkIn}
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-              />
-            </div>
+    <div className="bg-[var(--acme-paper)]">
+      <PropertyGallery
+        name={c.hotel.name}
+        stars={c.hotel.star_rating ?? null}
+        location={location}
+        thumbnailUrl={null}
+      />
+
+      <Container className="py-12 lg:py-16">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+          <div className="space-y-14 lg:col-span-2">
+            <section>
+              <Eyebrow>The hotel</Eyebrow>
+              <p className="mt-4 max-w-2xl text-[var(--acme-ink-soft)] text-lg leading-relaxed">
+                {editorial.intro}
+              </p>
+              {c.hotel.description && c.hotel.description !== editorial.intro ? (
+                <p className="mt-4 max-w-2xl whitespace-pre-line text-[var(--acme-ink-soft)] text-sm leading-relaxed">
+                  {c.hotel.description}
+                </p>
+              ) : null}
+              <div className="mt-8">
+                <HighlightList highlights={editorial.highlights} />
+              </div>
+            </section>
+
+            <section>
+              <SectionHeading as="h2" className="text-2xl">
+                Rooms &amp; rates
+              </SectionHeading>
+              <p className="mt-2 text-[var(--acme-ink-soft)] text-sm">
+                Prices shown update live for your selected dates and occupancy.
+              </p>
+              <div className="mt-6">
+                <RoomList
+                  content={c}
+                  roomSeed={editorial.roomSeed}
+                  selectedRoomId={selectedRoomId}
+                  selectedRatePlanId={selectedRatePlanId}
+                  onSelect={(roomId, ratePlanId) => {
+                    setSelectedRoomId(roomId)
+                    setSelectedRatePlanId(ratePlanId)
+                  }}
+                  emptyLabel="No rooms are configured for this property yet."
+                />
+              </div>
+            </section>
+
+            {c.amenities.length > 0 ? (
+              <section>
+                <SectionHeading as="h2" className="text-2xl">
+                  Amenities
+                </SectionHeading>
+                <div className="mt-6">
+                  <AmenityList amenities={c.amenities} />
+                </div>
+              </section>
+            ) : null}
           </div>
 
-          <PaxBlock
-            adult={adultCount}
-            child={childCount}
-            infant={0}
-            setAdult={setAdultCount}
-            setChild={setChildCount}
-            setInfant={() => {}}
-            showInfants={false}
-          />
-          <PaxStepper
-            label={t.availableRooms}
-            hint=""
-            value={roomCount}
-            setValue={setRoomCount}
-            min={1}
-            max={8}
-          />
-        </BookingSidebar>
-      }
-    />
+          <aside className="lg:col-span-1">
+            <PropertyBookingPanel
+              checkIn={checkIn}
+              checkOut={checkOut}
+              adults={adultCount}
+              children={childCount}
+              rooms={roomCount}
+              selectedRoomName={selectedRoom?.name ?? null}
+              selectedBoard={selectedRate ? describeRate(selectedRate.name).board : null}
+              totalCents={totalCents}
+              currency={currency}
+              isQuoting={quote.isQuoting}
+              invalidReason={humanizeInvalid(quote.data?.invalidReason)}
+              bookDisabled={
+                !selectedRoomId ||
+                !selectedRatePlanId ||
+                !datesValid ||
+                totalPax < 1 ||
+                quote.data?.available === false
+              }
+              onCheckIn={setCheckIn}
+              onCheckOut={setCheckOut}
+              onAdults={setAdultCount}
+              onChildren={setChildCount}
+              onRooms={setRoomCount}
+              onBook={onBook}
+            />
+          </aside>
+        </div>
+      </Container>
+
+      <LocationBlock
+        name={c.hotel.name}
+        address={c.hotel.address ?? null}
+        city={c.hotel.city ?? null}
+        checkInTime={c.hotel.check_in_time ?? null}
+        checkOutTime={c.hotel.check_out_time ?? null}
+        phone={editorial.phone}
+        email={editorial.email}
+        resolution={content.data.resolution}
+      />
+    </div>
   )
 }
 
-function AccommodationDetailBody({
-  content,
+function LocationBlock({
+  name,
+  address,
+  city,
+  checkInTime,
+  checkOutTime,
+  phone,
+  email,
   resolution,
-  selectedRoomId,
-  selectedRatePlanId,
-  onSelect,
 }: {
-  content: AccommodationContent
+  name: string
+  address: string | null
+  city: string | null
+  checkInTime: string | null
+  checkOutTime: string | null
+  phone: string
+  email: string
   resolution: ContentResolution | null
-  selectedRoomId: string | undefined
-  selectedRatePlanId: string | undefined
-  onSelect: (roomTypeId: string, ratePlanId: string) => void
 }): React.ReactElement {
-  const t = useStorefrontMessagesOrDefault().shopDetailAccommodations
+  void resolution
   return (
-    <div className="space-y-4">
-      {content.hotel.hero_image_url ? (
-        <HeroImage url={content.hotel.hero_image_url} alt={content.hotel.name} />
-      ) : null}
+    <section className="bg-[var(--acme-ink)] text-[var(--acme-paper)]">
+      <Container className="grid grid-cols-1 gap-10 py-16 sm:grid-cols-3">
+        <div>
+          <p className="acme-eyebrow text-[var(--acme-accent-soft)]">Location</p>
+          <h2 className="acme-serif mt-3 text-2xl">{name}</h2>
+          {address ? <p className="mt-3 text-sm text-white/70">{address}</p> : null}
+          {city ? <p className="text-sm text-white/70">{city}</p> : null}
+        </div>
+        <div>
+          <p className="acme-eyebrow text-[var(--acme-accent-soft)]">Reservations</p>
+          <ul className="mt-3 space-y-1.5 text-sm text-white/70">
+            <li>
+              <a href={`tel:${phone.replace(/\s/g, "")}`} className="hover:text-white">
+                {phone}
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${email}`} className="hover:text-white">
+                {email}
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <p className="acme-eyebrow text-[var(--acme-accent-soft)]">Good to know</p>
+          <ul className="mt-3 space-y-1.5 text-sm text-white/70">
+            <li>Check-in from {checkInTime ?? "15:00"}</li>
+            <li>Check-out by {checkOutTime ?? "11:00"}</li>
+            <li>Valid photo ID required at arrival</li>
+          </ul>
+        </div>
+      </Container>
+    </section>
+  )
+}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            {content.hotel.name}
-            {content.hotel.star_rating ? (
-              <span className="ml-2 text-amber-500">
-                {"★".repeat(Math.floor(content.hotel.star_rating))}
-              </span>
-            ) : null}
-          </CardTitle>
-          {content.hotel.city || content.hotel.country ? (
-            <p className="text-muted-foreground text-sm">
-              {[content.hotel.city, content.hotel.country].filter(Boolean).join(", ")}
-            </p>
-          ) : null}
-          <ContentResolutionHint resolution={resolution} />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {content.hotel.description ? (
-            <p className="whitespace-pre-line text-muted-foreground text-sm">
-              {content.hotel.description}
-            </p>
-          ) : null}
-          <BackLink />
-        </CardContent>
-      </Card>
+function humanizeInvalid(reason: string | undefined): string | null {
+  if (!reason) return null
+  switch (reason) {
+    case "unavailable":
+      return "Sold out for these dates — try another window."
+    case "no_price_for_occupancy":
+      return "No rate for the chosen room and occupancy."
+    case "property_not_found":
+      return "This property is currently unavailable."
+    default:
+      return "This selection is currently unavailable."
+  }
+}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.availableRooms}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RoomsTable
-            content={content}
-            selectedRoomId={selectedRoomId}
-            selectedRatePlanId={selectedRatePlanId}
-            onSelect={onSelect}
-          />
-        </CardContent>
-      </Card>
+function DetailSkeleton(): React.ReactElement {
+  return (
+    <div className="bg-[var(--acme-paper)]">
+      <div className="h-[52vh] min-h-[380px] animate-pulse bg-[var(--acme-paper-deep)]" />
+      <Container className="py-16">
+        <div className="h-8 w-1/3 animate-pulse rounded bg-[var(--acme-paper-deep)]" />
+        <div className="mt-4 h-4 w-2/3 animate-pulse rounded bg-[var(--acme-paper-deep)]" />
+      </Container>
+    </div>
+  )
+}
 
-      {content.amenities.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.amenities}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
-              {content.amenities.map((a) => (
-                <li key={a.id} className="text-muted-foreground">
-                  {a.name}
-                  {a.is_free ? (
-                    <span className="ml-1 text-emerald-600 text-xs">{t.freeLabel}</span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {content.policies.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t.policies}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            {content.policies.map((p) => (
-              <div key={p.kind}>
-                <div className="font-medium capitalize">{p.kind.replace(/_/g, " ")}</div>
-                {p.body ? (
-                  <p className="whitespace-pre-line text-muted-foreground">{p.body}</p>
-                ) : null}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : null}
+function DetailMissing({ entityId }: { entityId: string }): React.ReactElement {
+  return (
+    <div className="bg-[var(--acme-paper)]">
+      <Container className="py-24 text-center">
+        <SectionHeading as="h1">Property unavailable</SectionHeading>
+        <p className="mt-4 text-[var(--acme-ink-soft)]">
+          We couldn't load this hotel ({entityId}). It may no longer be available.
+        </p>
+      </Container>
     </div>
   )
 }

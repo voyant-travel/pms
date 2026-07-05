@@ -6,6 +6,7 @@ import type { ProductContent } from "@voyant-travel/inventory/content-shape"
 import { useMemo } from "react"
 import { z } from "zod"
 
+import { Container, Eyebrow } from "@/components/storefront/site/primitives"
 import { StorefrontBookingJourney } from "@/components/voyant/booking-journey/storefront-booking-journey"
 import { getApiUrl } from "@/lib/env"
 import { useStorefrontMessagesOrDefault } from "@/lib/storefront-i18n"
@@ -99,20 +100,31 @@ function ShopBookRouteComponent(): React.ReactElement {
   const entitySummary = useEntitySummary(entityModule, entityId, search)
 
   return (
-    <StorefrontBookingJourney
-      entityModule={entityModule}
-      entityId={entityId}
-      draftId={draftId}
-      initialConfigure={initialConfigure}
-      initialAccommodation={initialAccommodation}
-      entitySummary={entitySummary}
-      // No `contractTemplateSlug` — the wrapper resolves whichever
-      // customer-scope template the operator has marked active via
-      // /v1/public/legal/contracts/templates/default. Per-product
-      // overrides plug in here once products grow a
-      // `contractTemplateSlug` field.
-      contractMarketingLabel={t.marketingLabel}
-    />
+    <div className="bg-[var(--acme-paper)]">
+      <Container className="py-10 sm:py-14">
+        <div className="mb-8">
+          <Eyebrow>Complete your booking</Eyebrow>
+          <h1 className="acme-serif mt-3 text-3xl leading-tight">Guest details &amp; payment</h1>
+          <p className="mt-2 text-[var(--acme-ink-soft)] text-sm">
+            You won't be charged until your reservation is confirmed.
+          </p>
+        </div>
+        <StorefrontBookingJourney
+          entityModule={entityModule}
+          entityId={entityId}
+          draftId={draftId}
+          initialConfigure={initialConfigure}
+          initialAccommodation={initialAccommodation}
+          entitySummary={entitySummary}
+          // No `contractTemplateSlug` — the wrapper resolves whichever
+          // customer-scope template the operator has marked active via
+          // /v1/public/legal/contracts/templates/default. Per-product
+          // overrides plug in here once products grow a
+          // `contractTemplateSlug` field.
+          contractMarketingLabel={t.marketingLabel}
+        />
+      </Container>
+    </div>
   )
 }
 
