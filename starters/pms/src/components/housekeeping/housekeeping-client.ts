@@ -102,7 +102,7 @@ export interface TaskListQueryInput {
 }
 
 export function listTasks(query: TaskListQueryInput): Promise<ListEnvelope<HousekeepingTask>> {
-  const params = new URLSearchParams({ limit: "500", offset: "0", propertyId: query.propertyId })
+  const params = new URLSearchParams({ limit: "200", offset: "0", propertyId: query.propertyId })
   if (query.date) params.set("date", query.date)
   if (query.status) params.set("status", query.status)
   if (query.type) params.set("type", query.type)
@@ -162,7 +162,7 @@ export interface MaintenanceListQueryInput {
 export function listMaintenanceBlocks(
   query: MaintenanceListQueryInput,
 ): Promise<ListEnvelope<MaintenanceBlock>> {
-  const params = new URLSearchParams({ limit: "500", offset: "0", propertyId: query.propertyId })
+  const params = new URLSearchParams({ limit: "200", offset: "0", propertyId: query.propertyId })
   if (query.unitId) params.set("unitId", query.unitId)
   if (query.status) params.set("status", query.status)
   return api.get<ListEnvelope<MaintenanceBlock>>(`${BASE}/maintenance-blocks?${params.toString()}`)

@@ -143,7 +143,7 @@ export interface FolioListQueryInput {
 }
 
 export function listFolios(query: FolioListQueryInput): Promise<ListEnvelope<Folio>> {
-  const params = new URLSearchParams({ limit: "500", offset: "0", propertyId: query.propertyId })
+  const params = new URLSearchParams({ limit: "200", offset: "0", propertyId: query.propertyId })
   if (query.status) params.set("status", query.status)
   if (query.bookingId) params.set("bookingId", query.bookingId)
   return api.get<ListEnvelope<Folio>>(`${BASE}/folios?${params.toString()}`)
