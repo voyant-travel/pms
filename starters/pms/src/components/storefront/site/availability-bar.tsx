@@ -78,6 +78,7 @@ export function AvailabilityBar({
     >
       <Field label="Destination">
         <select
+          aria-label="Destination"
           className="acme-input border-0 shadow-none focus:shadow-none"
           value={entityId}
           onChange={(e) => setEntityId(e.target.value)}
@@ -94,6 +95,7 @@ export function AvailabilityBar({
 
       <Field label="Check-in">
         <input
+          aria-label="Check-in date"
           type="date"
           className="acme-input border-0 shadow-none focus:shadow-none"
           value={checkIn}
@@ -103,6 +105,7 @@ export function AvailabilityBar({
 
       <Field label="Check-out">
         <input
+          aria-label="Check-out date"
           type="date"
           className="acme-input border-0 shadow-none focus:shadow-none"
           min={checkIn}
