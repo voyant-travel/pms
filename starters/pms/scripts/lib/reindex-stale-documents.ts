@@ -105,6 +105,9 @@ export function createTypesenseCollectionAdmin(
   }
 }
 
+/** First-party source kinds — the only docs the bulk reindex owns and may purge. */
+const OWNED_SOURCE_KINDS: ReadonlySet<string> = new Set(["owned", "direct"])
+
 export async function listStaleDocuments(
   slice: IndexerSlice,
   liveIds: ReadonlySet<string>,
@@ -114,13 +117,22 @@ export async function listStaleDocuments(
   const collection = collectionName(slice)
   const perPage = 250
   let page = 1
+  // We only ever want to purge FIRST-PARTY (owned) docs — sourced docs are
+  // owned by their adapter and refreshed by discovery sync, never here. Owned
+  // catalog docs carry `source.kind` in {owned, direct}; sourced docs carry an
+  // adapter kind. We enumerate every doc, read `source.kind` when the schema
+  // indexes it, and purge a doc when its id is no longer live AND it is owned
+  // (or the collection has no `source.kind` field at all — those collections
+  // only ever hold owned docs). Filtering by `source.kind:=owned` server-side
+  // was wrong: owned accommodation docs use `source.kind:"direct"`, so the old
+  // filter matched nothing and stale docs leaked on every re-seed.
+  let includeSourceKind = true
 
   while (true) {
     const params = new URLSearchParams({
       q: "*",
       query_by: "name",
-      filter_by: "source.kind:=owned",
-      include_fields: "id,source.kind",
+      include_fields: includeSourceKind ? "id,source.kind" : "id",
       per_page: String(perPage),
       page: String(page),
     })
@@ -131,9 +143,12 @@ export async function listStaleDocuments(
       if (
         err instanceof TypesenseDocumentSearchError &&
         err.status === 400 &&
-        err.message.includes("source.kind")
+        err.message.includes("source.kind") &&
+        includeSourceKind
       ) {
-        return staleIds
+        // Collection schema doesn't index `source.kind` — retry with id only.
+        includeSourceKind = false
+        continue
       }
       throw err
     }
@@ -142,7 +157,9 @@ export async function listStaleDocuments(
     const hits = data.hits ?? []
     for (const hit of hits) {
       const id = hit.document?.id
-      if (id && !liveIds.has(id)) staleIds.push(id)
+      if (!id || liveIds.has(id)) continue
+      const sourceKind = hit.document?.["source.kind"]
+      if (sourceKind === undefined || OWNED_SOURCE_KINDS.has(sourceKind)) staleIds.push(id)
     }
     if (hits.length < perPage) break
     page += 1
