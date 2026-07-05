@@ -416,30 +416,27 @@ any needed upstream changes while they're cheap.
 - **Upstreaming trigger for ARI authoring.** Revisit after Phase 2: if other
   Voyant deployments want owned-ARI authoring, extract it into
   `accommodations` and delete here.
-- **[UPSTREAM PR OWED] Accommodation owned-handler drops the committed booking
-  id.** `createAccommodationBookingHandler.commit` (in
-  `@voyant-travel/accommodations`, verified `0.109.7` installed and `0.109.8`
-  in the framework source) returns the bridge-created booking id only inside
-  `upstreamPayload.bridgeBookingId` and leaves the top-level `bookingId`
-  **undefined** — unlike the products handler
+- **[UPSTREAM FIX ADOPTED] Accommodation owned-handler drops the committed
+  booking id.** `createAccommodationBookingHandler.commit` (in
+  `@voyant-travel/accommodations`) used to return the bridge-created booking id
+  only inside `upstreamPayload.bridgeBookingId`, leaving the top-level
+  `bookingId` **undefined** — unlike the products handler
   (`@voyant-travel/inventory` `createProductsBookingHandler`) and the operator's
   cruise handler, which both set `bookingId: bridge.bookingId`. The catalog
-  engine's `bookEntity` then falls back to its own pre-generated shell id
+  engine's `bookEntity` then fell back to its own pre-generated shell id
   (`ownedBookingId = commitResult.bookingId ?? bookingId`), so the snapshot,
-  the consumed-quote marker, and the id handed to the storefront all point at a
-  phantom id — not the real `STAY-…` booking the bridge wrote. Checkout can't
-  find a booking for that id and materializes a bare `service` `BK-…` order
-  booking (which it confirms + charges) while the real stay reservation is
+  the consumed-quote marker, and the id handed to the storefront all pointed at
+  a phantom id — not the real `STAY-…` booking the bridge wrote. Checkout could
+  not find a booking for that id and materialized a bare `service` `BK-…` order
+  booking (which it confirmed + charged) while the real stay reservation was
   stranded as a draft — invisible to the tape chart / boards / night audit
-  (they join `stay_booking_items`). **Deployment workaround shipped:**
-  `starters/pms/src/api/lib/retained-vertical-booking-handlers.ts` wraps the
-  handler's `commit` via `adoptBridgeBookingId(...)`, promoting
-  `upstreamPayload.bridgeBookingId` to the canonical `bookingId`. **Upstream
-  fix that should replace it:** in `packages/accommodations/src/booking-engine/handler.ts`,
-  add `bookingId: bridge.bookingId` to the `commit` success return (line ~320,
-  mirroring the products/cruise handlers) and add a handler test asserting the
-  `CommitOwnedResult.bookingId` is set. Once released and adopted here, delete
-  the `adoptBridgeBookingId` wrapper + its test.
+  (they join `stay_booking_items`). Filed as voyant#2954, fixed in PR #2956 and
+  **released in `@voyant-travel/accommodations` `0.109.9`** (rolled in with the
+  `@voyant-travel/framework` `0.12.20` lockstep): `commit` now returns
+  `bookingId: bridge.bookingId` at the top level (`handler.ts:172`). The
+  deployment workaround (`adoptBridgeBookingId` wrapper in
+  `starters/pms/src/api/lib/retained-vertical-booking-handlers.ts` + its test)
+  has been **deleted** — the handler is now registered directly.
 
 ## 8. Pointers
 
