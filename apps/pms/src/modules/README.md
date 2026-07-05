@@ -1,8 +1,19 @@
-# Custom deployment modules
+# Custom deployment modules (prototype stage)
 
 Drop a custom module here to extend this deployment **without forking the
 framework**. A module in `src/modules/<name>/` is auto-discovered and mounted —
 no edit to any framework-owned file, and it survives `voyant upgrade`.
+
+## Prototype here, graduate to `packages/*`
+
+This directory is the **prototype** stage of a PMS domain's lifecycle. Once a
+module's schema and routes settle, graduate it into a published workspace
+package under `packages/<name>/` (`@voyant-travel/pms-<name>`) and register it
+explicitly in `src/api/composition.ts`. The six original PMS domains (ari,
+units, front-desk, housekeeping, folios, channels) have already graduated — this
+directory is intentionally empty of modules now. See `packages/README.md` for
+the graduated packages and the app/package boundary (e.g. how `pms-channels`
+takes the app-side `persistStayBooking` write path via injection).
 
 ## Shape
 

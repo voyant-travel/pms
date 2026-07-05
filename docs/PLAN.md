@@ -85,21 +85,29 @@ pms/
                          #   owns: composition.ts, providers, auth, wrangler,
                          #   drizzle configs, migrations, links, i18n hosts
   packages/
-    front-desk/          # @voyant-travel/pms-front-desk
+    ari/                 # @voyant-travel/pms-ari (ARI authoring; no schema)
     units/               # @voyant-travel/pms-units
-    housekeeping/        # @voyant-travel/pms-housekeeping
-    folios/              # @voyant-travel/pms-folios
-    pms-react/           # admin UI hooks/pages for the above (or per-package ./admin subpaths, matching the *-react convention upstream)
-    plugins/
-      channel-*/         # OTA channel connectors (later)
+    housekeeping/        # @voyant-travel/pms-housekeeping (→ units)
+    front-desk/          # @voyant-travel/pms-front-desk (→ units, housekeeping)
+    folios/              # @voyant-travel/pms-folios (→ units)
+    channels/            # @voyant-travel/pms-channels (connector seam + ingest)
+    eslint-config/       # @repo/eslint-config (repo tooling)
+    typescript-config/   # @repo/typescript-config (repo tooling)
+    # admin UI stays app-side (thin-host pattern) in apps/pms/src/components/*,
+    # importing types from the packages above; a per-package ./admin subpath or a
+    # pms-react package is a later option matching the *-react convention upstream.
+    # OTA channel connectors ship later as packages/plugins/channel-* bundles.
   docs/                  # this plan, ADRs, architecture notes
 ```
 
 Lifecycle for each PMS domain: prototype as a **deployment-local module**
 (`apps/pms/src/modules/<name>/` with `defineDeploymentModule`, auto-discovered
-by `modulesFromGlob`), then graduate to a published package once the schema and
-routes settle. Deployment-local schemas are auto-picked-up by the migration
-collector, so prototyping is cheap.
+by `modulesFromGlob`), then graduate to a published `packages/<name>/` package
+once the schema and routes settle (all six domains have now graduated;
+`apps/pms/src/api/composition.ts` registers them explicitly). Deployment-local
+schemas are auto-picked-up by the migration collector, so prototyping is cheap;
+graduated package schemas keep their migrations in `apps/pms/migrations/` and are
+globbed by the deployment drizzle configs at `../../packages/*/src/schema.ts`.
 
 ### 3.2 What the deployment app consumes vs owns
 
