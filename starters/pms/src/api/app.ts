@@ -193,6 +193,16 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
         return c.json({ error: "payment_session_not_found" }, 404)
       }
 
+      // A real PSP redirects the browser to the checkout's return URL after
+      // an approved payment. Emulate that so the storefront card flow lands
+      // on its confirmation page (`/shop/confirmation/:bookingId`) instead of
+      // stranding the guest on the mock pay landing. Fall back to the pay
+      // landing page only when the session carries no return URL (e.g.
+      // operator-sent payment links, which have no storefront to return to).
+      if (payment.returnUrl) {
+        return c.redirect(payment.returnUrl)
+      }
+
       const origin =
         (
           c.env as { PUBLIC_CHECKOUT_BASE_URL?: string; DASH_BASE_URL?: string; APP_URL?: string }
