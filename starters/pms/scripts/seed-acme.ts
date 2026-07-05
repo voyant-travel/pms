@@ -186,8 +186,15 @@ function nightlyCents(
 // ───────────────────────── Reset ─────────────────────────
 
 const WIPE_TABLES = [
-  // Finance reference data (invoice number series)
+  // Finance (series + documents — invoices from prior test bookings would
+  // otherwise survive the wipe and collide with the reset number series)
   "invoice_number_series",
+  "invoice_line_items",
+  "invoice_renditions",
+  "invoice_attachments",
+  "invoice_external_refs",
+  "invoices",
+  "payment_sessions",
   // PMS overlays first (loose refs to bookings/units/properties)
   "pms_folio_postings",
   "pms_folios",
