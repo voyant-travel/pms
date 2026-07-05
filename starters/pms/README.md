@@ -38,11 +38,32 @@ packages above.
 
 ## Local setup
 
-Prerequisites: Node `>=22`, `pnpm@9`. Install from the repo root:
+Prerequisites: Node `>=22`, `pnpm@9`, Docker. Install from the repo root:
 
 ```bash
 pnpm install
 ```
+
+The proven local boot sequence is: **Docker services → `.dev.vars` → migrate → dev**.
+
+### Local services (Docker)
+
+`compose.yaml` runs local Postgres 16 (with the `pg_trgm` + `unaccent`
+extensions from `docker/postgres/init.sql`) and Typesense 28 for catalog search:
+
+```bash
+cd starters/pms
+docker compose up -d          # waits for both to report healthy
+```
+
+| Service | Container | Host port | Notes |
+| --- | --- | --- | --- |
+| Postgres | `voyant-pms-postgres` | `54331` | db/user/pass all `voyant` |
+| Typesense | `voyant-pms-typesense` | `8109` | api-key `voyant-dev-typesense-key` |
+
+Both are namespaced `voyant-pms-*` so they don't collide with other local
+Voyant checkouts. Tear down with `docker compose down` (add `-v` to also drop
+the data volumes).
 
 ### Environment
 
@@ -56,20 +77,48 @@ cp starters/pms/.dev.vars.example starters/pms/.dev.vars
 Minimum required for local boot (see `.dev.vars.example` + `env.d.ts` for the
 full list and docs):
 
-- `DATABASE_URL` — Postgres connection string (Neon or local Postgres).
+- `DATABASE_URL` — Postgres connection string. For the local Docker Postgres
+  above: `postgres://voyant:voyant@localhost:54331/voyant`.
 - `BETTER_AUTH_SECRET`, `SESSION_CLAIMS_SECRET`, `INTERNAL_API_KEY` — generate
   with `openssl rand -base64 32` / `openssl rand -hex 32`.
+- `KMS_LOCAL_KEY` — base64 32-byte key (`openssl rand -base64 32`); required
+  because `wrangler.jsonc` defaults `KMS_PROVIDER=local`.
+- `TYPESENSE_HOST`, `TYPESENSE_ADMIN_API_KEY` — catalog/storefront search. For
+  the local Docker Typesense: `http://localhost:8109` +
+  `voyant-dev-typesense-key`. If unset, catalog search degrades to empty
+  results (no 500).
 - `VOYANT_API_KEY` — canonical email/SMS/verify/vault provider (see
-  `src/lib/notifications.ts` to swap transports).
+  `src/lib/notifications.ts` to swap transports). A dummy value is fine for
+  local boot, but with it outbound email/SMS **and email verification** fail
+  (logged as `Invalid API token`), so a freshly signed-up admin cannot verify
+  by email — see "First admin user" below for the local workaround.
 - `CHANNEL_WEBHOOK_SECRET` — shared secret the inbound channel webhook
   (`/v1/public/pms/channels/:channel/webhook`) checks via the `x-channel-secret`
   header before the connector verifies + parses the payload.
 - `STOREFRONT_SINGLE_PROPERTY_ID` (optional) — see "Single-property mode" below.
 
+Auth mode is `local` (`VOYANT_ADMIN_AUTH_MODE=local` in `wrangler.jsonc`), so
+Better Auth sign-up / sign-in / password reset work without the Voyant cloud
+broker.
+
 Non-secret vars (`APP_URL`, `DASH_BASE_URL`, auth mode, `EMAIL_FROM`) live in
 `wrangler.jsonc` under `vars`. The `CACHE` / `RATE_LIMIT` KV namespace IDs and
 the R2 bucket names in `wrangler.jsonc` are placeholders — replace them with real
 Cloudflare resource IDs before deploying (not required for `pnpm dev`).
+
+### Database migrations
+
+Run migrations once the DB is up and `.dev.vars` is in place — **before** the
+first `dev` boot:
+
+```bash
+pnpm --filter pms-admin db:migrate    # apply all migrations (package sources + deployment)
+```
+
+Migrations use the `@voyant-travel/framework-migrations` collector: each
+schema-owning package ships its own migrations, applied deps-first, and this
+deployment's `./migrations` (link tables + any local module schema) apply last.
+A second run is a no-op (`No pending migrations.`).
 
 ### Run
 
@@ -77,17 +126,44 @@ Cloudflare resource IDs before deploying (not required for `pnpm dev`).
 pnpm --filter pms-admin dev    # Worker + SSR admin on http://localhost:3300
 ```
 
-### Database migrations
+Quick smoke: `/` (admin shell → redirects to `/sign-in` when unauthenticated),
+`/shop` (storefront), and `POST /api/v1/public/catalog/search` (JSON, empty
+`hits` until you seed + reindex). The API is mounted under `/api` (matching
+`APP_URL`).
 
-Migrations use the `@voyant-travel/framework-migrations` collector: each
-schema-owning package ships its own migrations, applied deps-first, and this
-deployment's `./migrations` (link tables + any local module schema) apply last.
+### First admin user
+
+Local auth has no seeded user — the first sign-up becomes the workspace super
+admin. Register at `/sign-up`. Better Auth requires email verification, but the
+verification email can't send with a dummy `VOYANT_API_KEY`, so for local dev
+mark the user verified directly, then sign in:
+
+```bash
+docker exec voyant-pms-postgres \
+  psql -U voyant -d voyant -c \
+  "UPDATE \"user\" SET email_verified = true WHERE email = 'admin@pms.local';"
+```
+
+(Configure a real email transport in `src/lib/notifications.ts` to verify by
+email instead.)
+
+### Catalog search index
+
+Catalog/storefront search reads from Typesense. It returns empty results until
+you populate it — seed data then build the index:
+
+```bash
+pnpm --filter pms-admin seed        # baseline catalog data (optional)
+pnpm --filter pms-admin reindex     # (re)build Typesense collections
+```
+
+### More DB commands
 
 ```bash
 pnpm --filter pms-admin db:generate   # generate deployment migration from schema changes
-pnpm --filter pms-admin db:migrate    # apply all migrations (package sources + deployment)
+pnpm --filter pms-admin db:check      # validate the migration journal (no drift)
 pnpm --filter pms-admin db:push       # push aggregate schema (dev only)
-pnpm --filter pms-admin seed          # seed baseline data
+pnpm --filter pms-admin db:studio     # drizzle studio
 ```
 
 `DATABASE_URL` must be set (via `.dev.vars`, `.env`, or the environment) for any

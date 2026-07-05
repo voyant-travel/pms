@@ -1651,7 +1651,7 @@
         },
         "room_status": {
           "name": "room_status",
-          "type": "pms_unit_room_status",
+          "type": "pms_housekeeping_room_status",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
@@ -2040,15 +2040,6 @@
         "cancelled"
       ]
     },
-    "public.pms_unit_room_status": {
-      "name": "pms_unit_room_status",
-      "schema": "public",
-      "values": [
-        "dirty",
-        "clean",
-        "inspected"
-      ]
-    },
     "public.pms_room_unit_status": {
       "name": "pms_room_unit_status",
       "schema": "public",
@@ -2056,6 +2047,15 @@
         "available",
         "out_of_order",
         "out_of_service"
+      ]
+    },
+    "public.pms_housekeeping_room_status": {
+      "name": "pms_housekeeping_room_status",
+      "schema": "public",
+      "values": [
+        "dirty",
+        "clean",
+        "inspected"
       ]
     }
   },

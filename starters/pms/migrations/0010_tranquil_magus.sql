@@ -3,7 +3,7 @@ CREATE TYPE "public"."pms_housekeeping_task_status" AS ENUM('open', 'in_progress
 CREATE TYPE "public"."pms_housekeeping_task_type" AS ENUM('clean', 'inspect', 'turndown', 'deep_clean');--> statement-breakpoint
 CREATE TYPE "public"."pms_maintenance_reason" AS ENUM('maintenance', 'renovation', 'deep_clean', 'other');--> statement-breakpoint
 CREATE TYPE "public"."pms_maintenance_status" AS ENUM('active', 'resolved', 'cancelled');--> statement-breakpoint
-CREATE TYPE "public"."pms_unit_room_status" AS ENUM('dirty', 'clean', 'inspected');--> statement-breakpoint
+CREATE TYPE "public"."pms_housekeeping_room_status" AS ENUM('dirty', 'clean', 'inspected');--> statement-breakpoint
 CREATE TABLE "pms_housekeeping_tasks" (
 	"id" text PRIMARY KEY NOT NULL,
 	"unit_id" text NOT NULL,
@@ -39,7 +39,7 @@ CREATE TABLE "pms_maintenance_blocks" (
 CREATE TABLE "pms_unit_room_status" (
 	"id" text PRIMARY KEY NOT NULL,
 	"unit_id" text NOT NULL,
-	"room_status" "pms_unit_room_status" DEFAULT 'dirty' NOT NULL,
+	"room_status" "pms_housekeeping_room_status" DEFAULT 'dirty' NOT NULL,
 	"last_changed_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"last_changed_by" text
 );

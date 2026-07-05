@@ -106,7 +106,11 @@ export const housekeepingTasks = pgTable(
 
 /** Housekeeping lifecycle state of a physical unit. Distinct from the physical
  *  `pms_room_unit_status` (available/out_of_order/...) owned by the units module. */
-export const unitRoomStatusEnum = pgEnum("pms_unit_room_status", ["dirty", "clean", "inspected"])
+export const unitRoomStatusEnum = pgEnum("pms_housekeeping_room_status", [
+  "dirty",
+  "clean",
+  "inspected",
+])
 
 export const unitRoomStatus = pgTable(
   "pms_unit_room_status",
