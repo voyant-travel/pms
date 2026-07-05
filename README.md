@@ -1,159 +1,114 @@
-# Turborepo starter
+# Voyant PMS
 
-This Turborepo starter is maintained by the Turborepo core team.
+An open-source Property Management System for hotels, apartments, aparthotels,
+and property managers operating multiple properties — built on the
+[Voyant](https://github.com/voyant-travel/voyant) travel framework. One
+Cloudflare Worker deployment serves the staff admin, the `/v1/*` API, and a
+direct-booking storefront for guests.
 
-## Using this example
+The division of labor with the framework is deliberate: **the framework sells
+stays; the PMS operates them.** Voyant's published packages provide the ARI
+schema (room types, rate plans, daily rates and inventory), the catalog booking
+engine, bookings, payments, CRM, and finance. This repo adds the operating
+layer on top: front desk, housekeeping, folios, night audit, and channel
+connectivity. See [docs/PLAN.md](docs/PLAN.md) for the full architecture plan.
 
-Run the following command:
+## Features
 
-```sh
-npx create-turbo@latest
+- **Rates & inventory (ARI)** — room types, bed configurations, meal plans,
+  rate plans, and a rates & availability calendar with bulk range/weekday
+  updates. Authored inventory is immediately searchable and bookable through
+  the framework's owned-stay quote path.
+- **Front desk** — tape chart (units × dates), arrivals/departures/in-house
+  boards, check-in/check-out, no-shows, and unit assignment with overlap
+  guards. Serialized room types derive their sellable capacity from actual
+  units, minus maintenance blocks.
+- **Housekeeping & maintenance** — auto-generated cleaning/turndown tasks from
+  the day's departures and stayovers (idempotent, cron-driven), a
+  dirty/clean/inspected room-status lifecycle that warns at check-in, and
+  maintenance blocks that reduce sellable inventory.
+- **Folios & night audit** — an immutable posting ledger per stay (plus house
+  accounts), void/transfer via reversal postings, a nightly audit that posts
+  room charges and rolls the business date, settlement into a fiscal invoice,
+  and daily occupancy / ADR / RevPAR reports.
+- **Direct-booking storefront** — property-first search (dates + occupancy),
+  a booking.com-style room × rate table on the property page, and the
+  framework's booking journey and payment flow end to end. A single-property
+  mode turns the storefront into one hotel's booking site.
+- **Channel connectivity (skeleton)** — a provider-pluggable
+  `ChannelConnector` seam with outbound ARI push and inbound reservation
+  ingest ledgers, plus a reference mock connector. Live OTA connectors are the
+  next step; see
+  [docs/architecture/connect-exposure.md](docs/architecture/connect-exposure.md)
+  for how Voyant operators can consume PMS inventory.
+
+## Repository layout
+
+```
+apps/
+  pms/            the deployment: Cloudflare Worker (admin + API + storefront),
+                  composition, auth, migrations, crons — see apps/pms/README.md
+packages/
+  ari/            @voyant-travel/pms-ari          ARI authoring (writes upstream tables)
+  units/          @voyant-travel/pms-units        room units + assignments + derived inventory
+  front-desk/     @voyant-travel/pms-front-desk   tape chart, boards, check-in/out
+  housekeeping/   @voyant-travel/pms-housekeeping tasks, room status, maintenance
+  folios/         @voyant-travel/pms-folios       folio ledger, night audit, reports
+  channels/       @voyant-travel/pms-channels     connector seam, ARI push, ingest
+  eslint-config/  typescript-config/              repo tooling
+docs/             plan, ADRs, architecture notes
 ```
 
-## What's inside?
+Each domain package is a Voyant module: it owns its routes, services,
+validation, and (where applicable) schema, and registers into the deployment
+through `createVoyantApp` composition. The admin UI lives app-side as a thin
+host, importing types from the packages.
 
-This Turborepo includes the following packages/apps:
+## Getting started
 
-### Apps and Packages
+Prerequisites: Node `>= 22`, pnpm 9.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```bash
+pnpm install
+pnpm build        # builds packages, then the app
+pnpm typecheck
+pnpm test
 ```
 
-Without global `turbo`, use your package manager:
+To run the app locally (needs a Postgres `DATABASE_URL` and a few generated
+secrets), follow [apps/pms/README.md](apps/pms/README.md):
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+```bash
+cp apps/pms/.dev.vars.example apps/pms/.dev.vars   # fill in
+pnpm --filter pms-admin db:migrate
+pnpm --filter pms-admin dev                         # http://localhost:3300
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Deploying requires real Cloudflare resources (KV namespaces, R2 buckets) in
+place of the placeholders in `apps/pms/wrangler.jsonc`.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Status
 
-```sh
-turbo build --filter=docs
-```
+Pre-release. All six domains plus the storefront are code-complete and covered
+by unit tests (pure domain logic, validation, composition, and route
+mounting), and the repo's typecheck/lint/test/build lanes are green. Not yet
+done:
 
-Without global `turbo`:
+- End-to-end runtime validation against a live database (the immediate next
+  step).
+- npm publishing of the `pms-*` packages — they are publish-shaped but
+  consumed as workspace packages today; release wiring (changesets + trusted
+  publishing) is a follow-up.
+- Live OTA connectors and the outbound Voyant Connect provider surface (the
+  seam and ledgers exist; see the channels package README).
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+## Contributing
 
-### Develop
+Start with [docs/PLAN.md](docs/PLAN.md) (architecture, boundaries, roadmap)
+and [docs/adr/](docs/adr/) for recorded decisions. Each package README
+documents its routes, schema, and exports. Verification lanes: `pnpm
+typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` from the repo root.
 
-To develop all apps and packages, run the following command:
+## License
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+[Apache-2.0](LICENSE)
