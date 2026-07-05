@@ -84,8 +84,7 @@ export function UnitDialog({
   // initial (empty) mount state instead of the selected unit's values.
   useEffect(() => {
     if (open) setForm(toForm(unit, roomTypes))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, unit])
+  }, [open, unit, roomTypes])
 
   const save = useMutation({
     mutationFn: async () => {
