@@ -1,13 +1,31 @@
 # Voyant PMS — Admin Deployment (`apps/pms`)
 
-The PMS deployment app: a single Cloudflare Worker serving the `/v1/*` API and
-the SSR admin dashboard (later: the direct-booking storefront). It consumes the
-published `@voyant-travel/*` framework packages and composes them via
-`createVoyantApp` (see `src/api/app.ts` + `src/api/composition.ts`).
+The PMS deployment app: a single Cloudflare Worker serving the `/v1/*` API, the
+SSR admin dashboard, and the direct-booking storefront. It consumes the published
+`@voyant-travel/*` framework packages and composes them via `createVoyantApp`
+(see `src/api/app.ts` + `src/api/composition.ts`).
 
-This app was scaffolded from the Voyant operator starter (the proven
-`acme-travel/apps/admin` blueprint) as Phase 0 of `docs/PLAN.md`. See the
-"Vertical scope" note below for what is kept vs. deferred.
+This app was scaffolded from the Voyant operator starter as Phase 0 of
+`docs/PLAN.md`, then extended through Phases 1–6. See the "Vertical scope" note below for what is kept vs.
+deferred.
+
+## PMS domains
+
+The six PMS domains have graduated out of this app into published workspace
+packages (`packages/*`), registered explicitly in `src/api/composition.ts` and
+surfaced as admin sections (`src/admin/*`, `src/components/*`):
+
+| Admin section | Package | Admin API |
+| --- | --- | --- |
+| Rates & Inventory (ARI) | `@voyant-travel/pms-ari` | `/v1/admin/pms/ari/*` |
+| Units | `@voyant-travel/pms-units` | `/v1/admin/pms/units/*` |
+| Front Desk | `@voyant-travel/pms-front-desk` | `/v1/admin/pms/front-desk/*` |
+| Housekeeping | `@voyant-travel/pms-housekeeping` | `/v1/admin/pms/housekeeping/*` |
+| Folios | `@voyant-travel/pms-folios` | `/v1/admin/pms/folios/*` |
+| Channels | `@voyant-travel/pms-channels` | `/v1/admin/pms/channels/*` (+ `/v1/public/pms/channels/*`) |
+
+The admin UI stays app-side (thin-host pattern), importing types from the
+packages above.
 
 ## Stack
 
@@ -43,6 +61,10 @@ full list and docs):
   with `openssl rand -base64 32` / `openssl rand -hex 32`.
 - `VOYANT_API_KEY` — canonical email/SMS/verify/vault provider (see
   `src/lib/notifications.ts` to swap transports).
+- `CHANNEL_WEBHOOK_SECRET` — shared secret the inbound channel webhook
+  (`/v1/public/pms/channels/:channel/webhook`) checks via the `x-channel-secret`
+  header before the connector verifies + parses the payload.
+- `STOREFRONT_SINGLE_PROPERTY_ID` (optional) — see "Single-property mode" below.
 
 Non-secret vars (`APP_URL`, `DASH_BASE_URL`, auth mode, `EMAIL_FROM`) live in
 `wrangler.jsonc` under `vars`. The `CACHE` / `RATE_LIMIT` KV namespace IDs and
@@ -70,6 +92,19 @@ pnpm --filter pms-admin seed          # seed baseline data
 
 `DATABASE_URL` must be set (via `.dev.vars`, `.env`, or the environment) for any
 `db:*` command.
+
+## Scheduled jobs (crons)
+
+Cron triggers are declared in `wrangler.jsonc`; the single `scheduled` handler in
+`src/entry.ts` dispatches on `event.cron` to the matching job in
+`src/api/jobs/*`. Alongside the inherited framework reconcilers (channel-push,
+draft reaper, promotions boundary, event-outbox drain), the PMS adds three:
+
+| Cron | Job | What it does |
+| --- | --- | --- |
+| `0 6 * * *` | housekeeping generate | auto-creates cleaning/inspection tasks from the day's departures/stayovers (idempotent) |
+| `0 2 * * *` | night audit | posts nightly room + tax charges per in-house stay, rolls the business date, emits the day's KPIs |
+| `3,18,33,48 * * * *` | channel ARI push | processes pending outbound ARI events via registered channel connectors |
 
 ## Storefront (direct bookings)
 
@@ -110,23 +145,22 @@ pnpm --filter pms-admin lint          # biome check (root biome.json)
 pnpm --filter pms-admin test          # vitest
 ```
 
-## Vertical scope (Phase 0)
+## Vertical scope
 
 The PMS keeps the stay-relevant framework modules (accommodations, operations,
 bookings, catalog, commerce, crm, finance, transactions, storefront, auth) plus
 the standard admin shell.
 
-Tour-shaped verticals inherited from the operator blueprint (cruises, charters,
-mice, flights, trips, quotes) are still present and wired in this Phase-0
-skeleton. They are deeply woven into the composition registry (which has strict
-manifest/count tests), `voyant.config.ts` schema discovery, the generated admin
-route files (`src/admin.*.generated.*`), and the admin UI. Removing them safely
-is a coordinated change (composition factory removal + `createVoyantApp({ exclude })`
-for standard modules per ADR-0007 + regenerating admin routes via
-`voyant admin generate` + updating the composition tests) and is deferred to a
-later phase to keep the Phase-0 skeleton green. See `docs/PLAN.md` §5.1 / §6.
+Tour-shaped verticals inherited from the operator blueprint were stripped:
+cruises, charters, and mice (deployment-local wiring deleted) and flights
+(excluded via `createVoyantApp({ exclude })`, ADR-0007). Two remain composed by
+necessity: `trips` and `quotes` are standard framework modules whose provider
+ports are mandatory in `FrameworkProviders`, so they cannot be cleanly excluded
+today; they carry no PMS UI. The upstream catalog admin surface also still
+contributes empty `/catalog/cruises` browse routes (owned by
+`@voyant-travel/catalog-react`, not removable via config). See `docs/PLAN.md`
+§6 status note.
 
-`packages/plugin-catalog-demo`, `packages/plugin-flights-demo`, and
-`packages/realtime-react` are vendored prebuilt (dist-only) demo packages carried
-from the blueprint so the app resolves and typechecks; `plugin-flights-demo` is
-tour residue to remove alongside the flights vertical.
+`packages/plugin-catalog-demo` and `packages/realtime-react` are vendored
+prebuilt (dist-only) demo packages carried from the blueprint so the app resolves
+and typechecks. Both are removal candidates — see their READMEs.
