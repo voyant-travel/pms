@@ -2,7 +2,7 @@
 
 Vendored, prebuilt (dist-only) demo dependency carried over from the operator
 starter blueprint. It provides the React realtime provider/connector bindings
-(channel subscriptions + query-key invalidation hints) the `apps/pms` admin
+(channel subscriptions + query-key invalidation hints) the `starters/pms` admin
 imports so the app resolves and typechecks.
 
 ## Why it is committed

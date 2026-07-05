@@ -29,7 +29,7 @@ Workspace usage today (npm publish is a follow-up):
 ## Registering the module
 
 The default export is a `ModuleFactory` (via `defineDeploymentModule`). Register
-it in the deployment composition (`apps/pms/src/api/composition.ts`); its module
+it in the deployment composition (`starters/pms/src/api/composition.ts`); its module
 name `pms/ari` mounts the admin routes at `/v1/admin/pms/ari/*`.
 
 ```ts

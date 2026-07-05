@@ -1,4 +1,4 @@
-# Voyant PMS — Admin Deployment (`apps/pms`)
+# Voyant PMS — Admin Deployment (`starters/pms`)
 
 The PMS deployment app: a single Cloudflare Worker serving the `/v1/*` API, the
 SSR admin dashboard, and the direct-booking storefront. It consumes the published
@@ -50,7 +50,7 @@ Runtime secrets are provided to `wrangler dev` via `.dev.vars` (git-ignored).
 Copy the template and fill it in:
 
 ```bash
-cp apps/pms/.dev.vars.example apps/pms/.dev.vars
+cp starters/pms/.dev.vars.example starters/pms/.dev.vars
 ```
 
 Minimum required for local boot (see `.dev.vars.example` + `env.d.ts` for the

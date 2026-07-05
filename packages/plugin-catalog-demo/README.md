@@ -1,7 +1,7 @@
 # @voyant-travel/plugin-catalog-demo
 
 Vendored, prebuilt (dist-only) demo dependency carried over from the operator
-starter blueprint. It provides the demo-data catalog wiring the `apps/pms`
+starter blueprint. It provides the demo-data catalog wiring the `starters/pms`
 deployment expects so the app resolves, typechecks, and boots with sample
 inventory.
 

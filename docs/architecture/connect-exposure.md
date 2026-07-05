@@ -6,7 +6,7 @@ Scope: how a Voyant operator can resell this PMS's inventory today, what the
 
 ## The PMS is already a full Voyant deployment
 
-`apps/pms` is a standard Voyant composition, so its **owned accommodation
+`starters/pms` is a standard Voyant composition, so its **owned accommodation
 inventory is already searchable and bookable over the public catalog surface** —
 no channel code required. The accommodations booking engine mounts on both the
 admin and public legs (`@voyant-travel/catalog/booking-engine`), so these public

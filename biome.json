@@ -54,10 +54,10 @@
       "!**/*.generated.ts",
       "!**/*.generated.tsx",
       "!**/migrations",
-      "!apps/pms/openapi",
-      "!apps/pms/src/components/ui",
-      "!apps/pms/src/lib/async-utils.ts",
-      "!apps/pms/src/styles.css"
+      "!starters/pms/openapi",
+      "!starters/pms/src/components/ui",
+      "!starters/pms/src/lib/async-utils.ts",
+      "!starters/pms/src/styles.css"
     ]
   }
 }

@@ -47,7 +47,7 @@ connectivity. See [docs/PLAN.md](docs/PLAN.md) for the full architecture plan.
 ```
 apps/
   pms/            the deployment: Cloudflare Worker (admin + API + storefront),
-                  composition, auth, migrations, crons — see apps/pms/README.md
+                  composition, auth, migrations, crons — see starters/pms/README.md
 packages/
   ari/            @voyant-travel/pms-ari          ARI authoring (writes upstream tables)
   units/          @voyant-travel/pms-units        room units + assignments + derived inventory
@@ -76,16 +76,16 @@ pnpm test
 ```
 
 To run the app locally (needs a Postgres `DATABASE_URL` and a few generated
-secrets), follow [apps/pms/README.md](apps/pms/README.md):
+secrets), follow [starters/pms/README.md](starters/pms/README.md):
 
 ```bash
-cp apps/pms/.dev.vars.example apps/pms/.dev.vars   # fill in
+cp starters/pms/.dev.vars.example starters/pms/.dev.vars   # fill in
 pnpm --filter pms-admin db:migrate
 pnpm --filter pms-admin dev                         # http://localhost:3300
 ```
 
 Deploying requires real Cloudflare resources (KV namespaces, R2 buckets) in
-place of the placeholders in `apps/pms/wrangler.jsonc`.
+place of the placeholders in `starters/pms/wrangler.jsonc`.
 
 ## Status
 
