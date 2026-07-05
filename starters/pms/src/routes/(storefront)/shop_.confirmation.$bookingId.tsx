@@ -1,25 +1,23 @@
 import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router"
-import { Card, CardContent, CardHeader, CardTitle } from "@voyant-travel/ui/components/card"
 import { useEffect, useState } from "react"
 import { z } from "zod"
+
+import { Container } from "@/components/storefront/site/primitives"
 import { getApiUrl } from "@/lib/env"
 import { useStorefrontMessagesOrDefault } from "@/lib/storefront-i18n"
 
 /**
- * Post-checkout confirmation page for the storefront flow.
+ * Post-checkout confirmation page for the storefront flow — restyled to
+ * feel like a hotel confirmation (a prominent booking reference, a clear
+ * status headline, and next steps) while keeping the exact polling
+ * behaviour and i18n strings.
  *
- * Renders one of four panels keyed off `?kind=`:
- *
- *   - `card_pending`  — "we're processing your card payment"
- *   - `bank_transfer` — proforma + IBAN/reference instructions,
- *                        pulled from sessionStorage where the
- *                        storefront wrapper stashed them.
- *   - `inquiry`        — "we'll get back to you" thanks page
- *   - `hold`           — "we've placed a hold" (operator brokered)
- *   - default          — generic confirmation when no kind is set
- *
- * Phase 6: poll the booking status and surface contract / invoice
- * download links once the workflow finishes.
+ * Renders one of several panels keyed off `?kind=`:
+ *   - `card_pending`  — processing the card payment
+ *   - `bank_transfer` — proforma + IBAN/reference instructions
+ *   - `inquiry`       — "we'll get back to you"
+ *   - `hold`          — "we've placed a hold"
+ *   - default         — generic confirmation
  */
 
 const confirmationSearchSchema = z.object({
@@ -57,22 +55,66 @@ function ShopConfirmationRouteComponent(): React.ReactElement {
   const kind = search.kind ?? "default"
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {kind === "bank_transfer" ? (
-        <BankTransferPanel bookingId={bookingId} />
-      ) : kind === "card_pending" ? (
-        <CardPendingPanel
-          bookingId={bookingId}
-          paymentRef={search.session ?? search.orderId ?? search.ref}
-        />
-      ) : kind === "inquiry" ? (
-        <InquiryPanel bookingId={bookingId} />
-      ) : kind === "hold" ? (
-        <HoldPanel bookingId={bookingId} />
-      ) : (
-        <DefaultPanel bookingId={bookingId} />
-      )}
-      <BackLink />
+    <div className="bg-[var(--acme-paper)]">
+      <Container className="py-16 sm:py-24">
+        <div className="mx-auto max-w-2xl">
+          {kind === "bank_transfer" ? (
+            <BankTransferPanel bookingId={bookingId} />
+          ) : kind === "card_pending" ? (
+            <CardPendingPanel
+              bookingId={bookingId}
+              paymentRef={search.session ?? search.orderId ?? search.ref}
+            />
+          ) : kind === "inquiry" ? (
+            <InquiryPanel bookingId={bookingId} />
+          ) : kind === "hold" ? (
+            <HoldPanel bookingId={bookingId} />
+          ) : (
+            <DefaultPanel bookingId={bookingId} />
+          )}
+          <div className="mt-8 text-center">
+            <BackLink />
+          </div>
+        </div>
+      </Container>
+    </div>
+  )
+}
+
+/** Branded panel shell with an optional status accent + eyebrow. */
+function Panel({
+  eyebrow,
+  title,
+  confirmed = false,
+  children,
+}: {
+  eyebrow?: string
+  title: string
+  confirmed?: boolean
+  children: React.ReactNode
+}): React.ReactElement {
+  return (
+    <div className="rounded-sm border border-[var(--acme-line-strong)] bg-[var(--acme-surface)] p-8 shadow-sm sm:p-10">
+      {confirmed ? (
+        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--acme-accent-soft)] text-[var(--acme-accent-strong)] text-2xl">
+          ✓
+        </div>
+      ) : null}
+      {eyebrow ? <p className="acme-eyebrow">{eyebrow}</p> : null}
+      <h1 className="acme-serif mt-3 text-balance text-3xl leading-tight sm:text-4xl">{title}</h1>
+      <div className="mt-6 space-y-4 text-[var(--acme-ink-soft)] text-sm leading-relaxed">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** Prominent booking-reference block. */
+function ReferenceBlock({ label, value }: { label: string; value: string }): React.ReactElement {
+  return (
+    <div className="rounded-sm border border-[var(--acme-line)] bg-[var(--acme-paper)] px-5 py-4">
+      <div className="text-[var(--acme-ink-faint)] text-xs uppercase tracking-[0.14em]">{label}</div>
+      <div className="acme-serif mt-1 text-2xl tracking-wide">{value}</div>
     </div>
   )
 }
@@ -98,32 +140,24 @@ function BankTransferPanel({ bookingId }: { bookingId: string }): React.ReactEle
   }, [bookingId])
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.bankTransferTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4 text-sm">
-        <p>{t.bankTransferIntro}</p>
-        {instructions ? (
-          <dl className="space-y-2 rounded border bg-muted/30 p-4">
-            <Row label={t.bookingReference} value={bookingId} />
-            {proformaNumber ? <Row label={t.proformaNumber} value={proformaNumber} /> : null}
-            <Row label={t.beneficiary} value={instructions.beneficiary} />
-            <Row label={t.bank} value={instructions.bankName} />
-            <Row label={t.iban} value={instructions.iban} />
-            <Row label={t.reference} value={instructions.reference} />
-            <Row
-              label={t.amount}
-              value={formatMoney(instructions.amountCents, instructions.currency)}
-            />
-            {instructions.dueAt ? <Row label={t.dueBy} value={instructions.dueAt} /> : null}
-          </dl>
-        ) : (
-          <p className="text-muted-foreground">{t.bankTransferEmailed}</p>
-        )}
-        <p className="text-muted-foreground">{t.bankTransferFollowUp}</p>
-      </CardContent>
-    </Card>
+    <Panel eyebrow="Almost there" title={t.bankTransferTitle}>
+      <p>{t.bankTransferIntro}</p>
+      {instructions ? (
+        <dl className="space-y-2 rounded-sm border border-[var(--acme-line)] bg-[var(--acme-paper)] p-4">
+          <Row label={t.bookingReference} value={bookingId} />
+          {proformaNumber ? <Row label={t.proformaNumber} value={proformaNumber} /> : null}
+          <Row label={t.beneficiary} value={instructions.beneficiary} />
+          <Row label={t.bank} value={instructions.bankName} />
+          <Row label={t.iban} value={instructions.iban} />
+          <Row label={t.reference} value={instructions.reference} />
+          <Row label={t.amount} value={formatMoney(instructions.amountCents, instructions.currency)} />
+          {instructions.dueAt ? <Row label={t.dueBy} value={instructions.dueAt} /> : null}
+        </dl>
+      ) : (
+        <p className="text-[var(--acme-ink-faint)]">{t.bankTransferEmailed}</p>
+      )}
+      <p className="text-[var(--acme-ink-faint)]">{t.bankTransferFollowUp}</p>
+    </Panel>
   )
 }
 
@@ -158,32 +192,18 @@ function CardPendingPanel({
 
   if (status?.paymentStatus === "failed") {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{t.paymentNotCompletedTitle}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <p>
-            {t.bookingReference}: <code>{status.bookingNumber || bookingId}</code>
-          </p>
-          <p className="text-muted-foreground">{t.paymentNotCompletedBody}</p>
-        </CardContent>
-      </Card>
+      <Panel eyebrow="Payment" title={t.paymentNotCompletedTitle}>
+        <ReferenceBlock label={t.bookingReference} value={status.bookingNumber || bookingId} />
+        <p className="text-[var(--acme-ink-faint)]">{t.paymentNotCompletedBody}</p>
+      </Panel>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.processingTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <p>
-          {t.bookingReference}: <code>{bookingId}</code>
-        </p>
-        <p className="text-muted-foreground">{t.processingBody}</p>
-      </CardContent>
-    </Card>
+    <Panel eyebrow="One moment" title={t.processingTitle}>
+      <ReferenceBlock label={t.bookingReference} value={bookingId} />
+      <p className="text-[var(--acme-ink-faint)]">{t.processingBody}</p>
+    </Panel>
   )
 }
 
@@ -196,23 +216,18 @@ function PaymentSuccessPanel({
 }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.confirmedTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
+    <Panel eyebrow="Confirmed" title={t.confirmedTitle} confirmed>
+      <ReferenceBlock label={t.bookingReference} value={status.bookingNumber || bookingId} />
+      {status.session ? (
         <p>
-          {t.bookingReference}: <code>{status.bookingNumber || bookingId}</code>
+          {t.paymentReceived}{" "}
+          <strong className="text-[var(--acme-ink)]">
+            {formatMoney(status.session.amountCents, status.session.currency)}
+          </strong>
         </p>
-        {status.session ? (
-          <p>
-            {t.paymentReceived}{" "}
-            <strong>{formatMoney(status.session.amountCents, status.session.currency)}</strong>
-          </p>
-        ) : null}
-        <p className="text-muted-foreground">{t.confirmedFollowUp}</p>
-      </CardContent>
-    </Card>
+      ) : null}
+      <p className="text-[var(--acme-ink-faint)]">{t.confirmedFollowUp}</p>
+    </Panel>
   )
 }
 
@@ -259,59 +274,38 @@ function useCheckoutStatus(bookingId: string, paymentRef?: string): CheckoutStat
 function InquiryPanel({ bookingId }: { bookingId: string }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.inquiryTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <p>{t.inquiryBody}</p>
-        <p className="text-muted-foreground">
-          {t.referenceLabel} <code>{bookingId}</code>
-        </p>
-      </CardContent>
-    </Card>
+    <Panel eyebrow="Received" title={t.inquiryTitle} confirmed>
+      <p>{t.inquiryBody}</p>
+      <ReferenceBlock label={t.referenceLabel.replace(/:$/, "")} value={bookingId} />
+    </Panel>
   )
 }
 
 function HoldPanel({ bookingId }: { bookingId: string }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.holdTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <p>
-          {t.bookingReference}: <code>{bookingId}</code>
-        </p>
-        <p className="text-muted-foreground">{t.holdBody}</p>
-      </CardContent>
-    </Card>
+    <Panel eyebrow="On hold" title={t.holdTitle} confirmed>
+      <ReferenceBlock label={t.bookingReference} value={bookingId} />
+      <p className="text-[var(--acme-ink-faint)]">{t.holdBody}</p>
+    </Panel>
   )
 }
 
 function DefaultPanel({ bookingId }: { bookingId: string }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.defaultTitle}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p>
-          {t.bookingReference}: <code>{bookingId}</code>
-        </p>
-        <p className="text-muted-foreground text-sm">{t.defaultBody}</p>
-      </CardContent>
-    </Card>
+    <Panel eyebrow="Confirmed" title={t.defaultTitle} confirmed>
+      <ReferenceBlock label={t.bookingReference} value={bookingId} />
+      <p className="text-[var(--acme-ink-faint)]">{t.defaultBody}</p>
+    </Panel>
   )
 }
 
 function Row({ label, value }: { label: string; value: string }): React.ReactElement {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-muted-foreground text-xs uppercase tracking-wide">{label}</dt>
-      <dd className="break-all font-medium">{value}</dd>
+      <dt className="text-[var(--acme-ink-faint)] text-xs uppercase tracking-wide">{label}</dt>
+      <dd className="break-all font-medium text-[var(--acme-ink)]">{value}</dd>
     </div>
   )
 }
@@ -319,10 +313,7 @@ function Row({ label, value }: { label: string; value: string }): React.ReactEle
 function BackLink(): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
-    <Link
-      to="/shop"
-      className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm hover:bg-primary/90"
-    >
+    <Link to="/shop" className="acme-btn acme-btn-ink">
       {t.backToStorefront}
     </Link>
   )

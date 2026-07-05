@@ -112,6 +112,44 @@ export const ACME_PROPERTY_CONTENT: Record<AcmePropertyKey, AcmePropertyContent>
   },
 }
 
+/**
+ * Static directory for the About / Contact pages — the stable facts
+ * (name, city, address) alongside the editorial contact placeholders,
+ * so those pages render instantly without a catalog round-trip. Order
+ * leads with the flagship.
+ */
+export interface AcmeDirectoryEntry {
+  key: AcmePropertyKey
+  name: string
+  city: string
+  address: string
+  stars: number
+}
+
+export const ACME_DIRECTORY: readonly AcmeDirectoryEntry[] = [
+  {
+    key: "acme-grand",
+    name: "Acme Grand Hotel",
+    city: "Bucharest",
+    address: "Calea Victoriei 12, Bucharest, RO 010061",
+    stars: 5,
+  },
+  {
+    key: "acme-seaside",
+    name: "Acme Seaside Resort",
+    city: "Constanța",
+    address: "Bulevardul Mamaia 250, Constanța, RO 900001",
+    stars: 4,
+  },
+  {
+    key: "acme-city",
+    name: "Acme City Apartments",
+    city: "Cluj-Napoca",
+    address: "Strada Memorandumului 8, Cluj-Napoca, RO 400114",
+    stars: 3,
+  },
+]
+
 const NAME_FALLBACKS: ReadonlyArray<{ match: string; key: AcmePropertyKey }> = [
   { match: "grand", key: "acme-grand" },
   { match: "seaside", key: "acme-seaside" },
