@@ -147,15 +147,28 @@ docker exec voyant-pms-postgres \
 (Configure a real email transport in `src/lib/notifications.ts` to verify by
 email instead.)
 
-### Catalog search index
+### Demo dataset
 
-Catalog/storefront search reads from Typesense. It returns empty results until
-you populate it — seed data then build the index:
+`seed:acme` builds a realistic multi-property demo for a fictitious hotel group,
+**Acme Hotels** — three properties (Acme Grand Hotel · Bucharest 5★, Acme
+Seaside Resort · Mamaia 4★, Acme City Apartments · Cluj-Napoca aparthotel) with
+room types, meal plans, rate plans, daily rates + inventory (today−30 …
+today+180), ~40 guest stays across the lifecycle, unit assignments, check-ins,
+housekeeping tasks, maintenance blocks and folios (night-audited + one settled).
+
+The seed writes through the PMS package services (`pms-ari`, `pms-units`,
+`pms-front-desk`, `pms-housekeeping`, `pms-folios`) and the shared owned-stay
+booking write path, so it doubles as an integration exercise of those services.
+It is **idempotent** — each run TRUNCATEs the tables it owns and re-seeds a
+clean dataset.
 
 ```bash
-pnpm --filter pms-admin seed        # baseline catalog data (optional)
-pnpm --filter pms-admin reindex     # (re)build Typesense collections
+pnpm --filter pms-admin seed:acme   # seed the Acme Hotels demo dataset (alias: seed)
+pnpm --filter pms-admin reindex     # (re)build Typesense collections so storefront search works
 ```
+
+Catalog/storefront search reads from Typesense and returns empty results until
+you run `reindex` after seeding.
 
 ### More DB commands
 
