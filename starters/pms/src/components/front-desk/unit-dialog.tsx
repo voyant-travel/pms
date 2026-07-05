@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@voyant-travel/ui/components/select"
 import { Textarea } from "@voyant-travel/ui/components/textarea"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import type { RoomType } from "../ari/ari-client"
@@ -77,6 +77,15 @@ export function UnitDialog({
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
+
+  // Re-seed the form whenever the dialog is opened for a (possibly different)
+  // unit. The parent controls `open` directly, so Radix's `onOpenChange` never
+  // fires on programmatic open — without this the Edit form would keep its
+  // initial (empty) mount state instead of the selected unit's values.
+  useEffect(() => {
+    if (open) setForm(toForm(unit, roomTypes))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, unit])
 
   const save = useMutation({
     mutationFn: async () => {
