@@ -39,15 +39,15 @@ function buildToolContext(c: Context): OperatorToolContext {
       createTrip: (input) => tripsService.createTrip(c.var.db, input),
       addComponent: (input) => tripsService.addComponent(c.var.db, input),
       removeComponent: (componentId) => tripsService.removeComponent(c.var.db, componentId),
-      priceTrip: (input) => {
+      priceTrip: async (input) => {
         const options = createOperatorTripsRoutesOptions()
-        const deps = resolveDeps(c, options.priceTripDeps)
+        const deps = await resolveDeps(c, options.priceTripDeps)
         if (!deps) throw new Error("Trips price dependencies are not configured")
         return tripsService.priceTrip(c.var.db, input, deps)
       },
-      reserveTrip: (input) => {
+      reserveTrip: async (input) => {
         const options = createOperatorTripsRoutesOptions()
-        const deps = resolveDeps(c, options.reserveTripDeps)
+        const deps = await resolveDeps(c, options.reserveTripDeps)
         if (!deps) throw new Error("Trips reserve dependencies are not configured")
         return tripsService.reserveTrip(c.var.db, input, deps)
       },
@@ -55,7 +55,10 @@ function buildToolContext(c: Context): OperatorToolContext {
   }
 }
 
-function resolveDeps<T>(c: Context, deps: T | ((c: Context) => T | undefined) | undefined) {
+function resolveDeps<T>(
+  c: Context,
+  deps: T | ((c: Context) => T | Promise<T | undefined> | undefined) | undefined,
+) {
   if (typeof deps !== "function") return deps
-  return (deps as (c: Context) => T | undefined)(c)
+  return (deps as (c: Context) => T | Promise<T | undefined> | undefined)(c)
 }

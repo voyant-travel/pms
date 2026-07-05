@@ -36,10 +36,10 @@
     "clean": "rm -rf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@voyant-travel/accommodations": "^0.109.7",
+    "@voyant-travel/accommodations": "^0.109.9",
     "@voyant-travel/db": "0.109.5",
-    "@voyant-travel/framework": "^0.12.13",
-    "@voyant-travel/hono": "0.121.1",
+    "@voyant-travel/framework": "^0.12.20",
+    "@voyant-travel/hono": "0.121.3",
     "@voyant-travel/types": "0.107.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.25",
