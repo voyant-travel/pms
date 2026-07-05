@@ -209,7 +209,12 @@ export function AccommodationDetailPage({
                 !selectedRatePlanId ||
                 !datesValid ||
                 totalPax < 1 ||
-                quote.data?.available === false
+                quote.data?.available === false ||
+                // A quote can come back `available: true` yet still carry an
+                // `invalidReason` (e.g. `room_occupancy_exceeded`) with no
+                // price — Book must stay disabled so the guest can't advance an
+                // unpriceable selection into the booking journey.
+                Boolean(quote.data?.invalidReason)
               }
               onCheckIn={setCheckIn}
               onCheckOut={setCheckOut}
