@@ -95,10 +95,14 @@
   --acme-surface: #ffffff;
   --acme-ink: #1b1712;
   --acme-ink-soft: #574e43;
-  --acme-ink-faint: #8a7f70;
+  /* Darkened from #8a7f70 to meet WCAG AA (4.5:1) for small muted text on
+     paper/surface/paper-deep — the old value measured only ~3.2–3.9:1. */
+  --acme-ink-faint: #726757;
   --acme-line: #e5dccb;
   --acme-line-strong: #d6c9b2;
-  --acme-accent: #9c6b3c;
+  /* Darkened from #9c6b3c (~4.1:1 on paper) to clear WCAG AA for accent
+     text (eyebrows/links) and improve white-on-accent button contrast. */
+  --acme-accent: #8c5f34;
   --acme-accent-strong: #7d5330;
   --acme-accent-soft: #efe4d2;
   --acme-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
