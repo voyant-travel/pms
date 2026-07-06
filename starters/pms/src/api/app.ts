@@ -18,6 +18,7 @@ import {
 import { dbFromEnvForApp, httpDbFromEnvForApp } from "./lib/db"
 import { bookingScheduleBundle } from "./routes/booking-schedule"
 import { channelPushBundle } from "./routes/channel-push"
+import { mountStayBookingDetailRoutes } from "./routes/stay-booking-detail"
 import {
   createOperatorWorkflowDriver,
   generateContractPdfForBooking,
@@ -104,6 +105,10 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
     "/v1/public/payment-link",
     "/v1/public/products",
     "/v1/public/accommodations",
+    // Guest-authorized rich stay-booking detail (mounted in additionalRoutes).
+    // Access is gated per-request by a traveler-email match or a
+    // `voyant_guest_booking` capability — an id in the path alone leaks nothing.
+    "/v1/public/stay-bookings",
     "/v1/public/operator-profile",
     "/v1/public/payment-policy",
     "/v1/local/mock-card",
@@ -156,6 +161,11 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
         return typeof userId === "string" ? userId : null
       },
     })
+
+    // Guest-facing rich stay detail for the confirmation + manage-booking
+    // pages. Authorization is enforced inside the handler (email match or
+    // guest-booking capability); the prefix is listed in `publicPaths` above.
+    mountStayBookingDetailRoutes(hono)
 
     hono.get("/v1/local/mock-card/:sessionId/approve", async (c) => {
       const mockEnabled = String(
