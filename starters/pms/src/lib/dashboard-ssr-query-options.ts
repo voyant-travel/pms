@@ -1,15 +1,24 @@
 import { queryOptions } from "@tanstack/react-query"
 import { createMiddleware, createServerFn } from "@tanstack/react-start"
-import {
-  type BookingsAggregates,
-  buildDashboardSixMonthWindow,
-  dashboardQueryKeys,
-  type FinanceAggregates,
-  type SuppliersAggregates,
-} from "@voyant-travel/admin/dashboard/query-options"
 
+import { ariKeys, type PropertyOption } from "@/components/ari/ari-client"
 import { dbFromEnvForApp } from "../api/lib/db"
 import { getOperatorStartEnv } from "./operator-start-context"
+
+/**
+ * SSR data seam for the hotel Dashboard (the property-scoped daily overview at
+ * `/`, replacing the packaged operator dashboard).
+ *
+ * The dashboard's KPI / front-desk / housekeeping / revenue panels are scoped to
+ * the property picked in the shared selector, which lives in `localStorage` and
+ * is therefore unknown server-side — those reads necessarily run client-side
+ * (the page renders on the client; the route is `ssr: "data-only"`). What SSR
+ * CAN populate is the property list itself, so the selector paints with the
+ * portfolio on first render instead of flashing empty. This loader prefetches
+ * the property options through a cookie-authenticated server function that reads
+ * the database directly (mirroring the operator dashboard's original SSR
+ * pattern), under the SAME query key the client `usePropertyOptions` hook uses.
+ */
 
 type OperatorServerContext = {
   env?: CloudflareBindings
@@ -59,71 +68,51 @@ async function withDashboardDb<T>(
   }
 }
 
-export const getOperatorDashboardBookingsAggregates = createServerFn({ method: "GET" })
+/**
+ * Property options for the dashboard selector: sellable properties joined to
+ * their facility name (properties carry no display name of their own — it lives
+ * on the linked facility). The server-side twin of the client
+ * `listPropertyOptions`, returning the identical `PropertyOption[]` shape so the
+ * hydrated cache satisfies `usePropertyOptions` without a shape mismatch.
+ */
+export const getOperatorDashboardPropertyOptions = createServerFn({ method: "GET" })
   .middleware([withOperatorRequest])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<PropertyOption[]> => {
     const env = await requireAuthenticatedOperatorRequest(context)
-    const { from } = buildDashboardSixMonthWindow()
     return withDashboardDb(env, async (db) => {
-      const { bookingsService } = await import("@voyant-travel/bookings")
-      const serviceDb = db as unknown as Parameters<typeof bookingsService.getBookingAggregates>[0]
-      return bookingsService.getBookingAggregates(serviceDb, { from, upcomingLimit: 8 })
+      const { placesService, facilitiesService } = await import("@voyant-travel/operations")
+      const serviceDb = db as unknown as Parameters<typeof placesService.listProperties>[0]
+      const [properties, facilities] = await Promise.all([
+        placesService.listProperties(serviceDb, { limit: 200, offset: 0 }),
+        facilitiesService.listFacilities(serviceDb, { limit: 200, offset: 0 }),
+      ])
+      const nameByFacility = new Map(
+        facilities.data.map((f: { id: string; name: string }) => [f.id, f.name]),
+      )
+      return properties.data.map(
+        (p: {
+          id: string
+          facilityId: string
+          brandName: string | null
+          propertyType: string
+        }) => ({
+          id: p.id,
+          label: nameByFacility.get(p.facilityId) ?? p.brandName ?? p.id,
+          propertyType: p.propertyType,
+        }),
+      )
     })
   })
 
-export const getOperatorDashboardSuppliersAggregates = createServerFn({ method: "GET" })
-  .middleware([withOperatorRequest])
-  .handler(async ({ context }) => {
-    const env = await requireAuthenticatedOperatorRequest(context)
-    return withDashboardDb(env, async (db) => {
-      const { suppliersService } = await import("@voyant-travel/distribution")
-      const serviceDb = db as unknown as Parameters<
-        typeof suppliersService.getSupplierAggregates
-      >[0]
-      return suppliersService.getSupplierAggregates(serviceDb)
-    })
-  })
-
-export const getOperatorDashboardFinanceAggregates = createServerFn({ method: "GET" })
-  .middleware([withOperatorRequest])
-  .handler(async ({ context }) => {
-    const env = await requireAuthenticatedOperatorRequest(context)
-    const { from } = buildDashboardSixMonthWindow()
-    return withDashboardDb(env, async (db) => {
-      const { financeService } = await import("@voyant-travel/finance")
-      const serviceDb = db as unknown as Parameters<typeof financeService.getFinanceAggregates>[0]
-      return financeService.getFinanceAggregates(serviceDb, { from, outstandingTopLimit: 5 })
-    })
-  })
-
-export function getOperatorDashboardBookingsAggregatesQueryOptions() {
-  const { from } = buildDashboardSixMonthWindow()
+/**
+ * Query options for the dashboard property selector, keyed to `ariKeys.properties()`
+ * — the SAME key the client `usePropertyOptions` hook reads — so an SSR prefetch
+ * hydrates that hook's cache.
+ */
+export function getOperatorDashboardPropertyOptionsQueryOptions() {
   return queryOptions({
-    queryKey: dashboardQueryKeys.bookingsAggregates(from),
-    queryFn: async (): Promise<{ data: BookingsAggregates }> => ({
-      data: await getOperatorDashboardBookingsAggregates(),
-    }),
-    staleTime: 60_000,
-  })
-}
-
-export function getOperatorDashboardSuppliersAggregatesQueryOptions() {
-  return queryOptions({
-    queryKey: dashboardQueryKeys.suppliersAggregates(),
-    queryFn: async (): Promise<{ data: SuppliersAggregates }> => ({
-      data: await getOperatorDashboardSuppliersAggregates(),
-    }),
-    staleTime: 60_000,
-  })
-}
-
-export function getOperatorDashboardFinanceAggregatesQueryOptions() {
-  const { from } = buildDashboardSixMonthWindow()
-  return queryOptions({
-    queryKey: dashboardQueryKeys.financeAggregates(from),
-    queryFn: async (): Promise<{ data: FinanceAggregates }> => ({
-      data: await getOperatorDashboardFinanceAggregates(),
-    }),
+    queryKey: ariKeys.properties(),
+    queryFn: () => getOperatorDashboardPropertyOptions(),
     staleTime: 60_000,
   })
 }

@@ -299,27 +299,50 @@ function withOperatorRouteMessagesProviders(
 //   operator starter's `/v1/admin/settings/operator-*` endpoints, which
 //   have no packaged client yet) spliced into the packaged settings layout
 //   as an extra page, leading the General group.
+// The packaged tour-operator DashboardPage (bookings/finance/suppliers
+// aggregates + recharts) is replaced by the app-owned hotel Dashboard — a
+// property-scoped daily overview under `src/components/dashboard/`. The core
+// extension's `dashboard` seam only exposes the loader + SSR mode, not the page
+// component, so we compose the packaged core extension and then swap the
+// `core-dashboard` route's `page` for the app page (keeping the generated `/`
+// route + typed links untouched). The route stays `ssr: "data-only"`: the page
+// reads the selected property from `localStorage`, so it renders on the client
+// while its loader still prefetches the property list server-side.
+function withAppDashboardPage(extension: AdminExtension): AdminExtension {
+  if (!extension.routes?.length) return extension
+  return {
+    ...extension,
+    routes: extension.routes.map((route) =>
+      route.id === "core-dashboard"
+        ? {
+            ...route,
+            component: undefined,
+            page: () =>
+              import("@/components/dashboard/dashboard-page").then((module) =>
+                adminRoutePageModule(module.DashboardPage),
+              ),
+          }
+        : route,
+    ),
+  }
+}
+
 function createCoreExtension() {
-  return createAdminCoreExtension({
+  const extension = createAdminCoreExtension({
     dashboard: {
+      ssr: "data-only",
       // Dynamic import on purpose: the SSR query options pull the server-fn
       // module, and a static import here would pin it into the
       // workspace-chrome chunk that evaluates this registry.
       loader: async ({ queryClient }: AdminRouteLoaderContext) => {
-        // The PMS removed the Products admin surface, so the operator no longer
-        // SSR-prefetches product aggregates. The packaged DashboardPage still
-        // renders its baked-in "Active products" KPI (client-fetched); removing
-        // that card would require ejecting the whole packaged dashboard.
-        const {
-          getOperatorDashboardBookingsAggregatesQueryOptions,
-          getOperatorDashboardFinanceAggregatesQueryOptions,
-          getOperatorDashboardSuppliersAggregatesQueryOptions,
-        } = await import("@/lib/dashboard-ssr-query-options")
-        await Promise.all([
-          queryClient.ensureQueryData(getOperatorDashboardBookingsAggregatesQueryOptions()),
-          queryClient.ensureQueryData(getOperatorDashboardSuppliersAggregatesQueryOptions()),
-          queryClient.ensureQueryData(getOperatorDashboardFinanceAggregatesQueryOptions()),
-        ])
+        // Property-scoped KPIs can't be SSR-prefetched (the property lives in
+        // localStorage, unknown server-side); the panels fetch client-side. What
+        // SSR can seed is the property selector's option list, keyed the same as
+        // the client `usePropertyOptions` hook so the selector paints instantly.
+        const { getOperatorDashboardPropertyOptionsQueryOptions } = await import(
+          "@/lib/dashboard-ssr-query-options"
+        )
+        await queryClient.ensureQueryData(getOperatorDashboardPropertyOptionsQueryOptions())
       },
     },
     settings: {
@@ -367,6 +390,8 @@ function createCoreExtension() {
       ],
     },
   })
+
+  return withAppDashboardPage(extension)
 }
 
 // Operations is package-delivered (packaged-admin RFC Phase 3): the owner
