@@ -15,8 +15,11 @@ import { buildRowLanes, type StayBar, statusBarClass } from "./tape-chart-model"
 
 const WEEKDAY_LABELS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
+// Sticky Unit column. Every sticky cell must carry its own opaque background so
+// horizontally scrolled stay bars never show through it — `bg-background` for
+// unit rows, `bg-muted` for the opaque section headers (see `GroupRows`).
 const STICKY_COL =
-  "sticky left-0 z-10 bg-background border-r w-40 min-w-40 max-w-40 px-3 text-left align-middle"
+  "sticky left-0 z-20 bg-background border-r w-40 min-w-40 max-w-40 px-3 text-left align-middle"
 
 // The grid is `table-fixed` + `w-full`, so the date columns share the container
 // width evenly instead of sitting at a fixed size and leaving a dead gap on wide
@@ -102,9 +105,9 @@ function GroupRows({
 }) {
   return (
     <>
-      <tr className="border-b bg-muted/20">
-        <th className={`${STICKY_COL} bg-muted/20 py-1.5 font-semibold`}>{roomTypeName}</th>
-        <td className="px-2 py-1" colSpan={dates.length} />
+      <tr className="border-y bg-muted">
+        <th className={`${STICKY_COL} bg-muted py-1.5 font-semibold`}>{roomTypeName}</th>
+        <td className="bg-muted px-2 py-1" colSpan={dates.length} />
       </tr>
       {units.map((unit) => (
         <UnitRows key={unit.unitId} unit={unit} dates={dates} onSelectStay={onSelectStay} />

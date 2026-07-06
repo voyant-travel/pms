@@ -10,14 +10,22 @@ import type { CalendarInventoryCell, CalendarRateCell } from "@voyant-travel/pms
 import { useEffect, useRef, useState } from "react"
 import { centsToInput, inputToCents } from "./calendar-grid-model"
 
+/** Join truthy class names (single background per element keeps stacking sane). */
+const cx = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(" ")
+
 function EditableValue({
   initial,
   onCommit,
   align = "center",
+  valueClassName,
+  strike = false,
 }: {
   initial: string
   onCommit: (raw: string) => void
   align?: "center" | "right"
+  valueClassName?: string
+  strike?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(initial)
@@ -47,7 +55,11 @@ function EditableValue({
             setEditing(false)
           }
         }}
-        className="h-6 w-full rounded border px-1 text-center text-xs tabular-nums outline-none"
+        className={cx(
+          "h-6 w-full rounded border px-1 tabular-nums outline-none",
+          align === "right" ? "text-right" : "text-center",
+          valueClassName ?? "text-xs",
+        )}
       />
     )
   }
@@ -59,9 +71,12 @@ function EditableValue({
         setDraft(initial)
         setEditing(true)
       }}
-      className={`h-6 w-full px-1 text-xs tabular-nums hover:bg-accent ${
-        align === "right" ? "text-right" : "text-center"
-      }`}
+      className={cx(
+        "h-6 w-full px-1 tabular-nums hover:bg-accent",
+        align === "right" ? "text-right" : "text-center",
+        valueClassName ?? "text-xs",
+        strike && "text-muted-foreground line-through",
+      )}
     >
       {initial === "" ? <span className="text-muted-foreground">–</span> : initial}
     </button>
@@ -79,22 +94,40 @@ export function InventoryCell({
   const closed = cell?.closed ?? false
 
   return (
-    <div className={`flex flex-col items-center ${closed ? "bg-destructive/10" : ""}`}>
+    <div
+      className={cx(
+        "flex flex-col items-center justify-center gap-0.5 py-0.5",
+        closed && "bg-destructive/10",
+      )}
+    >
       <EditableValue
         initial={cell ? String(capacity) : ""}
+        valueClassName={cx("text-[13px] font-semibold", !closed && "text-foreground")}
+        strike={closed}
         onCommit={(raw) => {
           const n = Number(raw)
           if (Number.isFinite(n) && n >= 0) onSave(Math.trunc(n), closed)
         }}
       />
+      {/* Open is the norm, so it reads as a quiet dot; closed is the exception
+          worth ink — a red "Closed" label. Both toggle the same state. */}
       <button
         type="button"
         onClick={() => onSave(capacity, !closed)}
-        className={`text-[10px] leading-tight ${
-          closed ? "text-destructive font-medium" : "text-muted-foreground"
-        }`}
+        title={closed ? "Closed — click to open" : "Open — click to close"}
+        aria-label={closed ? "Closed — click to open" : "Open — click to close"}
+        className={cx(
+          "flex h-3 items-center justify-center leading-none",
+          closed
+            ? "text-destructive text-[9px] font-semibold uppercase tracking-wide"
+            : "text-muted-foreground/40 hover:text-muted-foreground",
+        )}
       >
-        {closed ? "closed" : "open"}
+        {closed ? (
+          "Closed"
+        ) : (
+          <span className="h-1 w-1 rounded-full bg-current" aria-hidden="true" />
+        )}
       </button>
     </div>
   )
@@ -111,6 +144,7 @@ export function RateCell({
     <EditableValue
       initial={centsToInput(cell?.sellAmountCents)}
       align="right"
+      valueClassName="text-[13px] font-semibold text-foreground"
       onCommit={(raw) => {
         const cents = inputToCents(raw)
         if (cents != null && cents >= 0) onSave(cents)
