@@ -59,6 +59,8 @@ export interface Folio {
   currency: string
   status: FolioStatus
   financeInvoiceId: string | null
+  /** Human `INV-…` number resolved from the finance invoice on list/detail reads. */
+  financeInvoiceNumber?: string | null
   settledAt: string | null
   closedAt: string | null
   metadata: Record<string, unknown> | null

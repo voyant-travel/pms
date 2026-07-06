@@ -11,6 +11,7 @@
  */
 
 import { bookings } from "@voyant-travel/bookings/schema"
+import { invoices } from "@voyant-travel/finance/schema"
 import { type ListResponse, listResponse } from "@voyant-travel/types"
 import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm"
 import { summarizeFolio } from "./balance.js"
@@ -64,6 +65,26 @@ export async function resolveBookingLabels(
   )
 }
 
+/**
+ * Resolve `financeInvoiceId → invoice_number` for a set of folios in one query.
+ * Settlement stores the upstream finance invoice's raw id on the folio; the admin
+ * surfaces want the human `INV-…` number, so read paths LEFT JOIN `invoices`
+ * (finance is already a package dependency) rather than leak a raw `inv_…` id. A
+ * read-join keeps the number correct even if finance renumbers.
+ */
+export async function resolveInvoiceNumbers(
+  db: FoliosDb,
+  invoiceIds: readonly (string | null)[],
+): Promise<Map<string, string>> {
+  const ids = [...new Set(invoiceIds.filter((id): id is string => Boolean(id)))]
+  if (ids.length === 0) return new Map()
+  const rows = await db
+    .select({ id: invoices.id, invoiceNumber: invoices.invoiceNumber })
+    .from(invoices)
+    .where(inArray(invoices.id, ids))
+  return new Map(rows.map((r) => [r.id, r.invoiceNumber]))
+}
+
 /** Compute the next `F-<seq>` folio number for a property (count + 1, zero-padded). */
 export async function nextFolioNumber(db: FoliosDb, propertyId: string): Promise<string> {
   const [{ total }] = await db
@@ -101,6 +122,8 @@ export interface FolioWithBalance extends FolioRow {
   balanceCents: number
   /** Linked booking's `STAY-…` reference (null for house folios / unlinked). */
   bookingNumber: string | null
+  /** Settlement's upstream finance invoice number (null when unsettled). */
+  financeInvoiceNumber: string | null
 }
 
 /**
@@ -126,10 +149,16 @@ export async function listFoliosWithBalances(
         .groupBy(folioPostings.folioId)
     : []
   const byId = new Map(sums.map((s) => [s.folioId, Number(s.total)]))
-  const labels = await resolveBookingLabels(
-    db,
-    page.data.map((f) => f.bookingId).filter((id): id is string => Boolean(id)),
-  )
+  const [labels, invoiceNumbers] = await Promise.all([
+    resolveBookingLabels(
+      db,
+      page.data.map((f) => f.bookingId).filter((id): id is string => Boolean(id)),
+    ),
+    resolveInvoiceNumbers(
+      db,
+      page.data.map((f) => f.financeInvoiceId),
+    ),
+  ])
   return listResponse(
     page.data.map((f) => {
       const label = f.bookingId ? labels.get(f.bookingId) : undefined
@@ -138,6 +167,9 @@ export async function listFoliosWithBalances(
         balanceCents: byId.get(f.id) ?? 0,
         guestName: f.guestName ?? label?.guestName ?? null,
         bookingNumber: label?.bookingNumber ?? null,
+        financeInvoiceNumber: f.financeInvoiceId
+          ? (invoiceNumbers.get(f.financeInvoiceId) ?? null)
+          : null,
       }
     }),
     { total: page.total, limit: query.limit, offset: query.offset },
@@ -150,7 +182,7 @@ export async function getFolio(db: FoliosDb, id: string): Promise<FolioRow | nul
 }
 
 export interface FolioWithPostings {
-  folio: FolioRow & { bookingNumber: string | null }
+  folio: FolioRow & { bookingNumber: string | null; financeInvoiceNumber: string | null }
   postings: (typeof folioPostings.$inferSelect)[]
   summary: ReturnType<typeof summarizeFolio>
 }
@@ -170,11 +202,16 @@ export async function getFolioWithPostings(
   const label = folio.bookingId
     ? (await resolveBookingLabels(db, [folio.bookingId])).get(folio.bookingId)
     : undefined
+  const financeInvoiceNumber = folio.financeInvoiceId
+    ? ((await resolveInvoiceNumbers(db, [folio.financeInvoiceId])).get(folio.financeInvoiceId) ??
+      null)
+    : null
   return {
     folio: {
       ...folio,
       guestName: folio.guestName ?? label?.guestName ?? null,
       bookingNumber: label?.bookingNumber ?? null,
+      financeInvoiceNumber,
     },
     postings,
     summary: summarizeFolio(postings),

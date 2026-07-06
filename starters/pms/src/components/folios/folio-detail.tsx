@@ -213,8 +213,11 @@ export function FolioDetail({ folioId, onBack }: { folioId: string; onBack: () =
                 </span>
               ) : null}
               {folio.financeInvoiceId ? (
-                <span>
-                  {m.detail.invoice}: <span className="font-mono">{folio.financeInvoiceId}</span>
+                <span title={folio.financeInvoiceId}>
+                  {m.detail.invoice}:{" "}
+                  <span className="font-mono">
+                    {folio.financeInvoiceNumber ?? folio.financeInvoiceId}
+                  </span>
                 </span>
               ) : null}
             </div>
