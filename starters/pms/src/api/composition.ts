@@ -55,7 +55,7 @@ import { asPostgresDb } from "./lib/booking-engine-db"
 import { resolveBookingRequirementsProductSnapshot } from "./lib/booking-requirements-product-snapshot"
 import { buildCatalogContext } from "./lib/catalog-context"
 import { getChannelConnectors } from "./lib/channel-connectors"
-import { persistStayBooking } from "./lib/persist-stay-booking"
+import { persistConfirmedStayBooking, persistStayBooking } from "./lib/persist-stay-booking"
 import { createBookingScheduleExtension } from "./routes/booking-schedule"
 import { createChannelPushExtension } from "./routes/channel-push"
 import { createOperatorQuoteVersionSnapshotExtension } from "./routes/quote-version-snapshot-routes"
@@ -269,10 +269,12 @@ const pmsDomainModules: Record<string, ModuleFactory<OperatorCapabilities>> = {
   units: unitsModule,
   // Front-desk reservations persist through the shared owned-stay write path,
   // marked `direct` so reports distinguish desk-created reservations from OTA
-  // ingests and storefront/walk-in drafts.
+  // ingests and storefront/walk-in drafts. They confirm immediately — no
+  // payment step gates a desk reservation (folios carry the charges); the
+  // checkout/finalize saga confirms storefront bookings instead.
   "front-desk": createFrontDeskModule({
     persistStayBooking: (db, input, opts) =>
-      persistStayBooking(asPostgresDb(db), input, { ...opts, source: "direct" }),
+      persistConfirmedStayBooking(asPostgresDb(db), input, { ...opts, source: "direct" }),
   }),
   housekeeping: housekeepingModule,
   folios: foliosModule,

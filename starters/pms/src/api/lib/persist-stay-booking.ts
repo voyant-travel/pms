@@ -37,7 +37,16 @@ export type StayBookingSource = "direct" | "manual" | "ota" | "internal"
 export async function persistStayBooking(
   db: PostgresJsDatabase,
   input: AccommodationCommitBridgeInput,
-  opts?: { userId?: string; source?: StayBookingSource },
+  opts?: {
+    userId?: string
+    source?: StayBookingSource
+    /**
+     * Lifecycle entry point. The booking-engine/checkout flow creates `draft`
+     * bookings (confirmed later by the finalize saga); staff flows create
+     * `on_hold` — the state `bookingsService.confirmBooking` requires.
+     */
+    initialStatus?: "draft" | "on_hold"
+  },
 ): Promise<PersistStayBookingResult> {
   try {
     const roomCount = input.roomCount ?? 1
@@ -68,7 +77,7 @@ export async function persistStayBooking(
         {
           bookingNumber: generateStayBookingNumber(),
           sellCurrency: currency,
-          status: "draft",
+          status: opts?.initialStatus ?? "draft",
           sourceType: opts?.source ?? "manual",
           personId: input.personId ?? null,
           organizationId: input.organizationId ?? null,
@@ -175,6 +184,30 @@ export async function persistStayBooking(
       reason: err instanceof Error ? err.message : String(err),
     }
   }
+}
+
+/**
+ * Persist and immediately confirm a stay booking. Used for staff-created
+ * (front-desk) reservations, which have no payment step gating confirmation —
+ * the checkout/finalize saga confirms storefront bookings instead.
+ */
+export async function persistConfirmedStayBooking(
+  db: PostgresJsDatabase,
+  input: AccommodationCommitBridgeInput,
+  opts?: { userId?: string; source?: StayBookingSource },
+): Promise<PersistStayBookingResult> {
+  // `confirmBooking` requires the staff-brokered `on_hold` entry state — it
+  // deliberately refuses to confirm straight from `draft`.
+  const result = await persistStayBooking(db, input, { ...opts, initialStatus: "on_hold" })
+  if (result.status !== "ok" || !result.bookingId) return result
+  const confirmed = await bookingsService.confirmBooking(db, result.bookingId, {}, opts?.userId)
+  if (confirmed.status !== "ok") {
+    return {
+      status: "failed",
+      reason: `reservation persisted as ${result.bookingNumber} but confirmation failed (${confirmed.status})`,
+    }
+  }
+  return result
 }
 
 export function generateStayBookingNumber(): string {
