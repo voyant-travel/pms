@@ -2,9 +2,9 @@ import { createFileRoute, Outlet } from "@tanstack/react-router"
 import { defaultOperatorNavIcons } from "@voyant-travel/admin"
 import {
   AdminWorkspacePendingFallback,
-  AdminWorkspaceShell,
   createAdminWorkspaceBeforeLoad,
 } from "@voyant-travel/admin/app/workspace"
+import { OperatorWorkspaceShell } from "@/components/admin-shared/operator-workspace-shell"
 import { UserProvider, useUser } from "@/components/providers/user-provider"
 import { operatorAdminDestinations } from "@/lib/admin-destinations"
 import { createOperatorAdminExtensions } from "@/lib/admin-extensions"
@@ -46,7 +46,7 @@ function WorkspaceContent() {
   const signOut = useSignOut()
 
   return (
-    <AdminWorkspaceShell
+    <OperatorWorkspaceShell
       user={user}
       isUserLoading={isLoading}
       icons={operatorNavigationIcons}
@@ -57,6 +57,6 @@ function WorkspaceContent() {
       onSignOut={() => signOut({ redirectTo: "/sign-in" })}
     >
       <Outlet />
-    </AdminWorkspaceShell>
+    </OperatorWorkspaceShell>
   )
 }
