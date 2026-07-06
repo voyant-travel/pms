@@ -168,6 +168,11 @@ export function AccommodationDetailPage({
                 <RoomList
                   content={c}
                   roomSeed={editorial.roomSeed}
+                  entityId={entityId}
+                  checkIn={checkIn}
+                  checkOut={checkOut}
+                  adults={adultCount}
+                  childCount={childCount}
                   selectedRoomId={selectedRoomId}
                   selectedRatePlanId={selectedRatePlanId}
                   onSelect={(roomId, ratePlanId) => {

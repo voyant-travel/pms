@@ -8,6 +8,7 @@ import { buildRoomsMatrix } from "@/components/storefront/rooms-matrix"
 import { Stars } from "./primitives"
 import { picsum, resolveAcmeContent } from "./property-content"
 import { describeRate } from "./rate-plan-label"
+import { RatePrice } from "./rate-price"
 
 /**
  * Presentational building blocks for the elevated Acme property page.
@@ -127,6 +128,11 @@ export { describeRate }
 export function RoomList({
   content,
   roomSeed,
+  entityId,
+  checkIn,
+  checkOut,
+  adults,
+  childCount,
   selectedRoomId,
   selectedRatePlanId,
   onSelect,
@@ -134,6 +140,11 @@ export function RoomList({
 }: {
   content: Pick<AccommodationContent, "room_types" | "rate_plans">
   roomSeed: string
+  entityId: string
+  checkIn: string
+  checkOut: string
+  adults: number
+  childCount: number
   selectedRoomId: string | undefined
   selectedRatePlanId: string | undefined
   onSelect: (roomTypeId: string, ratePlanId: string) => void
@@ -193,6 +204,17 @@ export function RoomList({
                             {cancellation}
                           </div>
                         ) : null}
+                      </div>
+                      <div className="ml-auto text-right">
+                        <RatePrice
+                          entityId={entityId}
+                          roomId={room.id}
+                          ratePlanId={plan.id}
+                          checkIn={checkIn}
+                          checkOut={checkOut}
+                          adults={adults}
+                          childCount={childCount}
+                        />
                       </div>
                       <button
                         type="button"
