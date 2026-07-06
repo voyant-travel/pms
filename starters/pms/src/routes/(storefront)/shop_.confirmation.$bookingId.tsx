@@ -89,8 +89,12 @@ function ShopConfirmationRouteComponent(): React.ReactElement {
             (an inquiry has no booked inventory yet). Rendered once the stashed
             payer email authorizes the fetch; absent that, this stays hidden. */}
         {kind !== "inquiry" && detail ? <ConfirmationStayDetails detail={detail} /> : null}
-        <div className="mx-auto mt-8 max-w-2xl text-center">
+        <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-3">
           <BackLink />
+          {/* When the rich recap can't be shown (e.g. the link is reopened on
+              another device without the stashed payer email), still give the
+              guest a way through to their reservation instead of a dead end. */}
+          {kind !== "inquiry" && !detail ? <ManageLink /> : null}
         </div>
       </Container>
     </div>
@@ -382,6 +386,15 @@ function BackLink(): React.ReactElement {
   return (
     <Link to="/shop" className="acme-btn acme-btn-ink">
       {t.backToStorefront}
+    </Link>
+  )
+}
+
+function ManageLink(): React.ReactElement {
+  const t = useStorefrontMessagesOrDefault().manageBooking
+  return (
+    <Link to="/shop/booking" className="acme-btn acme-btn-outline">
+      {t.manageCta}
     </Link>
   )
 }
