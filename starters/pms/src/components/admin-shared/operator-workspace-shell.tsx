@@ -27,6 +27,7 @@ import {
   useOperatorAdminMessages,
 } from "@voyant-travel/admin/providers/operator-admin-messages"
 import { Fragment, useCallback, useMemo } from "react"
+import { mergeAdminMessageOverrides, navReservationOverrides } from "@/lib/reservation-terminology"
 
 /**
  * Base operator nav groups the PMS deployment hides (tour-operator surfaces
@@ -88,7 +89,10 @@ export function OperatorWorkspaceShell<TUser extends AdminWorkspaceShellUser>({
     >
       {({ user: loadedUser }) => (
         <OperatorAdminMessagesProvider
-          overrides={getOperatorAdminMessageOverridesFromUiPrefs(loadedUser.uiPrefs)}
+          overrides={mergeAdminMessageOverrides(
+            navReservationOverrides,
+            getOperatorAdminMessageOverridesFromUiPrefs(loadedUser.uiPrefs),
+          )}
         >
           <AdminLocalePreferenceSync source={loadedUser} />
           <OperatorWorkspaceShellInner

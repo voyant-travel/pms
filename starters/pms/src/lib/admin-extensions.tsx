@@ -9,9 +9,17 @@ import {
   createAdminExtensionRegistry,
 } from "@voyant-travel/admin/extensions"
 import { createAdminCoreExtension } from "@voyant-travel/admin-app/core-extension"
+import type { LocaleMessageOverrides } from "@voyant-travel/i18n"
 import { Building, FileText, ScrollText, SlidersHorizontal, Tag } from "lucide-react"
+import type { ReactNode } from "react"
 import { generatedAdminExtensionFactories } from "@/admin.extensions.generated"
 import type { AdminMessages } from "@/lib/admin-i18n"
+import {
+  bookingsReservationOverrides,
+  financeReservationOverrides,
+  legalReservationOverrides,
+  relationshipsReservationOverrides,
+} from "@/lib/reservation-terminology"
 
 /**
  * Operator admin contributions composed through the shared admin runtime.
@@ -73,6 +81,42 @@ function loadProvider<TModule>(
   return () => importer().then((module) => ({ default: pick(module) }))
 }
 
+/**
+ * A package `*UiMessagesProvider` — accepts the route seam's `{ children, locale }`
+ * plus the package-owned `overrides` prop the deployment injects.
+ */
+type OverridableMessagesProvider<TMessages extends Record<string, unknown>> = {
+  (props: {
+    children: ReactNode
+    locale: string | null | undefined
+    overrides?: LocaleMessageOverrides<TMessages> | null
+  }): ReactNode
+  displayName?: string
+}
+
+/**
+ * Like `loadProvider`, but statically injects deployment-owned message overrides
+ * (the "Reservations" terminology split) into the package provider while keeping
+ * the route seam's `{ children, locale }` contract. See `reservation-terminology.ts`.
+ */
+function loadProviderWithOverrides<TModule, TMessages extends Record<string, unknown>>(
+  importer: () => Promise<TModule>,
+  pick: (module: TModule) => OverridableMessagesProvider<TMessages>,
+  overrides: LocaleMessageOverrides<TMessages>,
+): RouteMessagesProviderLoader {
+  return () =>
+    importer().then((module) => {
+      const Provider = pick(module)
+      const WithOverrides: AdminRouteMessagesProvider = ({ children, locale }) => (
+        <Provider locale={locale} overrides={overrides}>
+          {children}
+        </Provider>
+      )
+      WithOverrides.displayName = `${Provider.displayName ?? Provider.name ?? "Package"}ReservationOverrides`
+      return { default: WithOverrides }
+    })
+}
+
 function composeProviderLoaders(
   ...loaders: readonly RouteMessagesProviderLoader[]
 ): RouteMessagesProviderLoader {
@@ -99,9 +143,10 @@ const authMessagesProvider = loadProvider(
   () => import("@voyant-travel/auth-react/i18n"),
   (module) => module.AuthUiMessagesProvider,
 )
-const bookingsMessagesProvider = loadProvider(
+const bookingsMessagesProvider = loadProviderWithOverrides(
   () => import("@voyant-travel/bookings-react/i18n"),
   (module) => module.BookingsUiMessagesProvider,
+  bookingsReservationOverrides,
 )
 const catalogMessagesProvider = loadProvider(
   () => import("@voyant-travel/catalog-react/i18n"),
@@ -119,17 +164,19 @@ const suppliersMessagesProvider = loadProvider(
   () => import("@voyant-travel/distribution-react/suppliers/i18n"),
   (module) => module.SuppliersUiMessagesProvider,
 )
-const financeMessagesProvider = loadProvider(
+const financeMessagesProvider = loadProviderWithOverrides(
   () => import("@voyant-travel/finance-react/i18n"),
   (module) => module.FinanceUiMessagesProvider,
+  financeReservationOverrides,
 )
 const productsMessagesProvider = loadProvider(
   () => import("@voyant-travel/inventory-react/i18n"),
   (module) => module.ProductsUiMessagesProvider,
 )
-const legalMessagesProvider = loadProvider(
+const legalMessagesProvider = loadProviderWithOverrides(
   () => import("@voyant-travel/legal-react/i18n"),
   (module) => module.LegalUiMessagesProvider,
+  legalReservationOverrides,
 )
 const notificationsMessagesProvider = loadProvider(
   () => import("@voyant-travel/notifications-react/i18n"),
@@ -147,9 +194,10 @@ const resourcesMessagesProvider = loadProvider(
   () => import("@voyant-travel/operations-react/resources/i18n"),
   (module) => module.ResourcesUiMessagesProvider,
 )
-const crmMessagesProvider = loadProvider(
+const crmMessagesProvider = loadProviderWithOverrides(
   () => import("@voyant-travel/relationships-react/i18n"),
   (module) => module.CrmUiMessagesProvider,
+  relationshipsReservationOverrides,
 )
 const quotesMessagesProvider = loadProvider(
   () => import("@voyant-travel/quotes-react/i18n"),
