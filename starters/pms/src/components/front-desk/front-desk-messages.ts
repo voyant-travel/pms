@@ -95,11 +95,12 @@ export const frontDeskMessages = {
     colStatus: "Status",
     deleteTitle: "Delete room unit",
     deleteBody: "This removes the unit and its assignment history.",
-    recompute: "Recompute inventory",
-    recomputeGroup: "Recompute serialized inventory",
+    recompute: "Rebuild availability from rooms",
+    recomputeGroup: "Rebuild availability from rooms",
     recomputeDone: (upserted: number, days: number) =>
-      `Recomputed ${days} day(s), wrote ${upserted} capacity row(s).`,
-    recomputePooled: "This room type is pooled — capacity is hand-authored, nothing to recompute.",
+      `Rebuilt availability for ${days} day(s), updated ${upserted} day(s) of capacity.`,
+    recomputePooled:
+      "This room type uses a set capacity you enter by hand, so there is nothing to rebuild from individual rooms.",
     statusLabels: {
       available: "Available",
       out_of_order: "Out of order",
