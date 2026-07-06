@@ -5,7 +5,6 @@ import {
   buildDashboardSixMonthWindow,
   dashboardQueryKeys,
   type FinanceAggregates,
-  type ProductsAggregates,
   type SuppliersAggregates,
 } from "@voyant-travel/admin/dashboard/query-options"
 
@@ -72,17 +71,6 @@ export const getOperatorDashboardBookingsAggregates = createServerFn({ method: "
     })
   })
 
-export const getOperatorDashboardProductsAggregates = createServerFn({ method: "GET" })
-  .middleware([withOperatorRequest])
-  .handler(async ({ context }) => {
-    const env = await requireAuthenticatedOperatorRequest(context)
-    return withDashboardDb(env, async (db) => {
-      const { productsService } = await import("@voyant-travel/inventory")
-      const serviceDb = db as unknown as Parameters<typeof productsService.getProductAggregates>[0]
-      return productsService.getProductAggregates(serviceDb)
-    })
-  })
-
 export const getOperatorDashboardSuppliersAggregates = createServerFn({ method: "GET" })
   .middleware([withOperatorRequest])
   .handler(async ({ context }) => {
@@ -114,16 +102,6 @@ export function getOperatorDashboardBookingsAggregatesQueryOptions() {
     queryKey: dashboardQueryKeys.bookingsAggregates(from),
     queryFn: async (): Promise<{ data: BookingsAggregates }> => ({
       data: await getOperatorDashboardBookingsAggregates(),
-    }),
-    staleTime: 60_000,
-  })
-}
-
-export function getOperatorDashboardProductsAggregatesQueryOptions() {
-  return queryOptions({
-    queryKey: dashboardQueryKeys.productsAggregates(),
-    queryFn: async (): Promise<{ data: ProductsAggregates }> => ({
-      data: await getOperatorDashboardProductsAggregates(),
     }),
     staleTime: 60_000,
   })

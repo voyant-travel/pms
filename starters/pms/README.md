@@ -242,13 +242,45 @@ the standard admin shell.
 
 Tour-shaped verticals inherited from the operator blueprint were stripped:
 cruises, charters, and mice (deployment-local wiring deleted) and flights
-(excluded via `createVoyantApp({ exclude })`, ADR-0007). Two remain composed by
-necessity: `trips` and `quotes` are standard framework modules whose provider
-ports are mandatory in `FrameworkProviders`, so they cannot be cleanly excluded
-today; they carry no PMS UI. The upstream catalog admin surface also still
-contributes empty `/catalog/cruises` browse routes (owned by
-`@voyant-travel/catalog-react`, not removable via config). See `docs/PLAN.md`
-§6 status note.
+(excluded via `createVoyantApp({ exclude })`, ADR-0007). Two modules remain
+composed by necessity: `trips` and `quotes` are standard framework modules
+whose provider ports are mandatory in `FrameworkProviders`, so they cannot be
+cleanly excluded today.
+
+**Admin UI removal.** The tour-operator admin surfaces the base operator shell
+still shipped — the **Catalog** browse group (all verticals, incl. the
+accommodations browse: ARI is the PMS authoring surface for stays), **Products**,
+**Trips**, and any residual **Flights** entries — are removed from both the
+sidebar and the route tree. The removal is deployment-owned and hand-applied to
+the committed generated artifacts (`admin.routes.generated.tsx`,
+`admin.extensions.generated.ts`, `admin.destinations.generated.ts`) rather than
+via `voyant admin generate`, because those files derive from `voyant.config.ts`
+`modules`, which also drives schema discovery — dropping the modules there would
+break the `db doctor` schema-drift gate. The catalog/trips/quotes MODULES stay
+composed API-side (the storefront + booking engine depend on catalog), so only
+UI surfaces were removed:
+
+- Base-nav groups `catalog`, `flights`, and `products` are filtered out by the
+  app-owned `OperatorWorkspaceShell`
+  (`src/components/admin-shared/operator-workspace-shell.tsx`), which reproduces
+  the packaged `AdminWorkspaceShell` and injects a curated `navItems`.
+- The `catalog`, `inventory` (Products), and `trips` admin extension factories,
+  routes, and destination resolvers are pruned from the generated modules.
+- The `/bookings/compose` alias (a legacy forward to the removed trips composer)
+  is dropped. A few destination keys still declared by kept packages
+  (`catalog.browse`/`catalog.detail` from `catalog-react/admin`,
+  `product.detail`/`trip.create` from `bookings-react/admin`) retain stub
+  resolvers pointed at PMS booking pages so the kept booking-journey flow has no
+  dead links; see `src/lib/admin-destinations.ts`.
+- The operator no longer SSR-prefetches product aggregates on the dashboard. The
+  packaged `DashboardPage` still renders a baked-in "Active products" KPI card
+  that cannot be subsetted without ejecting the whole dashboard (out of scope).
+
+The final hotel sidebar shows: Dashboard, the PMS domain sections (Rates &
+Inventory/ARI incl. Pricing, Front Desk, Housekeeping, Folios, Channels) from
+`src/admin/*`, plus the stay-relevant framework groups (Bookings, Availability,
+Resources, Suppliers, People/Guests, Finance, Legal, Notifications, Channel sync,
+Promotions, Quotes, Logs) and Settings.
 
 `packages/plugin-catalog-demo` and `packages/realtime-react` are vendored
 prebuilt (dist-only) demo packages carried from the blueprint so the app resolves
