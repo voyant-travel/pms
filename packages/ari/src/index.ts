@@ -28,6 +28,16 @@ export default defineDeploymentModule({
 export { expandDates, isoWeekday, MAX_RANGE_DAYS } from "./date-mask.js"
 export type { AriDb } from "./db.js"
 export {
+  computeNightlyPrice,
+  type MaterializedRateOp,
+  materializePlan,
+  type PricingAdjustmentType,
+  type PricingRule,
+  type PricingRuleKind,
+  type RateBase,
+  ruleMatches,
+} from "./pricing-engine.js"
+export {
   assembleCalendar,
   buildInventoryRows,
   buildRateRows,
@@ -37,4 +47,5 @@ export {
   type CalendarRatePlan,
   type CalendarRoomType,
 } from "./service-calendar.js"
+export type { ApplyResult, PreviewPair, PreviewResult } from "./service-pricing.js"
 export * from "./validation.js"

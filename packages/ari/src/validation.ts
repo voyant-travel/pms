@@ -196,6 +196,106 @@ export const bulkInventoryInputSchema = z.object({
   operations: z.array(bulkInventoryOperationSchema).min(1).max(200),
 })
 
+// --- pricing: base rates -----------------------------------------------------
+
+/**
+ * Upsert a base "starting from" nightly price for a (rate plan × room type)
+ * pair. Idempotent on the pair so the grid can create-or-update a cell in one
+ * call.
+ */
+export const upsertRateBaseSchema = z.object({
+  propertyId: typeid,
+  ratePlanId: typeid,
+  roomTypeId: typeid,
+  currency,
+  baseAmountCents: nonNegativeInt,
+})
+
+export const rateBaseListQuerySchema = z.object({
+  propertyId: typeid,
+})
+
+// --- pricing: rules ----------------------------------------------------------
+
+export const pricingRuleKindSchema = z.enum(["season", "weekday"])
+export const pricingAdjustmentTypeSchema = z.enum(["percent", "absolute", "set"])
+
+/**
+ * A named season / weekday pricing rule. Cross-field invariants:
+ *   - `season` rules require both `fromDate` and `toDate`.
+ *   - `weekday` rules require a non-empty `weekdays` mask.
+ * Scope arrays are `null`/omitted = "all rate plans / room types".
+ */
+const pricingRuleShape = {
+  propertyId: typeid,
+  name: z.string().min(1),
+  kind: pricingRuleKindSchema,
+  fromDate: isoDate.nullish(),
+  toDate: isoDate.nullish(),
+  weekdays: z.array(weekdaySchema).min(1).max(7).nullish(),
+  adjustmentType: pricingAdjustmentTypeSchema,
+  adjustmentValue: z.number().int(),
+  roomTypeIds: z.array(typeid).min(1).nullish(),
+  ratePlanIds: z.array(typeid).min(1).nullish(),
+  priority: z.number().int().min(0).optional(),
+  active: z.boolean().optional(),
+}
+
+/** Enforce the kind-specific invariants (shared by insert + update-with-kind). */
+function refinePricingRule(
+  data: {
+    kind?: "season" | "weekday"
+    fromDate?: string | null
+    toDate?: string | null
+    weekdays?: number[] | null
+  },
+  ctx: z.RefinementCtx,
+): void {
+  if (data.kind === "season") {
+    if (!data.fromDate || !data.toDate) {
+      ctx.addIssue({
+        code: "custom",
+        message: "season rules require both fromDate and toDate",
+        path: ["fromDate"],
+      })
+    } else if (data.toDate < data.fromDate) {
+      ctx.addIssue({
+        code: "custom",
+        message: "toDate must not precede fromDate",
+        path: ["toDate"],
+      })
+    }
+  }
+  if (data.kind === "weekday" && (!data.weekdays || data.weekdays.length === 0)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "weekday rules require a non-empty weekdays mask",
+      path: ["weekdays"],
+    })
+  }
+}
+
+export const insertPricingRuleSchema = z.object(pricingRuleShape).superRefine(refinePricingRule)
+
+export const updatePricingRuleSchema = z
+  .object(pricingRuleShape)
+  .omit({ propertyId: true })
+  .partial()
+  .superRefine(refinePricingRule)
+
+export const pricingRuleListQuerySchema = paginationSchema.extend({
+  propertyId: typeid.optional(),
+  active: booleanQuery.optional(),
+})
+
+// --- pricing: preview / apply ------------------------------------------------
+
+export const pricingHorizonSchema = z.object({
+  propertyId: typeid,
+  from: isoDate,
+  to: isoDate,
+})
+
 export type InsertRoomTypeInput = z.infer<typeof insertRoomTypeSchema>
 export type UpdateRoomTypeInput = z.infer<typeof updateRoomTypeSchema>
 export type RoomTypeListQuery = z.infer<typeof roomTypeListQuerySchema>
@@ -213,3 +313,9 @@ export type BulkRateOperation = z.infer<typeof bulkRateOperationSchema>
 export type BulkRatesInput = z.infer<typeof bulkRatesInputSchema>
 export type BulkInventoryOperation = z.infer<typeof bulkInventoryOperationSchema>
 export type BulkInventoryInput = z.infer<typeof bulkInventoryInputSchema>
+export type UpsertRateBaseInput = z.infer<typeof upsertRateBaseSchema>
+export type RateBaseListQuery = z.infer<typeof rateBaseListQuerySchema>
+export type InsertPricingRuleInput = z.infer<typeof insertPricingRuleSchema>
+export type UpdatePricingRuleInput = z.infer<typeof updatePricingRuleSchema>
+export type PricingRuleListQuery = z.infer<typeof pricingRuleListQuerySchema>
+export type PricingHorizonInput = z.infer<typeof pricingHorizonSchema>

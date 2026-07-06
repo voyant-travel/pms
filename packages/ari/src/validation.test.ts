@@ -4,10 +4,13 @@ import {
   bulkInventoryInputSchema,
   bulkRatesInputSchema,
   calendarQuerySchema,
+  insertPricingRuleSchema,
   insertRatePlanSchema,
   insertRoomTypeSchema,
   roomTypeListQuerySchema,
+  updatePricingRuleSchema,
   updateRoomTypeSchema,
+  upsertRateBaseSchema,
 } from "./validation"
 
 describe("insertRoomTypeSchema", () => {
@@ -122,5 +125,115 @@ describe("bulk input schemas", () => {
         operations: [{ roomTypeId: "rt_1", from: "2026-07-01", to: "2026-07-02", capacity: 5 }],
       }).success,
     ).toBe(true)
+  })
+})
+
+describe("upsertRateBaseSchema", () => {
+  it("requires the pair, a 3-char currency and a non-negative amount", () => {
+    expect(
+      upsertRateBaseSchema.safeParse({
+        propertyId: "prop_1",
+        ratePlanId: "rp_1",
+        roomTypeId: "rt_1",
+        currency: "EUR",
+        baseAmountCents: 18000,
+      }).success,
+    ).toBe(true)
+    expect(
+      upsertRateBaseSchema.safeParse({
+        propertyId: "prop_1",
+        ratePlanId: "rp_1",
+        roomTypeId: "rt_1",
+        currency: "EUR",
+        baseAmountCents: -1,
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe("insertPricingRuleSchema", () => {
+  it("accepts a season with both bounds", () => {
+    expect(
+      insertPricingRuleSchema.safeParse({
+        propertyId: "prop_1",
+        name: "Summer",
+        kind: "season",
+        fromDate: "2026-06-01",
+        toDate: "2026-08-31",
+        adjustmentType: "percent",
+        adjustmentValue: 60,
+      }).success,
+    ).toBe(true)
+  })
+
+  it("rejects a season missing a bound", () => {
+    expect(
+      insertPricingRuleSchema.safeParse({
+        propertyId: "prop_1",
+        name: "Summer",
+        kind: "season",
+        fromDate: "2026-06-01",
+        adjustmentType: "percent",
+        adjustmentValue: 60,
+      }).success,
+    ).toBe(false)
+  })
+
+  it("rejects an inverted season range", () => {
+    expect(
+      insertPricingRuleSchema.safeParse({
+        propertyId: "prop_1",
+        name: "Bad",
+        kind: "season",
+        fromDate: "2026-08-31",
+        toDate: "2026-06-01",
+        adjustmentType: "percent",
+        adjustmentValue: 60,
+      }).success,
+    ).toBe(false)
+  })
+
+  it("accepts an open-ended weekday rule but requires a mask", () => {
+    expect(
+      insertPricingRuleSchema.safeParse({
+        propertyId: "prop_1",
+        name: "Weekend",
+        kind: "weekday",
+        weekdays: [5, 6],
+        adjustmentType: "percent",
+        adjustmentValue: 15,
+      }).success,
+    ).toBe(true)
+    expect(
+      insertPricingRuleSchema.safeParse({
+        propertyId: "prop_1",
+        name: "Weekend",
+        kind: "weekday",
+        adjustmentType: "percent",
+        adjustmentValue: 15,
+      }).success,
+    ).toBe(false)
+  })
+
+  it("rejects an empty scope array (null means all)", () => {
+    expect(
+      insertPricingRuleSchema.safeParse({
+        propertyId: "prop_1",
+        name: "Scoped",
+        kind: "weekday",
+        weekdays: [6],
+        adjustmentType: "percent",
+        adjustmentValue: 10,
+        roomTypeIds: [],
+      }).success,
+    ).toBe(false)
+  })
+})
+
+describe("updatePricingRuleSchema", () => {
+  it("is a partial that cannot move propertyId", () => {
+    const parsed = updatePricingRuleSchema.parse({ name: "Renamed", propertyId: "prop_2" })
+    expect(parsed).not.toHaveProperty("propertyId")
+    expect(parsed.name).toBe("Renamed")
   })
 })

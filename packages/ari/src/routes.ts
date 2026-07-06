@@ -37,21 +37,39 @@ import {
   updateRoomType,
 } from "./service-crud.js"
 import {
+  applyPricing,
+  createPricingRule,
+  deletePricingRule,
+  deleteRateBase,
+  getPricingRule,
+  listPricingRules,
+  listRateBases,
+  previewPricing,
+  updatePricingRule,
+  upsertRateBase,
+} from "./service-pricing.js"
+import {
   bulkInventoryInputSchema,
   bulkRatesInputSchema,
   calendarQuerySchema,
   insertBedConfigSchema,
   insertMealPlanSchema,
+  insertPricingRuleSchema,
   insertRatePlanRoomTypeSchema,
   insertRatePlanSchema,
   insertRoomTypeSchema,
   mealPlanListQuerySchema,
+  pricingHorizonSchema,
+  pricingRuleListQuerySchema,
+  rateBaseListQuerySchema,
   ratePlanListQuerySchema,
   roomTypeListQuerySchema,
   updateBedConfigSchema,
   updateMealPlanSchema,
+  updatePricingRuleSchema,
   updateRatePlanSchema,
   updateRoomTypeSchema,
+  upsertRateBaseSchema,
 } from "./validation.js"
 
 type AriEnv = { Variables: { db: VoyantDb } }
@@ -206,5 +224,64 @@ export const ariAdminRoutes = new Hono<AriEnv>()
     const { operations } = await parseJsonBody(c, bulkInventoryInputSchema)
     return c.json({ data: await bulkUpsertInventory(dbOf(c.get("db")), operations) })
   })
+  // --- pricing: base rates ---------------------------------------------------
+  .get("/rate-base", async (c) => {
+    const { propertyId } = parseQuery(c, rateBaseListQuerySchema)
+    return c.json({ data: await listRateBases(dbOf(c.get("db")), propertyId) })
+  })
+  .post("/rate-base", async (c) =>
+    c.json(
+      {
+        data: await upsertRateBase(dbOf(c.get("db")), await parseJsonBody(c, upsertRateBaseSchema)),
+      },
+      201,
+    ),
+  )
+  .delete("/rate-base/:id", async (c) => {
+    const row = await deleteRateBase(dbOf(c.get("db")), c.req.param("id"))
+    return row ? c.json({ success: true }) : c.json(notFound("Rate base"), 404)
+  })
+  // --- pricing: rules --------------------------------------------------------
+  .get("/pricing-rules", async (c) =>
+    c.json(await listPricingRules(dbOf(c.get("db")), parseQuery(c, pricingRuleListQuerySchema))),
+  )
+  .post("/pricing-rules", async (c) =>
+    c.json(
+      {
+        data: await createPricingRule(
+          dbOf(c.get("db")),
+          await parseJsonBody(c, insertPricingRuleSchema),
+        ),
+      },
+      201,
+    ),
+  )
+  .get("/pricing-rules/:id", async (c) => {
+    const row = await getPricingRule(dbOf(c.get("db")), c.req.param("id"))
+    return row ? c.json({ data: row }) : c.json(notFound("Pricing rule"), 404)
+  })
+  .patch("/pricing-rules/:id", async (c) => {
+    const row = await updatePricingRule(
+      dbOf(c.get("db")),
+      c.req.param("id"),
+      await parseJsonBody(c, updatePricingRuleSchema),
+    )
+    return row ? c.json({ data: row }) : c.json(notFound("Pricing rule"), 404)
+  })
+  .delete("/pricing-rules/:id", async (c) => {
+    const row = await deletePricingRule(dbOf(c.get("db")), c.req.param("id"))
+    return row ? c.json({ success: true }) : c.json(notFound("Pricing rule"), 404)
+  })
+  // --- pricing: preview (read-only) + apply (OVERWRITES daily rates) ---------
+  .post("/pricing-rules/preview", async (c) =>
+    c.json({
+      data: await previewPricing(dbOf(c.get("db")), await parseJsonBody(c, pricingHorizonSchema)),
+    }),
+  )
+  .post("/pricing-rules/apply", async (c) =>
+    c.json({
+      data: await applyPricing(dbOf(c.get("db")), await parseJsonBody(c, pricingHorizonSchema)),
+    }),
+  )
 
 export type AriAdminRoutes = typeof ariAdminRoutes
