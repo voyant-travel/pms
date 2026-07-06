@@ -15,6 +15,17 @@ import { useCalendarMutations } from "./use-calendar-mutations"
 
 const WEEKDAY_LABELS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
+// See the tape-chart grid for the same reasoning: the grid is `table-fixed` +
+// `w-full` so date columns share the container width instead of leaving a dead
+// gap on wide screens. STICKY_COL_PX matches `w-52` (13rem); MIN_COL_PX is the
+// per-column floor below which the container scrolls (a full month easily
+// exceeds the viewport, so this grid usually scrolls at 1440/1920 as before);
+// MAX_COL_PX caps growth on ultra-wide viewports where the table then
+// left-aligns.
+const STICKY_COL_PX = 208
+const MIN_COL_PX = 56
+const MAX_COL_PX = 140
+
 export function CalendarGridView({ grid }: { grid: CalendarGrid }) {
   const m = ariMessages.calendar
   const dates = buildDateColumns(grid.from, grid.to)
@@ -27,11 +38,16 @@ export function CalendarGridView({ grid }: { grid: CalendarGrid }) {
   }
 
   const stickyCol =
-    "sticky left-0 z-10 bg-background border-r min-w-52 max-w-52 px-3 text-left align-middle"
+    "sticky left-0 z-10 bg-background border-r w-52 min-w-52 max-w-52 px-3 text-left align-middle"
+
+  const gridStyle = {
+    minWidth: STICKY_COL_PX + dates.length * MIN_COL_PX,
+    maxWidth: STICKY_COL_PX + dates.length * MAX_COL_PX,
+  }
 
   return (
     <div className="overflow-x-auto rounded-md border">
-      <table className="w-max border-collapse text-xs">
+      <table className="w-full table-fixed border-collapse text-xs" style={gridStyle}>
         <thead>
           <tr className="border-b bg-muted/40">
             <th className={`${stickyCol} py-2 font-medium`}>{ariMessages.property.label}</th>
@@ -40,7 +56,7 @@ export function CalendarGridView({ grid }: { grid: CalendarGrid }) {
               return (
                 <th
                   key={date}
-                  className={`min-w-[3.5rem] px-1 py-1 text-center font-normal ${
+                  className={`px-1 py-1 text-center font-normal ${
                     isWeekend(date) ? "bg-muted/60" : ""
                   }`}
                 >

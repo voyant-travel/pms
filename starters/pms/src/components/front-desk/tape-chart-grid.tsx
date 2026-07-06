@@ -16,7 +16,22 @@ import { buildRowLanes, type StayBar, statusBarClass } from "./tape-chart-model"
 const WEEKDAY_LABELS = ["", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 const STICKY_COL =
-  "sticky left-0 z-10 bg-background border-r min-w-40 max-w-40 px-3 text-left align-middle"
+  "sticky left-0 z-10 bg-background border-r w-40 min-w-40 max-w-40 px-3 text-left align-middle"
+
+// The grid is `table-fixed` + `w-full`, so the date columns share the container
+// width evenly instead of sitting at a fixed size and leaving a dead gap on wide
+// screens. The bounds below keep that graceful in both directions:
+//   - STICKY_COL_PX: width of the sticky Unit column (matches `w-40` = 10rem).
+//   - MIN_COL_PX: floor per date column; once the container is narrower than the
+//     sticky column plus one min-width per date, the table's `min-width` wins and
+//     the container scrolls horizontally (preserving the sticky-column behaviour).
+//   - MAX_COL_PX: cap per date column so columns stop growing on ultra-wide
+//     viewports; past that the table caps out and left-aligns (a right gap only
+//     appears at absurd widths). 140px reads well at 1440px (~70px/col) and
+//     1920px (~104px/col) while staying inside the 120-160px sweet spot.
+const STICKY_COL_PX = 160
+const MIN_COL_PX = 48
+const MAX_COL_PX = 140
 
 export function TapeChartGrid({
   chart,
@@ -32,16 +47,21 @@ export function TapeChartGrid({
     return <p className="text-muted-foreground text-sm">{m.noUnits}</p>
   }
 
+  const gridStyle = {
+    minWidth: STICKY_COL_PX + dates.length * MIN_COL_PX,
+    maxWidth: STICKY_COL_PX + dates.length * MAX_COL_PX,
+  }
+
   return (
     <div className="overflow-x-auto rounded-md border">
-      <table className="w-max border-collapse text-xs">
+      <table className="w-full table-fixed border-collapse text-xs" style={gridStyle}>
         <thead>
           <tr className="border-b bg-muted/40">
             <th className={`${STICKY_COL} py-2 font-medium`}>{m.unitColumn}</th>
             {dates.map((date) => (
               <th
                 key={date}
-                className={`min-w-[3rem] px-1 py-1 text-center font-normal ${
+                className={`px-1 py-1 text-center font-normal ${
                   isWeekend(date) ? "bg-muted/60" : ""
                 }`}
               >
@@ -139,7 +159,7 @@ function UnitRows({
               cells.push(
                 <td
                   key={`gap-${cursor}`}
-                  className={`min-w-[3rem] ${isWeekend(date) ? "bg-muted/30" : ""}`}
+                  className={isWeekend(date) ? "bg-muted/30" : undefined}
                 />,
               )
               cursor += 1
