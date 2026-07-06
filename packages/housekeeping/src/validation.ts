@@ -19,6 +19,39 @@ export const housekeepingTaskStatusSchema = z.enum(["open", "in_progress", "done
 export const unitRoomStatusSchema = z.enum(["dirty", "clean", "inspected"])
 export const maintenanceReasonSchema = z.enum(["maintenance", "renovation", "deep_clean", "other"])
 export const maintenanceStatusSchema = z.enum(["active", "resolved", "cancelled"])
+export const staffRoleSchema = z.enum([
+  "housekeeper",
+  "supervisor",
+  "maintenance",
+  "front_desk",
+  "other",
+])
+
+// --- staff (non-login assignee records) --------------------------------------
+
+export const insertStaffSchema = z.object({
+  // NULL propertyId = a member available at every property.
+  propertyId: typeid.nullish(),
+  name: z.string().min(1),
+  role: staffRoleSchema.default("housekeeper"),
+  notes: z.string().nullish(),
+})
+
+export const updateStaffSchema = z.object({
+  propertyId: typeid.nullish(),
+  name: z.string().min(1).optional(),
+  role: staffRoleSchema.optional(),
+  active: z.boolean().optional(),
+  notes: z.string().nullish(),
+})
+
+export const staffListQuerySchema = paginationSchema.extend({
+  propertyId: typeid.optional(),
+  active: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
+})
 
 // --- housekeeping tasks ------------------------------------------------------
 
@@ -27,7 +60,7 @@ export const insertTaskSchema = z.object({
   propertyId: typeid,
   type: housekeepingTaskTypeSchema.default("clean"),
   priority: z.number().int().optional(),
-  assigneeUserId: typeid.nullish(),
+  assigneeStaffId: typeid.nullish(),
   dueDate: isoDate.nullish(),
   notes: z.string().nullish(),
   metadata: metadata.nullish(),
@@ -37,7 +70,7 @@ export const insertTaskSchema = z.object({
 export const updateTaskSchema = z.object({
   type: housekeepingTaskTypeSchema.optional(),
   priority: z.number().int().optional(),
-  assigneeUserId: typeid.nullish(),
+  assigneeStaffId: typeid.nullish(),
   dueDate: isoDate.nullish(),
   notes: z.string().nullish(),
   metadata: metadata.nullish(),
@@ -53,7 +86,7 @@ export const taskListQuerySchema = paginationSchema.extend({
   date: isoDate.optional(),
   status: housekeepingTaskStatusSchema.optional(),
   type: housekeepingTaskTypeSchema.optional(),
-  assigneeUserId: typeid.optional(),
+  assigneeStaffId: typeid.optional(),
 })
 
 // --- room status -------------------------------------------------------------
@@ -117,6 +150,10 @@ export const readinessQuerySchema = z.object({
   date: isoDate.optional(),
 })
 
+export type InsertStaffInput = z.infer<typeof insertStaffSchema>
+export type UpdateStaffInput = z.infer<typeof updateStaffSchema>
+export type StaffListQuery = z.infer<typeof staffListQuerySchema>
+export type StaffRole = z.infer<typeof staffRoleSchema>
 export type InsertTaskInput = z.infer<typeof insertTaskSchema>
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>
 export type TaskStatusInput = z.infer<typeof taskStatusSchema>

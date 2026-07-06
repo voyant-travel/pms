@@ -21,14 +21,20 @@
  *
  * TypeID prefixes (checked against @voyant-travel/schema-kit PREFIXES — all
  * unused): `hkt` (housekeeping task), `hkrs` (housekeeping room status), `mblk`
- * (maintenance block). Generated via `newIdFromPrefix` because these prefixes are
- * deployment-local and therefore not in the closed upstream `PrefixKey` registry
- * that `typeId()` requires.
+ * (maintenance block), `hstf` (housekeeping staff). Generated via
+ * `newIdFromPrefix` because these prefixes are deployment-local and therefore not
+ * in the closed upstream `PrefixKey` registry that `typeId()` requires.
+ *
+ * `pms_staff` are NON-LOGIN operational staff records owned by this module — they
+ * are the assignee pool for tasks (a task's `assignee_staff_id` is a loose ref to
+ * a `pms_staff` row, NOT a Better Auth user). Staff are soft-deleted (`active`)
+ * rather than hard-deleted so referencing tasks keep a resolvable name.
  */
 
 import { newIdFromPrefix } from "@voyant-travel/db/lib/typeid"
 import { typeIdRef } from "@voyant-travel/db/lib/typeid-column"
 import {
+  boolean,
   date,
   index,
   integer,
@@ -46,6 +52,38 @@ const localId = (prefix: string) =>
     .primaryKey()
     .notNull()
     .$defaultFn(() => newIdFromPrefix(prefix))
+
+// --- staff (non-login assignee records) --------------------------------------
+
+/** Operational role of a staff member (drives the board's assignee picker). */
+export const staffRoleEnum = pgEnum("pms_staff_role", [
+  "housekeeper",
+  "supervisor",
+  "maintenance",
+  "front_desk",
+  "other",
+])
+
+export const staff = pgTable(
+  "pms_staff",
+  {
+    id: localId("hstf"),
+    // Loose ref to the property the member works at. NULL = all properties.
+    propertyId: typeIdRef("property_id"),
+    name: text("name").notNull(),
+    role: staffRoleEnum("role").notNull().default("housekeeper"),
+    // Soft-delete flag: deactivated staff drop out of the assignee picker but
+    // keep resolving names on tasks that already reference them.
+    active: boolean("active").notNull().default(true),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_pms_staff_property").on(table.propertyId),
+    index("idx_pms_staff_active").on(table.active),
+  ],
+)
 
 // --- housekeeping tasks ------------------------------------------------------
 
@@ -78,8 +116,9 @@ export const housekeepingTasks = pgTable(
     type: housekeepingTaskTypeEnum("type").notNull().default("clean"),
     status: housekeepingTaskStatusEnum("status").notNull().default("open"),
     priority: integer("priority").notNull().default(0),
-    // Loose ref to the auth user the task is assigned to. Nullable (unassigned).
-    assigneeUserId: typeIdRef("assignee_user_id"),
+    // Loose ref to the `pms_staff` member the task is assigned to (NOT an auth
+    // user). Nullable (unassigned).
+    assigneeStaffId: typeIdRef("assignee_staff_id"),
     dueDate: date("due_date"),
     source: housekeepingTaskSourceEnum("source").notNull().default("manual"),
     // Deterministic idempotency key for auto-generated tasks (e.g. `dep:<unit>:<date>`).
@@ -98,7 +137,7 @@ export const housekeepingTasks = pgTable(
     index("idx_pms_housekeeping_tasks_property_due").on(table.propertyId, table.dueDate),
     index("idx_pms_housekeeping_tasks_unit").on(table.unitId),
     index("idx_pms_housekeeping_tasks_status").on(table.status),
-    index("idx_pms_housekeeping_tasks_assignee").on(table.assigneeUserId),
+    index("idx_pms_housekeeping_tasks_assignee").on(table.assigneeStaffId),
   ],
 )
 
@@ -170,6 +209,7 @@ export const maintenanceBlocks = pgTable(
   ],
 )
 
+export type StaffRow = typeof staff.$inferSelect
 export type HousekeepingTaskRow = typeof housekeepingTasks.$inferSelect
 export type UnitRoomStatusRow = typeof unitRoomStatus.$inferSelect
 export type MaintenanceBlockRow = typeof maintenanceBlocks.$inferSelect

@@ -68,7 +68,8 @@ export async function listTasks(
   if (query.propertyId) clauses.push(eq(housekeepingTasks.propertyId, query.propertyId))
   if (query.status) clauses.push(eq(housekeepingTasks.status, query.status))
   if (query.type) clauses.push(eq(housekeepingTasks.type, query.type))
-  if (query.assigneeUserId) clauses.push(eq(housekeepingTasks.assigneeUserId, query.assigneeUserId))
+  if (query.assigneeStaffId)
+    clauses.push(eq(housekeepingTasks.assigneeStaffId, query.assigneeStaffId))
   // `date` selects tasks due on or before that business date (the day's board).
   if (query.date) clauses.push(lte(housekeepingTasks.dueDate, query.date))
   const where = clauses.length ? and(...clauses) : undefined
@@ -106,7 +107,7 @@ export async function createTask(db: HousekeepingDb, input: InsertTaskInput): Pr
       propertyId: input.propertyId,
       type: input.type,
       priority: input.priority ?? 0,
-      assigneeUserId: input.assigneeUserId ?? null,
+      assigneeStaffId: input.assigneeStaffId ?? null,
       dueDate: input.dueDate ?? null,
       notes: input.notes ?? null,
       source: "manual",

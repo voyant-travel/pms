@@ -13,11 +13,14 @@
 import type {
   GenerationResult,
   InsertMaintenanceBlockInput,
+  InsertStaffInput,
   InsertTaskInput,
   RoomStatus,
   RoomStatusEntry,
+  StaffRole,
   TaskStatus,
   UpdateMaintenanceBlockInput,
+  UpdateStaffInput,
   UpdateTaskInput,
 } from "@voyant-travel/pms-housekeeping"
 import { api } from "@/lib/api-client"
@@ -29,9 +32,29 @@ const BASE = "/v1/admin/pms/housekeeping"
 export type TaskType = InsertTaskInput["type"]
 export type MaintenanceReason = InsertMaintenanceBlockInput["reason"]
 export type MaintenanceStatus = NonNullable<UpdateMaintenanceBlockInput["status"]>
-export type { GenerationResult, RoomStatus, RoomStatusEntry, TaskStatus }
+export type { GenerationResult, RoomStatus, RoomStatusEntry, StaffRole, TaskStatus }
+
+/** The staff roles the picker offers (mirrors the server `staffRoleSchema`). */
+export const STAFF_ROLES: readonly StaffRole[] = [
+  "housekeeper",
+  "supervisor",
+  "maintenance",
+  "front_desk",
+  "other",
+]
 
 // --- stored-row shapes -------------------------------------------------------
+
+export interface Staff {
+  id: string
+  propertyId: string | null
+  name: string
+  role: StaffRole
+  active: boolean
+  notes: string | null
+  createdAt?: string
+  updatedAt?: string
+}
 
 export interface HousekeepingTask {
   id: string
@@ -40,7 +63,7 @@ export interface HousekeepingTask {
   type: TaskType
   status: TaskStatus
   priority: number
-  assigneeUserId: string | null
+  assigneeStaffId: string | null
   dueDate: string | null
   source: "auto" | "manual"
   sourceKey: string | null
@@ -89,6 +112,30 @@ export const housekeepingKeys = {
   roomStatus: (propertyId: string) => [...housekeepingKeys.all, "room-status", propertyId] as const,
   maintenance: (propertyId: string) =>
     [...housekeepingKeys.all, "maintenance", propertyId] as const,
+  staff: (propertyId: string) => [...housekeepingKeys.all, "staff", propertyId] as const,
+}
+
+// --- staff -------------------------------------------------------------------
+
+export interface StaffListQueryInput {
+  propertyId?: string
+  active?: boolean
+}
+
+export function listStaff(query: StaffListQueryInput = {}): Promise<ListEnvelope<Staff>> {
+  const params = new URLSearchParams({ limit: "200", offset: "0" })
+  if (query.propertyId) params.set("propertyId", query.propertyId)
+  if (query.active !== undefined) params.set("active", String(query.active))
+  return api.get<ListEnvelope<Staff>>(`${BASE}/staff?${params.toString()}`)
+}
+export function createStaff(input: InsertStaffInput): Promise<ItemEnvelope<Staff>> {
+  return api.post<ItemEnvelope<Staff>>(`${BASE}/staff`, input)
+}
+export function updateStaff(id: string, input: UpdateStaffInput): Promise<ItemEnvelope<Staff>> {
+  return api.patch<ItemEnvelope<Staff>>(`${BASE}/staff/${id}`, input)
+}
+export function deactivateStaff(id: string): Promise<ItemEnvelope<Staff>> {
+  return api.post<ItemEnvelope<Staff>>(`${BASE}/staff/${id}/deactivate`)
 }
 
 // --- housekeeping tasks ------------------------------------------------------
@@ -98,7 +145,7 @@ export interface TaskListQueryInput {
   date?: string
   status?: TaskStatus
   type?: TaskType
-  assigneeUserId?: string
+  assigneeStaffId?: string
 }
 
 export function listTasks(query: TaskListQueryInput): Promise<ListEnvelope<HousekeepingTask>> {
@@ -106,7 +153,7 @@ export function listTasks(query: TaskListQueryInput): Promise<ListEnvelope<House
   if (query.date) params.set("date", query.date)
   if (query.status) params.set("status", query.status)
   if (query.type) params.set("type", query.type)
-  if (query.assigneeUserId) params.set("assigneeUserId", query.assigneeUserId)
+  if (query.assigneeStaffId) params.set("assigneeStaffId", query.assigneeStaffId)
   return api.get<ListEnvelope<HousekeepingTask>>(`${BASE}/tasks?${params.toString()}`)
 }
 export function createTask(input: InsertTaskInput): Promise<ItemEnvelope<HousekeepingTask>> {

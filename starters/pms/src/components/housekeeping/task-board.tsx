@@ -16,7 +16,7 @@ import {
   type TaskView,
   toTaskView,
 } from "./housekeeping-board-model"
-import { housekeepingKeys, listTasks } from "./housekeeping-client"
+import { housekeepingKeys, listStaff, listTasks } from "./housekeeping-client"
 import { housekeepingMessages } from "./housekeeping-messages"
 import { TaskDialog } from "./task-dialog"
 import { useHousekeepingMutations } from "./use-housekeeping-mutations"
@@ -47,9 +47,9 @@ function TaskRow({ task }: { task: TaskView }) {
           <Badge variant="outline">{m.source[task.source]}</Badge>
         </div>
       </div>
-      {task.assigneeUserId ? (
-        <span className="text-muted-foreground text-xs">
-          {m.assignedTo} {task.assigneeUserId}
+      {task.assigneeName ? (
+        <span className="text-muted-foreground text-xs" title={task.assigneeStaffId ?? undefined}>
+          {m.assignedTo} {task.assigneeName}
         </span>
       ) : null}
       {task.notes ? <span className="text-muted-foreground text-xs">{task.notes}</span> : null}
@@ -101,15 +101,26 @@ export function TaskBoard({ propertyId, date }: { propertyId: string; date: stri
     queryKey: frontDeskKeys.units(propertyId),
     queryFn: () => listRoomUnits({ propertyId }),
   })
+  // All staff (incl. global + inactive) so any assignee resolves to a name.
+  const staffQuery = useQuery({
+    queryKey: housekeepingKeys.staff("all"),
+    queryFn: () => listStaff({}),
+  })
 
   const units = unitsQuery.data?.data ?? []
+  const staff = staffQuery.data?.data ?? []
   const groups = useMemo(() => {
     const numberById = new Map(units.map((u) => [u.id, u.unitNumber]))
+    const nameById = new Map(staff.map((s) => [s.id, s.name]))
     const views = (tasksQuery.data?.data ?? []).map((task) =>
-      toTaskView(task, (id) => numberById.get(id) ?? id),
+      toTaskView(
+        task,
+        (id) => numberById.get(id) ?? id,
+        (id) => nameById.get(id),
+      ),
     )
     return groupTasks(views)
-  }, [tasksQuery.data, units])
+  }, [tasksQuery.data, units, staff])
 
   return (
     <div className="flex flex-col gap-3">

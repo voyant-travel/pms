@@ -34,15 +34,17 @@ export interface TaskLike {
   type: TaskType
   status: TaskStatus
   priority: number
-  assigneeUserId: string | null
+  assigneeStaffId: string | null
   source: "auto" | "manual"
   dueDate: string | null
   notes: string | null
 }
 
-/** A task decorated with its resolved unit number for display + sorting. */
+/** A task decorated with its resolved unit number + assignee name for display. */
 export interface TaskView extends TaskLike {
   unitNumber: string
+  /** Resolved staff name for `assigneeStaffId`, or null when unassigned. */
+  assigneeName: string | null
 }
 
 /** Which board column a task status belongs to. */
@@ -52,9 +54,20 @@ export function taskBucket(status: TaskStatus): TaskBucket {
   return "closed"
 }
 
-/** Decorate a task with its unit number (falls back to the raw id). */
-export function toTaskView(task: TaskLike, unitNumberOf: (unitId: string) => string): TaskView {
-  return { ...task, unitNumber: unitNumberOf(task.unitId) || task.unitId }
+/**
+ * Decorate a task with its unit number (falls back to the raw id) and its
+ * assignee's staff name (null when unassigned or unresolved).
+ */
+export function toTaskView(
+  task: TaskLike,
+  unitNumberOf: (unitId: string) => string,
+  staffNameOf: (staffId: string) => string | undefined = () => undefined,
+): TaskView {
+  return {
+    ...task,
+    unitNumber: unitNumberOf(task.unitId) || task.unitId,
+    assigneeName: task.assigneeStaffId ? (staffNameOf(task.assigneeStaffId) ?? null) : null,
+  }
 }
 
 /** Column ordering: highest priority first, then unit number ascending (numeric). */

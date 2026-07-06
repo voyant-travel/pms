@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest"
 
 import {
   insertMaintenanceBlockSchema,
+  insertStaffSchema,
   insertTaskSchema,
   readinessQuerySchema,
   setRoomStatusSchema,
+  staffListQuerySchema,
   taskStatusSchema,
+  updateStaffSchema,
 } from "./validation"
 
 describe("insertTaskSchema", () => {
@@ -58,6 +61,34 @@ describe("insertMaintenanceBlockSchema", () => {
         toDate: "2026-07-03",
       }),
     ).toThrow()
+  })
+})
+
+describe("insertStaffSchema", () => {
+  it("defaults role to housekeeper and allows a null property scope", () => {
+    const parsed = insertStaffSchema.parse({ name: "Maria Ionescu", propertyId: null })
+    expect(parsed.role).toBe("housekeeper")
+    expect(parsed.propertyId).toBeNull()
+  })
+
+  it("requires a non-empty name and rejects an unknown role", () => {
+    expect(() => insertStaffSchema.parse({ name: "" })).toThrow()
+    expect(() => insertStaffSchema.parse({ name: "X", role: "chef" })).toThrow()
+  })
+})
+
+describe("updateStaffSchema", () => {
+  it("accepts an active toggle and a partial patch", () => {
+    expect(updateStaffSchema.parse({ active: false }).active).toBe(false)
+    expect(updateStaffSchema.parse({ role: "supervisor" }).role).toBe("supervisor")
+  })
+})
+
+describe("staffListQuerySchema", () => {
+  it("coerces the active string filter into a boolean", () => {
+    expect(staffListQuerySchema.parse({ active: "true" }).active).toBe(true)
+    expect(staffListQuerySchema.parse({ active: "false" }).active).toBe(false)
+    expect(staffListQuerySchema.parse({}).active).toBeUndefined()
   })
 })
 

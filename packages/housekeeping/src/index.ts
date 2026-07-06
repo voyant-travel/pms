@@ -41,6 +41,7 @@ export {
 export type {
   HousekeepingTaskRow,
   MaintenanceBlockRow,
+  StaffRow,
   UnitRoomStatusRow,
 } from "./schema.js"
 export {
@@ -58,6 +59,13 @@ export {
   listRoomStatusForProperty,
   type RoomStatusEntry,
 } from "./service-room-status.js"
+export {
+  createStaff,
+  deactivateStaff,
+  getStaff,
+  listStaff,
+  updateStaff,
+} from "./service-staff.js"
 export {
   assessUnitReadiness,
   type RoomStatus,

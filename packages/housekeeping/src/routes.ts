@@ -21,6 +21,7 @@ import {
 } from "./service-maintenance.js"
 import { getUnitReadiness } from "./service-readiness.js"
 import { listRoomStatusForProperty, setRoomStatus } from "./service-room-status.js"
+import { createStaff, deactivateStaff, getStaff, listStaff, updateStaff } from "./service-staff.js"
 import {
   createTask,
   deleteTask,
@@ -32,14 +33,17 @@ import {
 import {
   generateQuerySchema,
   insertMaintenanceBlockSchema,
+  insertStaffSchema,
   insertTaskSchema,
   maintenanceBlockListQuerySchema,
   readinessQuerySchema,
   roomStatusListQuerySchema,
   setRoomStatusSchema,
+  staffListQuerySchema,
   taskListQuerySchema,
   taskStatusSchema,
   updateMaintenanceBlockSchema,
+  updateStaffSchema,
   updateTaskSchema,
 } from "./validation.js"
 
@@ -49,6 +53,32 @@ const notFound = (entity: string) => ({ error: `${entity} not found` })
 const dbOf = (db: VoyantDb): HousekeepingDb => db
 
 export const housekeepingAdminRoutes = new Hono<HousekeepingEnv>()
+  // --- staff (non-login assignee records) ------------------------------------
+  .get("/staff", async (c) =>
+    c.json(await listStaff(dbOf(c.get("db")), parseQuery(c, staffListQuerySchema))),
+  )
+  .post("/staff", async (c) =>
+    c.json(
+      { data: await createStaff(dbOf(c.get("db")), await parseJsonBody(c, insertStaffSchema)) },
+      201,
+    ),
+  )
+  .get("/staff/:id", async (c) => {
+    const row = await getStaff(dbOf(c.get("db")), c.req.param("id"))
+    return row ? c.json({ data: row }) : c.json(notFound("Staff"), 404)
+  })
+  .patch("/staff/:id", async (c) => {
+    const row = await updateStaff(
+      dbOf(c.get("db")),
+      c.req.param("id"),
+      await parseJsonBody(c, updateStaffSchema),
+    )
+    return row ? c.json({ data: row }) : c.json(notFound("Staff"), 404)
+  })
+  .post("/staff/:id/deactivate", async (c) => {
+    const row = await deactivateStaff(dbOf(c.get("db")), c.req.param("id"))
+    return row ? c.json({ data: row }) : c.json(notFound("Staff"), 404)
+  })
   // --- housekeeping tasks ----------------------------------------------------
   .get("/tasks", async (c) =>
     c.json(await listTasks(dbOf(c.get("db")), parseQuery(c, taskListQuerySchema))),

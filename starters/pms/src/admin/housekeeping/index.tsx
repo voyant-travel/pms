@@ -12,13 +12,14 @@
  */
 
 import { adminRoutePageModule, defineAdminExtension } from "@voyant-travel/admin"
-import { LayoutGrid, SprayCan, Wrench } from "lucide-react"
+import { LayoutGrid, SprayCan, Users, Wrench } from "lucide-react"
 
 import { housekeepingMessages } from "@/components/housekeeping/housekeeping-messages"
 
 const ROUTES = {
   board: "/housekeeping/board",
   maintenance: "/housekeeping/maintenance",
+  staff: "/housekeeping/staff",
 } as const
 
 export default defineAdminExtension({
@@ -45,6 +46,12 @@ export default defineAdminExtension({
               url: ROUTES.maintenance,
               icon: Wrench,
             },
+            {
+              id: "housekeeping-staff",
+              title: housekeepingMessages.nav.staff,
+              url: ROUTES.staff,
+              icon: Users,
+            },
           ],
         },
       ],
@@ -67,6 +74,15 @@ export default defineAdminExtension({
       page: () =>
         import("@/components/housekeeping/maintenance-page").then((m) =>
           adminRoutePageModule(m.MaintenancePage),
+        ),
+    },
+    {
+      id: "housekeeping-staff",
+      path: ROUTES.staff,
+      title: housekeepingMessages.nav.staff,
+      page: () =>
+        import("@/components/housekeeping/staff-page").then((m) =>
+          adminRoutePageModule(m.StaffPage),
         ),
     },
   ],

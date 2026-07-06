@@ -1,6 +1,6 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@voyant-travel/ui/components/button"
 import {
   Dialog,
@@ -23,17 +23,19 @@ import { toast } from "sonner"
 import { IsoDateField } from "../admin-shared/iso-date-field"
 import { Field } from "../ari/ari-form"
 import type { RoomUnit } from "../front-desk/front-desk-client"
-import { createTask, housekeepingKeys, type TaskType } from "./housekeeping-client"
+import { createTask, housekeepingKeys, listStaff, type TaskType } from "./housekeeping-client"
 import { housekeepingMessages } from "./housekeeping-messages"
 
 const TASK_TYPES: TaskType[] = ["clean", "inspect", "turndown", "deep_clean"]
+
+const UNASSIGNED = "__unassigned__"
 
 interface FormState {
   unitId: string
   type: TaskType
   dueDate: string
   priority: string
-  assigneeUserId: string
+  assigneeStaffId: string
   notes: string
 }
 
@@ -43,7 +45,7 @@ function initialForm(units: RoomUnit[], date: string): FormState {
     type: "clean",
     dueDate: date,
     priority: "0",
-    assigneeUserId: "",
+    assigneeStaffId: "",
     notes: "",
   }
 }
@@ -66,6 +68,15 @@ export function TaskDialog({
   const queryClient = useQueryClient()
   const [form, setForm] = useState<FormState>(() => initialForm(units, date))
 
+  // Active staff at this property OR global (null-scoped) — the assignee pool.
+  const staffQuery = useQuery({
+    queryKey: housekeepingKeys.staff("all"),
+    queryFn: () => listStaff({ active: true }),
+  })
+  const assignableStaff = (staffQuery.data?.data ?? []).filter(
+    (s) => s.propertyId === null || s.propertyId === propertyId,
+  )
+
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
 
@@ -77,7 +88,7 @@ export function TaskDialog({
         propertyId,
         type: form.type,
         priority: Number.isFinite(priority) ? priority : 0,
-        assigneeUserId: form.assigneeUserId.trim() || null,
+        assigneeStaffId: form.assigneeStaffId || null,
         dueDate: form.dueDate || null,
         notes: form.notes.trim() || null,
       })
@@ -157,12 +168,22 @@ export function TaskDialog({
               />
             </Field>
             <Field label={m.taskDialog.assignee} htmlFor="task-assignee">
-              <Input
-                id="task-assignee"
-                value={form.assigneeUserId}
-                placeholder={m.taskDialog.assigneePlaceholder}
-                onChange={(e) => set("assigneeUserId", e.target.value)}
-              />
+              <Select
+                value={form.assigneeStaffId || UNASSIGNED}
+                onValueChange={(v) => set("assigneeStaffId", v === UNASSIGNED ? "" : (v ?? ""))}
+              >
+                <SelectTrigger id="task-assignee" className="w-full">
+                  <SelectValue placeholder={m.taskDialog.assigneePlaceholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED}>{m.common.unassigned}</SelectItem>
+                  {assignableStaff.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name} · {m.staff.roleLabels[s.role]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
           </div>
 

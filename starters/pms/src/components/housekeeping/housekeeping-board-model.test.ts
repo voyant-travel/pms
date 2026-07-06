@@ -24,7 +24,8 @@ function task(over: Partial<TaskView> = {}): TaskView {
     type: "clean",
     status: "open",
     priority: 0,
-    assigneeUserId: null,
+    assigneeStaffId: null,
+    assigneeName: null,
     source: "auto",
     dueDate: "2026-07-05",
     notes: null,
@@ -49,13 +50,48 @@ describe("toTaskView", () => {
       type: "inspect",
       status: "open",
       priority: 3,
-      assigneeUserId: null,
+      assigneeStaffId: null,
       source: "manual",
       dueDate: null,
       notes: null,
     }
     expect(toTaskView(raw, () => "204").unitNumber).toBe("204")
     expect(toTaskView(raw, () => "").unitNumber).toBe("runt_9")
+  })
+
+  it("resolves the assignee staff name, or null when unassigned/unresolved", () => {
+    const assigned: TaskLike = {
+      id: "hkt_2",
+      unitId: "runt_2",
+      type: "clean",
+      status: "open",
+      priority: 0,
+      assigneeStaffId: "hstf_1",
+      source: "manual",
+      dueDate: null,
+      notes: null,
+    }
+    expect(
+      toTaskView(
+        assigned,
+        () => "101",
+        (id) => (id === "hstf_1" ? "Maria Ionescu" : undefined),
+      ).assigneeName,
+    ).toBe("Maria Ionescu")
+    expect(
+      toTaskView(
+        assigned,
+        () => "101",
+        () => undefined,
+      ).assigneeName,
+    ).toBeNull()
+    expect(
+      toTaskView(
+        { ...assigned, assigneeStaffId: null },
+        () => "101",
+        () => "X",
+      ).assigneeName,
+    ).toBeNull()
   })
 })
 

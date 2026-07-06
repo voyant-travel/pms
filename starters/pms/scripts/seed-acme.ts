@@ -63,6 +63,8 @@ import { checkIn, noShow } from "../../../packages/front-desk/src/service-ops.js
 import { generateTasksForDate } from "../../../packages/housekeeping/src/service-generation.js"
 import { createMaintenanceBlock } from "../../../packages/housekeeping/src/service-maintenance.js"
 import { setRoomStatus } from "../../../packages/housekeeping/src/service-room-status.js"
+import { createStaff } from "../../../packages/housekeeping/src/service-staff.js"
+import { listTasks, updateTask } from "../../../packages/housekeeping/src/service-tasks.js"
 import { openFolio } from "../../../packages/folios/src/service-folios.js"
 import {
   getOrInitBusinessDate,
@@ -203,6 +205,7 @@ const WIPE_TABLES = [
   "pms_folios",
   "pms_business_dates",
   "pms_housekeeping_tasks",
+  "pms_staff",
   "pms_unit_room_status",
   "pms_maintenance_blocks",
   "pms_stay_ops",
@@ -1393,7 +1396,33 @@ async function seedFrontDesk() {
 // ───────────────────────── Housekeeping ─────────────────────────
 
 async function seedHousekeeping() {
-  console.log("→ housekeeping: generate tasks, room statuses, maintenance…")
+  console.log("→ housekeeping: staff, generate tasks, room statuses, maintenance…")
+
+  // Non-login staff records — the assignee pool for the board. `propertyId: null`
+  // = available at every property (e.g. the roving maintenance tech).
+  const staffDefs: {
+    name: string
+    role: "housekeeper" | "supervisor" | "maintenance" | "front_desk" | "other"
+    property: PropertyKey | null
+  }[] = [
+    { name: "Maria Ionescu", role: "housekeeper", property: "grand" },
+    { name: "Andrei Popescu", role: "supervisor", property: "grand" },
+    { name: "Elena Dumitru", role: "housekeeper", property: "seaside" },
+    { name: "Ana Marin", role: "front_desk", property: "seaside" },
+    { name: "Ion Vasile", role: "maintenance", property: null },
+    { name: "Gabriel Stan", role: "housekeeper", property: "city" },
+  ]
+  const staffByName: Record<string, string> = {}
+  for (const s of staffDefs) {
+    const row = await createStaff(db as any, {
+      name: s.name,
+      role: s.role,
+      propertyId: s.property ? seeded[s.property].propertyId : null,
+    })
+    staffByName[s.name] = row.id
+  }
+  console.log(`  ${staffDefs.length} staff created`)
+
   for (const def of PROPERTIES) {
     if (def.inventoryMode !== "serialized") continue
     const res = await generateTasksForDate(db as any, seeded[def.key].propertyId, isoOffset(0))
@@ -1401,6 +1430,28 @@ async function seedHousekeeping() {
       `  ${def.name}: generated ${res.inserted} task(s) (departures ${res.departures}, stayovers ${res.stayovers})`,
     )
   }
+
+  // Assign the first couple of generated tasks per property to distinct staff so
+  // the board shows names out of the box.
+  const assignments: [PropertyKey, string[]][] = [
+    ["grand", ["Maria Ionescu", "Andrei Popescu"]],
+    ["seaside", ["Elena Dumitru"]],
+  ]
+  let assignedTasks = 0
+  for (const [key, names] of assignments) {
+    const tasks = await listTasks(db as any, {
+      propertyId: seeded[key].propertyId,
+      limit: names.length,
+      offset: 0,
+    })
+    for (let i = 0; i < tasks.data.length; i++) {
+      const staffName = names[i]
+      if (!staffName) continue
+      await updateTask(db as any, tasks.data[i].id, { assigneeStaffId: staffByName[staffName] })
+      assignedTasks++
+    }
+  }
+  console.log(`  ${assignedTasks} task(s) assigned to staff`)
 
   // Sprinkle room statuses: most in-house units clean/inspected, a couple dirty.
   const grand = seeded.grand
