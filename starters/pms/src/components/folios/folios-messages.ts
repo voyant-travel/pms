@@ -28,8 +28,8 @@ export const foliosMessages = {
     newHouseFolio: "New house folio",
     filterStatus: "Status",
     filterAll: "All",
-    searchBooking: "Booking id",
-    searchPlaceholder: "Filter by booking id",
+    searchBooking: "Reservation id",
+    searchPlaceholder: "Filter by reservation id",
     colNumber: "Folio",
     colKind: "Kind",
     colGuest: "Guest",
@@ -53,7 +53,7 @@ export const foliosMessages = {
     guest: "Guest",
     status: "Status",
     invoice: "Invoice",
-    booking: "Booking",
+    booking: "Reservation",
     ledger: "Ledger",
     addPosting: "Add posting",
     settle: "Settle",
@@ -78,7 +78,7 @@ export const foliosMessages = {
     settleStayBody:
       "Cuts a finance invoice from this folio's charges and marks it settled. This cannot be undone.",
     settleHouseBody:
-      "Marks this house folio settled operationally. No fiscal invoice is minted (no upstream booking).",
+      "Marks this house folio settled operationally. No fiscal invoice is minted (no upstream reservation).",
     closeTitle: "Close folio",
     closeBody: "Archives this settled folio. Only a settled folio can be closed.",
     settledInvoiceToast: (id: string) => `Settled — invoice ${id} minted.`,

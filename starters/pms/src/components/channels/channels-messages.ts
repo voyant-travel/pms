@@ -30,7 +30,7 @@ export const channelsMessages = {
     colChannel: "Channel",
     colRef: "Channel ref",
     colStatus: "Status",
-    colBooking: "Booking",
+    colBooking: "Reservation",
     colError: "Error",
     status: {
       received: "Received",
