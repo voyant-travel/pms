@@ -74,3 +74,20 @@ export function retryReservationIngest(
 ): Promise<{ data: ChannelReservation; ingest?: { ok: boolean; reason?: string } }> {
   return api.post(`${BASE}/reservations/${id}/retry-ingest`)
 }
+
+// --- name resolution ---------------------------------------------------------
+// The ledger rows store loose ids (room type / rate plan / booking). The admin
+// surface resolves them to the names/references a channel manager recognizes by
+// reusing the ARI reads (room types + rate plans, per property) and the shared
+// bookings admin list, all keyed by id.
+
+interface BookingRow {
+  id: string
+  bookingNumber: string
+}
+
+/** Map `bookingId → STAY-… number` from the shared bookings admin list. */
+export async function listBookingNumbers(): Promise<Map<string, string>> {
+  const res = await api.get<ListEnvelope<BookingRow>>("/v1/admin/bookings?limit=200&offset=0")
+  return new Map(res.data.map((b) => [b.id, b.bookingNumber]))
+}

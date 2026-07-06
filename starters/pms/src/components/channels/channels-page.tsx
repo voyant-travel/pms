@@ -22,15 +22,56 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@voyant-travel/ui/comp
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { ariKeys, listPropertyOptions, listRatePlans, listRoomTypes } from "../ari/ari-client"
 import {
   type AriEventStatus,
   channelsKeys,
   listAriEvents,
+  listBookingNumbers,
   listReservations,
   type ReservationStatus,
   retryReservationIngest,
 } from "./channels-client"
-import { channelsMessages } from "./channels-messages"
+import { channelsMessages, formatChannel } from "./channels-messages"
+
+interface RoomTypeLabel {
+  name: string
+  propertyName: string
+}
+
+interface AriNameMaps {
+  roomTypes: Map<string, RoomTypeLabel>
+  ratePlans: Map<string, string>
+}
+
+/**
+ * Resolve the loose ids on ARI-event ledger rows to human names by fanning out
+ * over the ARI reads (room types + rate plans per property). Small, cached, and
+ * additive — the ledger stays a thin read.
+ */
+function useAriNames() {
+  return useQuery({
+    queryKey: [...ariKeys.all, "channel-name-maps"],
+    staleTime: 60_000,
+    queryFn: async (): Promise<AriNameMaps> => {
+      const properties = await listPropertyOptions()
+      const perProperty = await Promise.all(
+        properties.map(async (property) => ({
+          property,
+          roomTypes: (await listRoomTypes(property.id)).data,
+          ratePlans: (await listRatePlans(property.id)).data,
+        })),
+      )
+      const roomTypes = new Map<string, RoomTypeLabel>()
+      const ratePlans = new Map<string, string>()
+      for (const { property, roomTypes: rts, ratePlans: rps } of perProperty) {
+        for (const rt of rts) roomTypes.set(rt.id, { name: rt.name, propertyName: property.label })
+        for (const rp of rps) ratePlans.set(rp.id, rp.name)
+      }
+      return { roomTypes, ratePlans }
+    },
+  })
+}
 
 type BadgeVariant = "default" | "secondary" | "outline" | "destructive"
 
@@ -54,6 +95,11 @@ function ReservationsTab() {
   const query = useQuery({
     queryKey: channelsKeys.reservations("all"),
     queryFn: () => listReservations(),
+  })
+  const bookingNumbers = useQuery({
+    queryKey: [...channelsKeys.all, "booking-numbers"],
+    staleTime: 60_000,
+    queryFn: () => listBookingNumbers(),
   })
   const rows = query.data?.data ?? []
 
@@ -88,13 +134,17 @@ function ReservationsTab() {
       <TableBody>
         {rows.map((row) => (
           <TableRow key={row.id}>
-            <TableCell>{row.channel}</TableCell>
+            <TableCell>{formatChannel(row.channel)}</TableCell>
             <TableCell className="font-mono">{row.channelReservationId}</TableCell>
             <TableCell>
               <Badge variant={RESERVATION_VARIANT[row.status]}>{m.status[row.status]}</Badge>
             </TableCell>
-            <TableCell className="font-mono text-xs">
-              {row.bookingId ?? channelsMessages.common.none}
+            <TableCell className="text-xs">
+              {row.bookingId
+                ? (bookingNumbers.data?.get(row.bookingId) ?? (
+                    <span className="font-mono">{row.bookingId}</span>
+                  ))
+                : channelsMessages.common.none}
             </TableCell>
             <TableCell className="text-muted-foreground max-w-64 truncate text-xs">
               {row.error ?? channelsMessages.common.none}
@@ -124,6 +174,7 @@ function AriEventsTab() {
     queryKey: channelsKeys.ariEvents("all"),
     queryFn: () => listAriEvents(),
   })
+  const names = useAriNames()
   const rows = query.data?.data ?? []
 
   if (query.isError)
@@ -145,10 +196,25 @@ function AriEventsTab() {
       <TableBody>
         {rows.map((row) => (
           <TableRow key={row.id}>
-            <TableCell>{row.channel}</TableCell>
-            <TableCell className="font-mono text-xs">{row.roomTypeId}</TableCell>
-            <TableCell className="font-mono text-xs">
-              {row.ratePlanId ?? channelsMessages.common.none}
+            <TableCell>{formatChannel(row.channel)}</TableCell>
+            <TableCell className="text-sm">
+              {(() => {
+                const rt = names.data?.roomTypes.get(row.roomTypeId)
+                if (!rt) return <span className="font-mono text-xs">{row.roomTypeId}</span>
+                return (
+                  <span className="flex flex-col leading-tight">
+                    <span>{rt.name}</span>
+                    <span className="text-muted-foreground text-xs">{rt.propertyName}</span>
+                  </span>
+                )
+              })()}
+            </TableCell>
+            <TableCell className="text-sm">
+              {row.ratePlanId
+                ? (names.data?.ratePlans.get(row.ratePlanId) ?? (
+                    <span className="font-mono text-xs">{row.ratePlanId}</span>
+                  ))
+                : channelsMessages.common.none}
             </TableCell>
             <TableCell>
               <Badge variant={ARI_VARIANT[row.status]}>{m.status[row.status]}</Badge>

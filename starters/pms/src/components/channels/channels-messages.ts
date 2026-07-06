@@ -57,3 +57,29 @@ export const channelsMessages = {
 } as const
 
 export type ChannelsMessages = typeof channelsMessages
+
+/** Known channel codes → the brand names a channel manager recognizes. */
+const CHANNEL_LABELS: Record<string, string> = {
+  booking_com: "Booking.com",
+  expedia: "Expedia",
+  airbnb: "Airbnb",
+  agoda: "Agoda",
+  hostelworld: "Hostelworld",
+  direct: "Direct",
+  mock: "Reference (mock)",
+}
+
+/**
+ * Render a channel code as a human label — a known brand name, otherwise the raw
+ * code title-cased ("some_channel" → "Some Channel") so we never leak a snake
+ * case enum token to the ledger.
+ */
+export function formatChannel(channel: string): string {
+  return (
+    CHANNEL_LABELS[channel] ??
+    channel
+      .split("_")
+      .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
+      .join(" ")
+  )
+}
