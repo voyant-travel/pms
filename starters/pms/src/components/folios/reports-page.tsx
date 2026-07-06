@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@voyant-travel/ui/components/card"
-import { Input } from "@voyant-travel/ui/components/input"
 import {
   Table,
   TableBody,
@@ -13,6 +12,7 @@ import {
 } from "@voyant-travel/ui/components/table"
 import { useState } from "react"
 
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { todayIso } from "../front-desk/front-desk-dates"
 import { type DailyReport, foliosKeys, getDailyReport } from "./folios-client"
 import { foliosMessages } from "./folios-messages"
@@ -101,15 +101,12 @@ function ReportsView({ propertyId }: { propertyId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-2">
-        <label htmlFor="report-date" className="text-muted-foreground text-sm">
-          {m.reports.date}
-        </label>
-        <Input
-          id="report-date"
-          type="date"
-          className="w-44"
+        <span className="text-muted-foreground text-sm">{m.reports.date}</span>
+        <IsoDateField
           value={date}
-          onChange={(e) => setDate(e.target.value || todayIso())}
+          onChange={(v) => setDate(v || todayIso())}
+          required
+          containerClassName="w-44"
         />
       </div>
 

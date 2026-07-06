@@ -18,6 +18,7 @@ import {
 } from "@voyant-travel/ui/components/select"
 import { useState } from "react"
 
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { Field } from "../ari/ari-form"
 import { todayIso } from "../front-desk/front-desk-dates"
 import { MANUAL_POSTING_TYPES, type ManualPostingType } from "./folios-client"
@@ -103,7 +104,7 @@ export function PostingDialog({
               value={form.type}
               onValueChange={(v) => set("type", (v ?? "extra") as ManualPostingType)}
             >
-              <SelectTrigger id="posting-type">
+              <SelectTrigger id="posting-type" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -148,14 +149,12 @@ export function PostingDialog({
             </Field>
           </div>
 
-          <Field label={m.postingDialog.businessDate} htmlFor="posting-date">
-            <Input
-              id="posting-date"
-              type="date"
-              value={form.businessDate}
-              onChange={(e) => set("businessDate", e.target.value || fallbackDate)}
-            />
-          </Field>
+          <IsoDateField
+            label={m.postingDialog.businessDate}
+            value={form.businessDate}
+            onChange={(v) => set("businessDate", v || fallbackDate)}
+            required
+          />
 
           <p className="text-muted-foreground text-xs">{m.postingDialog.amountHint}</p>
         </div>

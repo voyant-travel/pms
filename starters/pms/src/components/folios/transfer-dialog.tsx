@@ -74,7 +74,7 @@ export function TransferDialog({
           ) : (
             <Field label={m.transferDialog.target} htmlFor="transfer-target">
               <Select value={targetFolioId} onValueChange={(v) => setTargetFolioId(v ?? "")}>
-                <SelectTrigger id="transfer-target">
+                <SelectTrigger id="transfer-target" className="w-full">
                   <SelectValue placeholder={m.transferDialog.pickTarget} />
                 </SelectTrigger>
                 <SelectContent>
