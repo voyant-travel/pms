@@ -15,17 +15,14 @@ import type { AdminDestinationResolvers } from "@voyant-travel/admin"
 // the chunk that imports the resolver map.
 import type {} from "@voyant-travel/action-ledger-react/admin"
 import type {} from "@voyant-travel/bookings-react/admin"
-import type {} from "@voyant-travel/catalog-react/admin"
 import type {} from "@voyant-travel/commerce-react/admin"
 import type {} from "@voyant-travel/distribution-react/admin"
 import type {} from "@voyant-travel/finance-react/admin"
-import type {} from "@voyant-travel/inventory-react/admin"
 import type {} from "@voyant-travel/legal-react/admin"
 import type {} from "@voyant-travel/notifications-react/admin"
 import type {} from "@voyant-travel/operations-react/admin"
 import type {} from "@voyant-travel/quotes-react/admin"
 import type {} from "@voyant-travel/relationships-react/admin"
-import type {} from "@voyant-travel/trips-react/admin"
 
 /** Resolvers for the route-backed subset of the declared destination keys. */
 export const generatedAdminDestinations = {
@@ -58,9 +55,6 @@ export const generatedAdminDestinations = {
   "person.list": () => "/people",
   "policy.detail": ({ policyId }) => `/legal/policies/${encodeURIComponent(policyId)}`,
   "policy.list": () => "/legal/policies",
-  "product.detail": ({ productId }) => `/products/${encodeURIComponent(productId)}`,
-  "product.list": () => "/products",
-  "productCategory.list": () => "/products/categories",
   "quote.detail": ({ quoteId }) => `/quotes/${encodeURIComponent(quoteId)}`,
   "quote.list": () => "/quotes",
   "resource.detail": ({ resourceId }) => `/operations/resources/${encodeURIComponent(resourceId)}`,
@@ -76,6 +70,4 @@ export const generatedAdminDestinations = {
   "supplierInvoice.detail": ({ supplierInvoiceId }) =>
     `/finance/supplier-invoices/${encodeURIComponent(supplierInvoiceId)}`,
   "supplierInvoice.list": () => "/finance/supplier-invoices",
-  "trip.detail": ({ tripId }) => `/trips/${encodeURIComponent(tripId)}`,
-  "trip.list": () => "/trips",
 } satisfies Partial<AdminDestinationResolvers>

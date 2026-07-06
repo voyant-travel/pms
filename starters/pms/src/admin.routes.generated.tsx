@@ -18,7 +18,6 @@ import {
   bookingNewSearchSchema,
   bookingsIndexSearchSchema,
 } from "@voyant-travel/bookings-react/admin"
-import { catalogSearchSchema, productDetailSearchSchema } from "@voyant-travel/catalog-react/admin"
 
 import { adminExtensions } from "@/lib/admin-extensions"
 import { getApiUrl } from "@/lib/env"
@@ -78,95 +77,11 @@ export const BookingsNewRoute = createRoute({
   ...adminExtensionRouteOptions(bookingsExtension, "bookings-new", runtime),
 })
 
-export const BookingsComposeRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/bookings/compose",
-  ...adminExtensionRouteOptions(bookingsExtension, "bookings-compose", runtime),
-})
-
 export const BookingsJourneyRoute = createRoute({
   getParentRoute: workspace,
   path: "/catalog/journey/$entityModule/$entityId",
   validateSearch: bookingJourneySearchSchema,
   ...adminExtensionRouteOptions(bookingsExtension, "bookings-journey", runtime),
-})
-
-// ---------------------------------------------------------------------------
-// catalog
-// ---------------------------------------------------------------------------
-
-const catalogExtension = extension("catalog")
-
-export const CatalogIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog",
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-index", runtime),
-})
-
-export const CatalogProductsIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/products",
-  validateSearch: catalogSearchSchema,
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-products-index", runtime),
-})
-
-export const CatalogProductsDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/products/$productId",
-  validateSearch: productDetailSearchSchema,
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-products-detail", runtime),
-})
-
-export const CatalogExcursionsIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/excursions",
-  validateSearch: catalogSearchSchema,
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-excursions-index", runtime),
-})
-
-export const CatalogExcursionsDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/excursions/$id",
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-excursions-detail", runtime),
-})
-
-export const CatalogToursIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/tours",
-  validateSearch: catalogSearchSchema,
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-tours-index", runtime),
-})
-
-export const CatalogToursDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/tours/$id",
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-tours-detail", runtime),
-})
-
-export const CatalogCruisesIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/cruises",
-  validateSearch: catalogSearchSchema,
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-cruises-index", runtime),
-})
-
-export const CatalogCruisesDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/cruises/$id",
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-cruises-detail", runtime),
-})
-
-export const CatalogAccommodationsIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/accommodations",
-  validateSearch: catalogSearchSchema,
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-accommodations-index", runtime),
-})
-
-export const CatalogAccommodationsDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/catalog/accommodations/$id",
-  ...adminExtensionRouteOptions(catalogExtension, "catalog-accommodations-detail", runtime),
 })
 
 // ---------------------------------------------------------------------------
@@ -379,30 +294,6 @@ export const FinanceProfitabilityRoute = createRoute({
   getParentRoute: workspace,
   path: "/finance/profitability",
   ...adminExtensionRouteOptions(financeExtension, "finance-profitability", runtime),
-})
-
-// ---------------------------------------------------------------------------
-// inventory
-// ---------------------------------------------------------------------------
-
-const inventoryExtension = extension("inventory")
-
-export const ProductsIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/products",
-  ...adminExtensionRouteOptions(inventoryExtension, "products-index", runtime),
-})
-
-export const ProductsCategoriesRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/products/categories",
-  ...adminExtensionRouteOptions(inventoryExtension, "products-categories", runtime),
-})
-
-export const ProductsDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/products/$id",
-  ...adminExtensionRouteOptions(inventoryExtension, "products-detail", runtime),
 })
 
 // ---------------------------------------------------------------------------
@@ -644,24 +535,6 @@ export const RelationshipsOrganizationsDetailRoute = createRoute({
 })
 
 // ---------------------------------------------------------------------------
-// trips
-// ---------------------------------------------------------------------------
-
-const tripsExtension = extension("trips")
-
-export const TripsIndexRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/trips",
-  ...adminExtensionRouteOptions(tripsExtension, "trips-index", runtime),
-})
-
-export const TripsDetailRoute = createRoute({
-  getParentRoute: workspace,
-  path: "/trips/$id",
-  ...adminExtensionRouteOptions(tripsExtension, "trips-detail", runtime),
-})
-
-// ---------------------------------------------------------------------------
 // tree + typed-link maps
 // ---------------------------------------------------------------------------
 
@@ -670,19 +543,7 @@ export const adminExtensionRoutes = [
   BookingsIndexRoute,
   BookingsDetailRoute,
   BookingsNewRoute,
-  BookingsComposeRoute,
   BookingsJourneyRoute,
-  CatalogIndexRoute,
-  CatalogProductsIndexRoute,
-  CatalogProductsDetailRoute,
-  CatalogExcursionsIndexRoute,
-  CatalogExcursionsDetailRoute,
-  CatalogToursIndexRoute,
-  CatalogToursDetailRoute,
-  CatalogCruisesIndexRoute,
-  CatalogCruisesDetailRoute,
-  CatalogAccommodationsIndexRoute,
-  CatalogAccommodationsDetailRoute,
   PromotionsIndexRoute,
   CoreDashboardRoute,
   CoreAccountRoute,
@@ -699,9 +560,6 @@ export const adminExtensionRoutes = [
   FinanceSupplierInvoicesIndexRoute,
   FinanceSupplierInvoicesDetailRoute,
   FinanceProfitabilityRoute,
-  ProductsIndexRoute,
-  ProductsCategoriesRoute,
-  ProductsDetailRoute,
   LegalIndexRoute,
   LegalContractsIndexRoute,
   LegalContractsDetailRoute,
@@ -734,8 +592,6 @@ export const adminExtensionRoutes = [
   RelationshipsPeopleDetailRoute,
   RelationshipsOrganizationsIndexRoute,
   RelationshipsOrganizationsDetailRoute,
-  TripsIndexRoute,
-  TripsDetailRoute,
 ]
 
 export interface AdminExtensionRoutesByFullPath {
@@ -743,19 +599,7 @@ export interface AdminExtensionRoutesByFullPath {
   "/bookings": typeof BookingsIndexRoute
   "/bookings/$id": typeof BookingsDetailRoute
   "/bookings/new": typeof BookingsNewRoute
-  "/bookings/compose": typeof BookingsComposeRoute
   "/catalog/journey/$entityModule/$entityId": typeof BookingsJourneyRoute
-  "/catalog": typeof CatalogIndexRoute
-  "/catalog/products": typeof CatalogProductsIndexRoute
-  "/catalog/products/$productId": typeof CatalogProductsDetailRoute
-  "/catalog/excursions": typeof CatalogExcursionsIndexRoute
-  "/catalog/excursions/$id": typeof CatalogExcursionsDetailRoute
-  "/catalog/tours": typeof CatalogToursIndexRoute
-  "/catalog/tours/$id": typeof CatalogToursDetailRoute
-  "/catalog/cruises": typeof CatalogCruisesIndexRoute
-  "/catalog/cruises/$id": typeof CatalogCruisesDetailRoute
-  "/catalog/accommodations": typeof CatalogAccommodationsIndexRoute
-  "/catalog/accommodations/$id": typeof CatalogAccommodationsDetailRoute
   "/promotions": typeof PromotionsIndexRoute
   "/": typeof CoreDashboardRoute
   "/account": typeof CoreAccountRoute
@@ -782,9 +626,6 @@ export interface AdminExtensionRoutesByFullPath {
   "/finance/supplier-invoices": typeof FinanceSupplierInvoicesIndexRoute
   "/finance/supplier-invoices/$id": typeof FinanceSupplierInvoicesDetailRoute
   "/finance/profitability": typeof FinanceProfitabilityRoute
-  "/products": typeof ProductsIndexRoute
-  "/products/categories": typeof ProductsCategoriesRoute
-  "/products/$id": typeof ProductsDetailRoute
   "/legal": typeof LegalIndexRoute
   "/legal/contracts": typeof LegalContractsIndexRoute
   "/legal/contracts/$id": typeof LegalContractsDetailRoute
@@ -817,8 +658,6 @@ export interface AdminExtensionRoutesByFullPath {
   "/people/$id": typeof RelationshipsPeopleDetailRoute
   "/organizations": typeof RelationshipsOrganizationsIndexRoute
   "/organizations/$id": typeof RelationshipsOrganizationsDetailRoute
-  "/trips": typeof TripsIndexRoute
-  "/trips/$id": typeof TripsDetailRoute
 }
 
 export interface AdminExtensionRoutesByTo {
@@ -826,19 +665,7 @@ export interface AdminExtensionRoutesByTo {
   "/bookings": typeof BookingsIndexRoute
   "/bookings/$id": typeof BookingsDetailRoute
   "/bookings/new": typeof BookingsNewRoute
-  "/bookings/compose": typeof BookingsComposeRoute
   "/catalog/journey/$entityModule/$entityId": typeof BookingsJourneyRoute
-  "/catalog": typeof CatalogIndexRoute
-  "/catalog/products": typeof CatalogProductsIndexRoute
-  "/catalog/products/$productId": typeof CatalogProductsDetailRoute
-  "/catalog/excursions": typeof CatalogExcursionsIndexRoute
-  "/catalog/excursions/$id": typeof CatalogExcursionsDetailRoute
-  "/catalog/tours": typeof CatalogToursIndexRoute
-  "/catalog/tours/$id": typeof CatalogToursDetailRoute
-  "/catalog/cruises": typeof CatalogCruisesIndexRoute
-  "/catalog/cruises/$id": typeof CatalogCruisesDetailRoute
-  "/catalog/accommodations": typeof CatalogAccommodationsIndexRoute
-  "/catalog/accommodations/$id": typeof CatalogAccommodationsDetailRoute
   "/promotions": typeof PromotionsIndexRoute
   "/": typeof CoreDashboardRoute
   "/account": typeof CoreAccountRoute
@@ -864,9 +691,6 @@ export interface AdminExtensionRoutesByTo {
   "/finance/supplier-invoices": typeof FinanceSupplierInvoicesIndexRoute
   "/finance/supplier-invoices/$id": typeof FinanceSupplierInvoicesDetailRoute
   "/finance/profitability": typeof FinanceProfitabilityRoute
-  "/products": typeof ProductsIndexRoute
-  "/products/categories": typeof ProductsCategoriesRoute
-  "/products/$id": typeof ProductsDetailRoute
   "/legal": typeof LegalIndexRoute
   "/legal/contracts": typeof LegalContractsIndexRoute
   "/legal/contracts/$id": typeof LegalContractsDetailRoute
@@ -899,8 +723,6 @@ export interface AdminExtensionRoutesByTo {
   "/people/$id": typeof RelationshipsPeopleDetailRoute
   "/organizations": typeof RelationshipsOrganizationsIndexRoute
   "/organizations/$id": typeof RelationshipsOrganizationsDetailRoute
-  "/trips": typeof TripsIndexRoute
-  "/trips/$id": typeof TripsDetailRoute
 }
 
 export interface AdminExtensionRoutesById {
@@ -908,19 +730,7 @@ export interface AdminExtensionRoutesById {
   "/_workspace/bookings": typeof BookingsIndexRoute
   "/_workspace/bookings/$id": typeof BookingsDetailRoute
   "/_workspace/bookings/new": typeof BookingsNewRoute
-  "/_workspace/bookings/compose": typeof BookingsComposeRoute
   "/_workspace/catalog/journey/$entityModule/$entityId": typeof BookingsJourneyRoute
-  "/_workspace/catalog": typeof CatalogIndexRoute
-  "/_workspace/catalog/products": typeof CatalogProductsIndexRoute
-  "/_workspace/catalog/products/$productId": typeof CatalogProductsDetailRoute
-  "/_workspace/catalog/excursions": typeof CatalogExcursionsIndexRoute
-  "/_workspace/catalog/excursions/$id": typeof CatalogExcursionsDetailRoute
-  "/_workspace/catalog/tours": typeof CatalogToursIndexRoute
-  "/_workspace/catalog/tours/$id": typeof CatalogToursDetailRoute
-  "/_workspace/catalog/cruises": typeof CatalogCruisesIndexRoute
-  "/_workspace/catalog/cruises/$id": typeof CatalogCruisesDetailRoute
-  "/_workspace/catalog/accommodations": typeof CatalogAccommodationsIndexRoute
-  "/_workspace/catalog/accommodations/$id": typeof CatalogAccommodationsDetailRoute
   "/_workspace/promotions": typeof PromotionsIndexRoute
   "/_workspace/": typeof CoreDashboardRoute
   "/_workspace/account": typeof CoreAccountRoute
@@ -947,9 +757,6 @@ export interface AdminExtensionRoutesById {
   "/_workspace/finance/supplier-invoices": typeof FinanceSupplierInvoicesIndexRoute
   "/_workspace/finance/supplier-invoices/$id": typeof FinanceSupplierInvoicesDetailRoute
   "/_workspace/finance/profitability": typeof FinanceProfitabilityRoute
-  "/_workspace/products": typeof ProductsIndexRoute
-  "/_workspace/products/categories": typeof ProductsCategoriesRoute
-  "/_workspace/products/$id": typeof ProductsDetailRoute
   "/_workspace/legal": typeof LegalIndexRoute
   "/_workspace/legal/contracts": typeof LegalContractsIndexRoute
   "/_workspace/legal/contracts/$id": typeof LegalContractsDetailRoute
@@ -982,6 +789,4 @@ export interface AdminExtensionRoutesById {
   "/_workspace/people/$id": typeof RelationshipsPeopleDetailRoute
   "/_workspace/organizations": typeof RelationshipsOrganizationsIndexRoute
   "/_workspace/organizations/$id": typeof RelationshipsOrganizationsDetailRoute
-  "/_workspace/trips": typeof TripsIndexRoute
-  "/_workspace/trips/$id": typeof TripsDetailRoute
 }
