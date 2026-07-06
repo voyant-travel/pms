@@ -54,6 +54,8 @@ export interface Folio {
   bookingId: string | null
   bookingItemId: string | null
   guestName: string | null
+  /** Linked booking's human `STAY-…` reference; server-resolved on list/detail reads. */
+  bookingNumber?: string | null
   currency: string
   status: FolioStatus
   financeInvoiceId: string | null

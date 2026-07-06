@@ -10,12 +10,59 @@
  * documents this as a v1 acceptable risk — retry-on-conflict is a follow-up).
  */
 
+import { bookings } from "@voyant-travel/bookings/schema"
 import { type ListResponse, listResponse } from "@voyant-travel/types"
 import { and, asc, count, desc, eq, inArray, type SQL, sql } from "drizzle-orm"
 import { summarizeFolio } from "./balance.js"
 import type { FoliosDb } from "./db.js"
 import { type FolioRow, folioPostings, folios } from "./schema.js"
 import type { FolioListQuery, OpenFolioInput } from "./validation.js"
+
+/** Human-facing labels resolved from a folio's linked booking. */
+export interface BookingLabels {
+  /** The `STAY-…` reservation number a front-desk agent recognizes. */
+  bookingNumber: string | null
+  /** The booking's contact name, used to backfill a stay folio's guest. */
+  guestName: string | null
+}
+
+function joinName(first: string | null, last: string | null): string | null {
+  const name = [first, last].filter(Boolean).join(" ").trim()
+  return name.length > 0 ? name : null
+}
+
+/**
+ * Resolve `bookingId → { bookingNumber, guestName }` for a set of folios in one
+ * query. Folios keep loose text `bookingId` columns; the admin surfaces want the
+ * human `STAY-…` reference and the guest's name, so the list/detail reads join
+ * `bookings` (already a package dependency) to enrich the response rather than
+ * leak a raw `book_…` id to the front desk.
+ */
+export async function resolveBookingLabels(
+  db: FoliosDb,
+  bookingIds: readonly string[],
+): Promise<Map<string, BookingLabels>> {
+  const ids = [...new Set(bookingIds.filter((id): id is string => Boolean(id)))]
+  if (ids.length === 0) return new Map()
+  const rows = await db
+    .select({
+      id: bookings.id,
+      bookingNumber: bookings.bookingNumber,
+      contactFirstName: bookings.contactFirstName,
+      contactLastName: bookings.contactLastName,
+    })
+    .from(bookings)
+    .where(inArray(bookings.id, ids))
+  return new Map(
+    rows.map((r) => [
+      r.id,
+      {
+        bookingNumber: r.bookingNumber,
+        guestName: joinName(r.contactFirstName, r.contactLastName),
+      },
+    ]),
+  )
+}
 
 /** Compute the next `F-<seq>` folio number for a property (count + 1, zero-padded). */
 export async function nextFolioNumber(db: FoliosDb, propertyId: string): Promise<string> {
@@ -52,6 +99,8 @@ export async function listFolios(
 /** A folio list row enriched with its signed posting balance (minor units). */
 export interface FolioWithBalance extends FolioRow {
   balanceCents: number
+  /** Linked booking's `STAY-…` reference (null for house folios / unlinked). */
+  bookingNumber: string | null
 }
 
 /**
@@ -77,8 +126,20 @@ export async function listFoliosWithBalances(
         .groupBy(folioPostings.folioId)
     : []
   const byId = new Map(sums.map((s) => [s.folioId, Number(s.total)]))
+  const labels = await resolveBookingLabels(
+    db,
+    page.data.map((f) => f.bookingId).filter((id): id is string => Boolean(id)),
+  )
   return listResponse(
-    page.data.map((f) => ({ ...f, balanceCents: byId.get(f.id) ?? 0 })),
+    page.data.map((f) => {
+      const label = f.bookingId ? labels.get(f.bookingId) : undefined
+      return {
+        ...f,
+        balanceCents: byId.get(f.id) ?? 0,
+        guestName: f.guestName ?? label?.guestName ?? null,
+        bookingNumber: label?.bookingNumber ?? null,
+      }
+    }),
     { total: page.total, limit: query.limit, offset: query.offset },
   )
 }
@@ -89,7 +150,7 @@ export async function getFolio(db: FoliosDb, id: string): Promise<FolioRow | nul
 }
 
 export interface FolioWithPostings {
-  folio: FolioRow
+  folio: FolioRow & { bookingNumber: string | null }
   postings: (typeof folioPostings.$inferSelect)[]
   summary: ReturnType<typeof summarizeFolio>
 }
@@ -106,7 +167,18 @@ export async function getFolioWithPostings(
     .from(folioPostings)
     .where(eq(folioPostings.folioId, id))
     .orderBy(asc(folioPostings.businessDate), asc(folioPostings.createdAt))
-  return { folio, postings, summary: summarizeFolio(postings) }
+  const label = folio.bookingId
+    ? (await resolveBookingLabels(db, [folio.bookingId])).get(folio.bookingId)
+    : undefined
+  return {
+    folio: {
+      ...folio,
+      guestName: folio.guestName ?? label?.guestName ?? null,
+      bookingNumber: label?.bookingNumber ?? null,
+    },
+    postings,
+    summary: summarizeFolio(postings),
+  }
 }
 
 /** Open a folio explicitly. Allocates the next per-property folio number. */

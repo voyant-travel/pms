@@ -206,14 +206,15 @@ export function FolioDetail({ folioId, onBack }: { folioId: string; onBack: () =
               {folio.guestName ? <span>{folio.guestName}</span> : null}
             </div>
             <div className="text-muted-foreground flex flex-col gap-0.5 text-xs">
-              {folio.bookingId ? (
-                <span className="font-mono">
-                  {m.detail.booking}: {folio.bookingId}
+              {(folio.bookingNumber ?? folio.bookingId) ? (
+                <span>
+                  {m.detail.booking}:{" "}
+                  <span className="font-mono">{folio.bookingNumber ?? folio.bookingId}</span>
                 </span>
               ) : null}
               {folio.financeInvoiceId ? (
-                <span className="font-mono">
-                  {m.detail.invoice}: {folio.financeInvoiceId}
+                <span>
+                  {m.detail.invoice}: <span className="font-mono">{folio.financeInvoiceId}</span>
                 </span>
               ) : null}
             </div>
