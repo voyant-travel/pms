@@ -5,7 +5,6 @@ import type { BoardEntry, Boards } from "@voyant-travel/pms-front-desk"
 import { Badge } from "@voyant-travel/ui/components/badge"
 import { Button } from "@voyant-travel/ui/components/button"
 import { ConfirmActionButton } from "@voyant-travel/ui/components/confirm-action-button"
-import { Input } from "@voyant-travel/ui/components/input"
 import {
   Table,
   TableBody,
@@ -17,6 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@voyant-travel/ui/components/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { ariKeys, listRoomTypes } from "../ari/ari-client"
 import {
   type BoardTab,
@@ -190,11 +190,11 @@ function BoardsView({ propertyId }: { propertyId: string }) {
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <Input
-          type="date"
-          className="w-40"
+        <IsoDateField
           value={date}
-          onChange={(e) => setDate(e.target.value || todayIso())}
+          onChange={(v) => setDate(v || todayIso())}
+          required
+          className="w-40"
         />
         <Button
           variant="outline"

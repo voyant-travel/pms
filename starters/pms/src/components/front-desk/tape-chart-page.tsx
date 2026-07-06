@@ -3,9 +3,9 @@
 import { useQuery } from "@tanstack/react-query"
 import type { TapeChart } from "@voyant-travel/pms-front-desk"
 import { Button } from "@voyant-travel/ui/components/button"
-import { Input } from "@voyant-travel/ui/components/input"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { frontDeskKeys, getTapeChart } from "./front-desk-client"
 import {
   addDaysIso,
@@ -64,14 +64,13 @@ function TapeChartView({ propertyId }: { propertyId: string }) {
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <Input
-          type="date"
-          className="w-40"
+        <IsoDateField
           value={range.from}
-          onChange={(e) => {
-            const from = e.target.value
+          onChange={(from) => {
             if (from) setRange({ from, to: addDaysIso(from, DEFAULT_TAPE_CHART_DAYS - 1) })
           }}
+          required
+          className="w-40"
         />
         <span className="text-muted-foreground text-sm tabular-nums">→ {range.to}</span>
         <Button

@@ -144,7 +144,7 @@ export function UnitDialog({
 
           <Field label={m.units.roomType} htmlFor="unit-room-type">
             <Select value={form.roomTypeId} onValueChange={(v) => set("roomTypeId", v ?? "")}>
-              <SelectTrigger id="unit-room-type">
+              <SelectTrigger id="unit-room-type" className="w-full">
                 <SelectValue placeholder={m.units.roomType} />
               </SelectTrigger>
               <SelectContent>
@@ -177,7 +177,7 @@ export function UnitDialog({
                 value={form.status}
                 onValueChange={(v) => set("status", (v ?? "available") as RoomUnitStatus)}
               >
-                <SelectTrigger id="unit-status">
+                <SelectTrigger id="unit-status" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

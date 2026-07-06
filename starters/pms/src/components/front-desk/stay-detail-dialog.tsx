@@ -109,7 +109,7 @@ export function StayDetailDialog({
               <p className="text-muted-foreground text-xs">{m.noAssignment}</p>
             ) : (
               <Select value={targetUnit} onValueChange={(v) => setTargetUnit(v ?? "")}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder={m.pickUnit} />
                 </SelectTrigger>
                 <SelectContent>
