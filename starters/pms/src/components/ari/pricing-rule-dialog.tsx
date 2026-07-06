@@ -29,6 +29,7 @@ import {
 import { useState } from "react"
 import { toast } from "sonner"
 import { toFriendlyError } from "@/lib/friendly-error"
+import { IsoDateField } from "../admin-shared/iso-date-field"
 
 import {
   ariKeys,
@@ -238,7 +239,7 @@ export function PricingRuleDialog({
               value={form.kind}
               onValueChange={(v) => set("kind", (v ?? "season") as FormState["kind"])}
             >
-              <SelectTrigger id="rule-kind">
+              <SelectTrigger id="rule-kind" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -250,22 +251,18 @@ export function PricingRuleDialog({
 
           {form.kind === "season" ? (
             <div className="grid grid-cols-2 gap-3">
-              <Field label={m.from} htmlFor="rule-from">
-                <Input
-                  id="rule-from"
-                  type="date"
-                  value={form.fromDate}
-                  onChange={(e) => set("fromDate", e.target.value)}
-                />
-              </Field>
-              <Field label={m.to} htmlFor="rule-to">
-                <Input
-                  id="rule-to"
-                  type="date"
-                  value={form.toDate}
-                  onChange={(e) => set("toDate", e.target.value)}
-                />
-              </Field>
+              <IsoDateField
+                label={m.from}
+                value={form.fromDate}
+                onChange={(v) => set("fromDate", v)}
+                required
+              />
+              <IsoDateField
+                label={m.to}
+                value={form.toDate}
+                onChange={(v) => set("toDate", v)}
+                required
+              />
             </div>
           ) : (
             <Field label={m.days}>
@@ -297,7 +294,7 @@ export function PricingRuleDialog({
                 value={form.mode}
                 onValueChange={(v) => set("mode", (v ?? "increase_pct") as AdjustmentMode)}
               >
-                <SelectTrigger id="rule-mode">
+                <SelectTrigger id="rule-mode" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

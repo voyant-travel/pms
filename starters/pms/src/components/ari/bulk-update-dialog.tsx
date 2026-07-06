@@ -29,6 +29,7 @@ import {
 import { useState } from "react"
 import { toast } from "sonner"
 import { toFriendlyError } from "@/lib/friendly-error"
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { ariKeys, bulkUpsertInventory, bulkUpsertRates } from "./ari-client"
 import { Field, SwitchRow } from "./ari-form"
 import { ariMessages } from "./ari-messages"
@@ -123,7 +124,7 @@ export function BulkUpdateDialog({
         <div className="flex flex-col gap-4">
           <Field label={m.target} htmlFor="bulk-target">
             <Select value={target} onValueChange={(v) => setTarget((v ?? "rates") as Target)}>
-              <SelectTrigger id="bulk-target">
+              <SelectTrigger id="bulk-target" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -135,7 +136,7 @@ export function BulkUpdateDialog({
 
           <Field label={m.roomType} htmlFor="bulk-room-type">
             <Select value={roomTypeId} onValueChange={(v) => setRoomTypeId(v ?? "")}>
-              <SelectTrigger id="bulk-room-type">
+              <SelectTrigger id="bulk-room-type" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -154,7 +155,7 @@ export function BulkUpdateDialog({
                 value={activeRatePlan?.id ?? ""}
                 onValueChange={(v) => setRatePlanId(v ?? "")}
               >
-                <SelectTrigger id="bulk-rate-plan">
+                <SelectTrigger id="bulk-rate-plan" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,17 +170,8 @@ export function BulkUpdateDialog({
           ) : null}
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label={m.from} htmlFor="bulk-from">
-              <Input
-                id="bulk-from"
-                type="date"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-              />
-            </Field>
-            <Field label={m.to} htmlFor="bulk-to">
-              <Input id="bulk-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </Field>
+            <IsoDateField label={m.from} value={from} onChange={setFrom} required />
+            <IsoDateField label={m.to} value={to} onChange={setTo} required />
           </div>
 
           <div className="flex flex-col gap-1.5">

@@ -141,7 +141,7 @@ export function RoomTypeDialog({
                 value={form.inventoryMode}
                 onValueChange={(v) => set("inventoryMode", (v ?? "pooled") as InventoryMode)}
               >
-                <SelectTrigger id="rt-inv">
+                <SelectTrigger id="rt-inv" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

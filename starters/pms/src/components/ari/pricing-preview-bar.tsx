@@ -10,14 +10,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@voyant-travel/ui/components/button"
 import { ConfirmActionButton } from "@voyant-travel/ui/components/confirm-action-button"
-import { Input } from "@voyant-travel/ui/components/input"
 import { AlertTriangle } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { toFriendlyError } from "@/lib/friendly-error"
 
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { applyPricing, ariKeys, listRoomTypes, previewPricing } from "./ari-client"
-import { Field } from "./ari-form"
 import { ariMessages } from "./ari-messages"
 import { formatCentsRange } from "./pricing-summary"
 
@@ -111,17 +110,14 @@ export function PricingPreviewBar({ propertyId }: { propertyId: string }) {
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
-        <Field label={m.from} htmlFor="preview-from" className="w-44">
-          <Input
-            id="preview-from"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
-        </Field>
-        <Field label={m.to} htmlFor="preview-to" className="w-44">
-          <Input id="preview-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </Field>
+        <IsoDateField
+          label={m.from}
+          value={from}
+          onChange={setFrom}
+          required
+          containerClassName="w-44"
+        />
+        <IsoDateField label={m.to} value={to} onChange={setTo} required containerClassName="w-44" />
         <Button variant="outline" onClick={() => preview.mutate()} disabled={preview.isPending}>
           {preview.isPending ? m.previewing : m.preview}
         </Button>

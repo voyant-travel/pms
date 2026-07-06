@@ -149,7 +149,7 @@ export function RatePlanDialog({
                 value={form.currencyCode}
                 onValueChange={(v) => set("currencyCode", v ?? "EUR")}
               >
-                <SelectTrigger id="rp-currency">
+                <SelectTrigger id="rp-currency" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -166,7 +166,7 @@ export function RatePlanDialog({
                 value={form.chargeFrequency}
                 onValueChange={(v) => set("chargeFrequency", (v ?? "per_night") as ChargeFrequency)}
               >
-                <SelectTrigger id="rp-charge">
+                <SelectTrigger id="rp-charge" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -183,7 +183,7 @@ export function RatePlanDialog({
                 value={form.guaranteeMode}
                 onValueChange={(v) => set("guaranteeMode", (v ?? "none") as GuaranteeMode)}
               >
-                <SelectTrigger id="rp-guarantee">
+                <SelectTrigger id="rp-guarantee" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,7 +202,7 @@ export function RatePlanDialog({
               value={form.mealPlanId}
               onValueChange={(v) => set("mealPlanId", v ?? NO_MEAL_PLAN)}
             >
-              <SelectTrigger id="rp-meal">
+              <SelectTrigger id="rp-meal" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
