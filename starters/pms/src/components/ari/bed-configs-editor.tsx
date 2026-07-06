@@ -14,6 +14,7 @@ import { Input } from "@voyant-travel/ui/components/input"
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import { ariKeys, createBedConfig, deleteBedConfig, listBedConfigs } from "./ari-client"
 import { ariMessages } from "./ari-messages"
@@ -46,13 +47,13 @@ export function BedConfigsEditor({ roomTypeId }: { roomTypeId: string }) {
       setIsPrimary(false)
       void invalidate()
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed"),
+    onError: (err) => toast.error(toFriendlyError(err, "Failed")),
   })
 
   const remove = useMutation({
     mutationFn: (id: string) => deleteBedConfig(id),
     onSuccess: () => void invalidate(),
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed"),
+    onError: (err) => toast.error(toFriendlyError(err, "Failed")),
   })
 
   const beds = data?.data ?? []

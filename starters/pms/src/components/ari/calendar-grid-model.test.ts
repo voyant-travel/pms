@@ -105,8 +105,9 @@ describe("money helpers", () => {
   })
 
   it("formats compact money", () => {
-    expect(formatMoney(12000, "EUR")).toBe("120 EUR")
-    expect(formatMoney(12050, "EUR")).toBe("120.50 EUR")
+    expect(formatMoney(12000, "EUR")).toBe("€120.00")
+    expect(formatMoney(12050, "EUR")).toBe("€120.50")
+    expect(formatMoney(182750, "EUR")).toBe("€1,827.50")
   })
 })
 

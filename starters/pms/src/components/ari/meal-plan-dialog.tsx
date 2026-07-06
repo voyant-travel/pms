@@ -13,6 +13,7 @@ import { Input } from "@voyant-travel/ui/components/input"
 import { Textarea } from "@voyant-travel/ui/components/textarea"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import { ariKeys, createMealPlan, type MealPlan, updateMealPlan } from "./ari-client"
 import { Field, SwitchRow } from "./ari-form"
@@ -68,7 +69,7 @@ export function MealPlanDialog({
       void queryClient.invalidateQueries({ queryKey: ariKeys.mealPlans(propertyId) })
       onOpenChange(false)
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : m.common.loadFailed),
+    onError: (err) => toast.error(toFriendlyError(err, m.common.loadFailed)),
   })
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>

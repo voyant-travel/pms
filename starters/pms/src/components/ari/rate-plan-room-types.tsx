@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Checkbox } from "@voyant-travel/ui/components/checkbox"
 import { useMemo } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import {
   ariKeys,
@@ -56,7 +57,7 @@ export function RatePlanRoomTypesEditor({
       if (joinId) return detachRatePlanRoomType(joinId)
     },
     onSuccess: () => void invalidate(),
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed"),
+    onError: (err) => toast.error(toFriendlyError(err, "Failed")),
   })
 
   const roomTypes = roomTypesData?.data ?? []

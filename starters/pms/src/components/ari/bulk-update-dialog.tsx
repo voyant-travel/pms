@@ -28,6 +28,7 @@ import {
 } from "@voyant-travel/ui/components/select"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 import { ariKeys, bulkUpsertInventory, bulkUpsertRates } from "./ari-client"
 import { Field, SwitchRow } from "./ari-form"
 import { ariMessages } from "./ari-messages"
@@ -109,7 +110,7 @@ export function BulkUpdateDialog({
       })
       onOpenChange(false)
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed"),
+    onError: (err) => toast.error(toFriendlyError(err, "Failed")),
   })
 
   return (

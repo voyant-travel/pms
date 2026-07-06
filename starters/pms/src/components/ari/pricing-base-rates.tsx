@@ -18,6 +18,7 @@ import {
 } from "@voyant-travel/ui/components/table"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import {
   ariKeys,
@@ -73,7 +74,7 @@ function BaseRateCell({
       toast.success(m.saved)
       void queryClient.invalidateQueries({ queryKey: ariKeys.rateBases(propertyId) })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Save failed"),
+    onError: (err) => toast.error(toFriendlyError(err, "Save failed")),
   })
 
   const commit = () => {

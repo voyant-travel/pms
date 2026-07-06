@@ -71,8 +71,15 @@ export function inputToCents(value: string): number | null {
 /** Compact money for a grid cell, e.g. `120` or `120.5` in the cell's currency. */
 export function formatMoney(cents: number, currency: string): string {
   const major = cents / 100
-  const formatted = Number.isInteger(major) ? major.toString() : major.toFixed(2)
-  return `${formatted} ${currency}`
+  try {
+    // Consistent hotel-facing money across the admin: symbol + grouped
+    // thousands + 2 decimals (e.g. "€1,827.50"). Currencies without a symbol in
+    // the locale fall back to their code prefix, which Intl handles.
+    return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(major)
+  } catch {
+    // Unknown / non-ISO currency code — keep a stable 2dp amount + code.
+    return `${major.toFixed(2)} ${currency}`
+  }
 }
 
 /** First and last day of the month containing `date` (a `YYYY-MM-DD`), as ISO strings. */

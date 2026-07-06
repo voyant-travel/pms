@@ -21,6 +21,7 @@ import {
 import { Textarea } from "@voyant-travel/ui/components/textarea"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 import { ariKeys, createRatePlan, listMealPlans, type RatePlan, updateRatePlan } from "./ari-client"
 import { CHARGE_FREQUENCY_OPTIONS, CURRENCY_OPTIONS, GUARANTEE_MODE_OPTIONS } from "./ari-constants"
 import { Field, SwitchRow } from "./ari-form"
@@ -106,7 +107,7 @@ export function RatePlanDialog({
       void queryClient.invalidateQueries({ queryKey: ariKeys.ratePlans(propertyId) })
       onOpenChange(false)
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : m.common.loadFailed),
+    onError: (err) => toast.error(toFriendlyError(err, m.common.loadFailed)),
   })
 
   const mealPlans = mealPlansData?.data ?? []

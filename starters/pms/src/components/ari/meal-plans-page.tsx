@@ -15,6 +15,7 @@ import {
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import { ariKeys, deleteMealPlan, listMealPlans, type MealPlan } from "./ari-client"
 import { ariMessages } from "./ari-messages"
@@ -47,7 +48,7 @@ function MealPlansTable({ propertyId }: { propertyId: string }) {
       toast.success(m.common.deletedToast)
       void queryClient.invalidateQueries({ queryKey: ariKeys.mealPlans(propertyId) })
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : m.common.loadFailed),
+    onError: (err) => toast.error(toFriendlyError(err, m.common.loadFailed)),
   })
 
   if (isError) return <p className="text-destructive text-sm">{m.common.loadFailed}</p>

@@ -13,6 +13,7 @@ import { ConfirmActionButton } from "@voyant-travel/ui/components/confirm-action
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import {
   ariKeys,
@@ -51,8 +52,7 @@ export function PricingRulesList({ propertyId }: { propertyId: string }) {
       toast.success(ariMessages.common.deletedToast)
       void queryClient.invalidateQueries({ queryKey: ariKeys.pricingRules(propertyId) })
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : ariMessages.common.loadFailed),
+    onError: (err) => toast.error(toFriendlyError(err, ariMessages.common.loadFailed)),
   })
 
   const roomTypeName = new Map((roomTypesQuery.data?.data ?? []).map((r) => [r.id, r.name]))

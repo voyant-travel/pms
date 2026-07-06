@@ -28,6 +28,7 @@ import {
 } from "@voyant-travel/ui/components/select"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import {
   ariKeys,
@@ -202,8 +203,7 @@ export function PricingRuleDialog({
       void queryClient.invalidateQueries({ queryKey: ariKeys.pricingRules(propertyId) })
       onOpenChange(false)
     },
-    onError: (err) =>
-      toast.error(err instanceof Error ? err.message : ariMessages.common.loadFailed),
+    onError: (err) => toast.error(toFriendlyError(err, ariMessages.common.loadFailed)),
   })
 
   const seasonInvalid = form.kind === "season" && (!form.fromDate || !form.toDate)

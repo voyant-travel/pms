@@ -9,13 +9,14 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import { ariKeys, bulkUpsertInventory, bulkUpsertRates } from "./ari-client"
 
 export function useCalendarMutations() {
   const queryClient = useQueryClient()
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ariKeys.all })
-  const onError = (err: unknown) => toast.error(err instanceof Error ? err.message : "Save failed")
+  const onError = (err: unknown) => toast.error(toFriendlyError(err, "Save failed"))
 
   const saveInventory = useMutation({
     mutationFn: (input: { roomTypeId: string; date: string; capacity: number; closed: boolean }) =>

@@ -14,6 +14,7 @@ import { Input } from "@voyant-travel/ui/components/input"
 import { AlertTriangle } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { toFriendlyError } from "@/lib/friendly-error"
 
 import { applyPricing, ariKeys, listRoomTypes, previewPricing } from "./ari-client"
 import { Field } from "./ari-form"
@@ -62,7 +63,7 @@ export function PricingPreviewBar({ propertyId }: { propertyId: string }) {
 
   const preview = useMutation({
     mutationFn: () => previewPricing(propertyId, from, to),
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Preview failed"),
+    onError: (err) => toast.error(toFriendlyError(err, "Preview failed")),
   })
 
   const apply = useMutation({
@@ -73,7 +74,7 @@ export function PricingPreviewBar({ propertyId }: { propertyId: string }) {
       void queryClient.invalidateQueries({ queryKey: ariKeys.all })
       preview.reset()
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Apply failed"),
+    onError: (err) => toast.error(toFriendlyError(err, "Apply failed")),
   })
 
   const result = preview.data?.data
