@@ -48,7 +48,9 @@ function TaskRow({ task }: { task: TaskView }) {
         </div>
       </div>
       {task.assigneeUserId ? (
-        <span className="text-muted-foreground text-xs">{task.assigneeUserId}</span>
+        <span className="text-muted-foreground text-xs">
+          {m.assignedTo} {task.assigneeUserId}
+        </span>
       ) : null}
       {task.notes ? <span className="text-muted-foreground text-xs">{task.notes}</span> : null}
       <div className="mt-1 flex gap-2">
