@@ -14,12 +14,21 @@
 
 import { defineDeploymentModule } from "@voyant-travel/framework"
 
-import { frontDeskAdminRoutes } from "./routes.js"
+import { createFrontDeskAdminRoutes } from "./routes.js"
+import type { FrontDeskModuleDeps } from "./service-reservations.js"
 
-export default defineDeploymentModule({
-  module: { name: "pms/front-desk" },
-  adminRoutes: frontDeskAdminRoutes,
-})
+/**
+ * Build the `pms/front-desk` module with the deployment's injected write path.
+ * The "New reservation" create route persists through the app-side
+ * `persistStayBooking` seam, so — like `createChannelsModule` — the deployment
+ * passes it in rather than this package importing it.
+ */
+export function createFrontDeskModule(deps: FrontDeskModuleDeps) {
+  return defineDeploymentModule({
+    module: { name: "pms/front-desk" },
+    adminRoutes: createFrontDeskAdminRoutes(deps),
+  })
+}
 
 export type { FrontDeskDb } from "./db.js"
 export type { StayOpsRow } from "./schema.js"
@@ -42,6 +51,23 @@ export type {
   StayContext,
   StayPicture,
 } from "./service-reads.js"
+export {
+  type AvailabilityOffer,
+  assembleAvailability,
+  type CreateReservationResult,
+  createReservation,
+  type FrontDeskModuleDeps,
+  fitsPartyOccupancy,
+  getReservationAvailability,
+  nightsBetween,
+  type PersistStayBookingFn,
+  type PersistStayBookingResult,
+  type ReservationAvailability,
+  type ReservationNightlyRate,
+  type ReservationRatePlanOffer,
+  type ReservationRoomTypeAvailability,
+  type RoomTypeMeta,
+} from "./service-reservations.js"
 export {
   assembleTapeChart,
   type TapeChart,

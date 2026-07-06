@@ -42,7 +42,7 @@ import { createNetopiaCheckoutStarter } from "@voyant-travel/plugin-netopia"
 import ariModule from "@voyant-travel/pms-ari"
 import { createChannelsModule } from "@voyant-travel/pms-channels"
 import foliosModule from "@voyant-travel/pms-folios"
-import frontDeskModule from "@voyant-travel/pms-front-desk"
+import { createFrontDeskModule } from "@voyant-travel/pms-front-desk"
 import housekeepingModule from "@voyant-travel/pms-housekeeping"
 import unitsModule from "@voyant-travel/pms-units"
 import { createRealtimeHonoModule } from "@voyant-travel/realtime"
@@ -267,12 +267,19 @@ const discoveredModules = modulesFromGlob<OperatorCapabilities>(
 const pmsDomainModules: Record<string, ModuleFactory<OperatorCapabilities>> = {
   ari: ariModule,
   units: unitsModule,
-  "front-desk": frontDeskModule,
+  // Front-desk reservations persist through the shared owned-stay write path,
+  // marked `direct` so reports distinguish desk-created reservations from OTA
+  // ingests and storefront/walk-in drafts.
+  "front-desk": createFrontDeskModule({
+    persistStayBooking: (db, input, opts) =>
+      persistStayBooking(asPostgresDb(db), input, { ...opts, source: "direct" }),
+  }),
   housekeeping: housekeepingModule,
   folios: foliosModule,
   channels: createChannelsModule({
     getConnectors: getChannelConnectors,
-    persistStayBooking: (db, input, opts) => persistStayBooking(asPostgresDb(db), input, opts),
+    persistStayBooking: (db, input, opts) =>
+      persistStayBooking(asPostgresDb(db), input, { ...opts, source: "ota" }),
   }),
 }
 

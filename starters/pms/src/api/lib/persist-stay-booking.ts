@@ -24,13 +24,20 @@ export interface PersistStayBookingResult {
 }
 
 /**
+ * Booking origin, recorded on the existing `bookings.source_type` column so
+ * reports can distinguish a front-desk-created reservation (`direct`) from an OTA
+ * ingest (`ota`) or a walk-in draft (`manual`) without widening any table.
+ */
+export type StayBookingSource = "direct" | "manual" | "ota" | "internal"
+
+/**
  * Persist a priced accommodation stay as a real PMS booking. Mirrors exactly the
  * previous inline commit-bridge body (behavior-preserving extraction).
  */
 export async function persistStayBooking(
   db: PostgresJsDatabase,
   input: AccommodationCommitBridgeInput,
-  opts?: { userId?: string },
+  opts?: { userId?: string; source?: StayBookingSource },
 ): Promise<PersistStayBookingResult> {
   try {
     const roomCount = input.roomCount ?? 1
@@ -62,7 +69,7 @@ export async function persistStayBooking(
           bookingNumber: generateStayBookingNumber(),
           sellCurrency: currency,
           status: "draft",
-          sourceType: "manual",
+          sourceType: opts?.source ?? "manual",
           personId: input.personId ?? null,
           organizationId: input.organizationId ?? null,
           contactFirstName: input.contact.firstName,
