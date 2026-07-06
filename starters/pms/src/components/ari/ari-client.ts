@@ -10,18 +10,23 @@
  */
 
 import type {
+  ApplyResult,
   BulkInventoryOperation,
   BulkRateOperation,
   CalendarGrid,
   InsertBedConfigInput,
   InsertMealPlanInput,
+  InsertPricingRuleInput,
   InsertRatePlanInput,
   InsertRatePlanRoomTypeInput,
   InsertRoomTypeInput,
+  PreviewResult,
   UpdateBedConfigInput,
   UpdateMealPlanInput,
+  UpdatePricingRuleInput,
   UpdateRatePlanInput,
   UpdateRoomTypeInput,
+  UpsertRateBaseInput,
 } from "@voyant-travel/pms-ari"
 import { api } from "@/lib/api-client"
 
@@ -36,6 +41,17 @@ export type BedConfig = Stored<InsertBedConfigInput> & { roomTypeId: string }
 export type MealPlan = Stored<InsertMealPlanInput> & { active?: boolean | null }
 export type RatePlan = Stored<InsertRatePlanInput> & { active?: boolean | null }
 export type RatePlanRoomType = Stored<InsertRatePlanRoomTypeInput> & { ratePlanId: string }
+export type RateBase = Stored<UpsertRateBaseInput>
+/** A stored pricing rule: the insert input plus id + normalized (non-optional) fields. */
+export type PricingRule = Stored<InsertPricingRuleInput> & {
+  fromDate: string | null
+  toDate: string | null
+  weekdays: number[] | null
+  roomTypeIds: string[] | null
+  ratePlanIds: string[] | null
+  priority: number
+  active: boolean
+}
 
 interface ListEnvelope<T> {
   data: T[]
@@ -60,6 +76,9 @@ export const ariKeys = {
     [...ariKeys.all, "rate-plan-room-types", ratePlanId] as const,
   calendar: (propertyId: string, from: string, to: string) =>
     [...ariKeys.all, "calendar", propertyId, from, to] as const,
+  rateBases: (propertyId: string) => [...ariKeys.all, "rate-base", propertyId] as const,
+  pricingRules: (propertyId?: string) =>
+    [...ariKeys.all, "pricing-rules", propertyId ?? null] as const,
 }
 
 // --- room types --------------------------------------------------------------
@@ -183,6 +202,65 @@ export function bulkUpsertInventory(
   operations: BulkInventoryOperation[],
 ): Promise<ItemEnvelope<{ upserted: number }>> {
   return api.put<ItemEnvelope<{ upserted: number }>>(`${BASE}/calendar/inventory`, { operations })
+}
+
+// --- pricing: base rates -----------------------------------------------------
+
+export function listRateBases(propertyId: string): Promise<ItemEnvelope<RateBase[]>> {
+  return api.get<ItemEnvelope<RateBase[]>>(`${BASE}/rate-base?propertyId=${propertyId}`)
+}
+export function upsertRateBase(input: UpsertRateBaseInput): Promise<ItemEnvelope<RateBase>> {
+  return api.post<ItemEnvelope<RateBase>>(`${BASE}/rate-base`, input)
+}
+export function deleteRateBase(id: string): Promise<{ success: true }> {
+  return api.delete<{ success: true }>(`${BASE}/rate-base/${id}`)
+}
+
+// --- pricing: rules ----------------------------------------------------------
+
+export function listPricingRules(propertyId: string): Promise<ListEnvelope<PricingRule>> {
+  return api.get<ListEnvelope<PricingRule>>(
+    `${BASE}/pricing-rules?propertyId=${propertyId}&limit=200&offset=0`,
+  )
+}
+export function createPricingRule(
+  input: InsertPricingRuleInput,
+): Promise<ItemEnvelope<PricingRule>> {
+  return api.post<ItemEnvelope<PricingRule>>(`${BASE}/pricing-rules`, input)
+}
+export function updatePricingRule(
+  id: string,
+  input: UpdatePricingRuleInput,
+): Promise<ItemEnvelope<PricingRule>> {
+  return api.patch<ItemEnvelope<PricingRule>>(`${BASE}/pricing-rules/${id}`, input)
+}
+export function deletePricingRule(id: string): Promise<{ success: true }> {
+  return api.delete<{ success: true }>(`${BASE}/pricing-rules/${id}`)
+}
+
+// --- pricing: preview / apply ------------------------------------------------
+
+export function previewPricing(
+  propertyId: string,
+  from: string,
+  to: string,
+): Promise<ItemEnvelope<PreviewResult>> {
+  return api.post<ItemEnvelope<PreviewResult>>(`${BASE}/pricing-rules/preview`, {
+    propertyId,
+    from,
+    to,
+  })
+}
+export function applyPricing(
+  propertyId: string,
+  from: string,
+  to: string,
+): Promise<ItemEnvelope<ApplyResult>> {
+  return api.post<ItemEnvelope<ApplyResult>>(`${BASE}/pricing-rules/apply`, {
+    propertyId,
+    from,
+    to,
+  })
 }
 
 // --- property selector data --------------------------------------------------

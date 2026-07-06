@@ -11,7 +11,7 @@
  */
 
 import { adminRoutePageModule, defineAdminExtension } from "@voyant-travel/admin"
-import { BedDouble, CalendarRange, LayoutGrid, Tags, UtensilsCrossed } from "lucide-react"
+import { BedDouble, CalendarRange, LayoutGrid, Sparkles, Tags, UtensilsCrossed } from "lucide-react"
 
 import { ariMessages } from "@/components/ari/ari-messages"
 
@@ -19,6 +19,7 @@ const ROUTES = {
   roomTypes: "/ari/room-types",
   mealPlans: "/ari/meal-plans",
   ratePlans: "/ari/rate-plans",
+  pricing: "/ari/pricing",
   calendar: "/ari/calendar",
 } as const
 
@@ -51,6 +52,12 @@ export default defineAdminExtension({
               title: ariMessages.nav.ratePlans,
               url: ROUTES.ratePlans,
               icon: Tags,
+            },
+            {
+              id: "ari-pricing",
+              title: ariMessages.pricing.nav,
+              url: ROUTES.pricing,
+              icon: Sparkles,
             },
             {
               id: "ari-calendar",
@@ -90,6 +97,13 @@ export default defineAdminExtension({
         import("@/components/ari/rate-plans-page").then((m) =>
           adminRoutePageModule(m.RatePlansPage),
         ),
+    },
+    {
+      id: "ari-pricing",
+      path: ROUTES.pricing,
+      title: ariMessages.pricing.nav,
+      page: () =>
+        import("@/components/ari/pricing-page").then((m) => adminRoutePageModule(m.PricingPage)),
     },
     {
       id: "ari-calendar",

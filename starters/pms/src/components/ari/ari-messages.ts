@@ -114,6 +114,81 @@ export const ariMessages = {
       applied: (n: number) => `Updated ${n} day(s)`,
     },
   },
+  pricing: {
+    title: "Pricing",
+    nav: "Pricing rules",
+    intro:
+      "Set a starting nightly price for each room, then add plain-language rules — like a summer season or a weekend uplift. Preview the result, then apply it to the calendar.",
+    // Base rates
+    baseRates: {
+      title: "Starting prices",
+      subtitle:
+        "The base “from” price per night for each room and rate plan. Rules build on top of these.",
+      empty: "No rate plans and room types yet. Create them first under Rate plans.",
+      perNight: "/night",
+      notSet: "Not set",
+      saved: "Starting price saved",
+    },
+    // Rules
+    rules: {
+      title: "Pricing rules",
+      subtitle: "Applied in order, top to bottom. Each rule adjusts the running price.",
+      new: "New rule",
+      editTitle: "Edit rule",
+      empty: "No rules yet. Add a season or a weekend uplift to get started.",
+      name: "Rule name",
+      namePlaceholder: "e.g. Summer 2026",
+      kind: "When does it apply?",
+      kindSeason: "A season (date range)",
+      kindWeekday: "Certain days of the week",
+      from: "From",
+      to: "To",
+      days: "Days",
+      adjustment: "Price change",
+      increaseBy: "Increase by %",
+      decreaseBy: "Decrease by %",
+      addAmount: "Add fixed amount",
+      subtractAmount: "Subtract fixed amount",
+      setPrice: "Set exact price",
+      amountPercent: "Percentage",
+      amountMoney: "Amount",
+      scope: "Applies to",
+      allRooms: "All rooms",
+      allPlans: "All rate plans",
+      rooms: "Rooms",
+      plans: "Rate plans",
+      priority: "Order",
+      priorityHint: "Lower numbers apply first.",
+      active: "Active",
+      deleteTitle: "Delete rule",
+      deleteBody:
+        "This removes the pricing rule. Rates already applied to the calendar stay as they are.",
+      inactive: "Paused",
+    },
+    // Preview + apply
+    apply: {
+      title: "Preview & apply",
+      horizon: "Date range",
+      from: "From",
+      to: "To",
+      preview: "Preview changes",
+      previewing: "Working…",
+      apply: "Apply to calendar",
+      applying: "Applying…",
+      noChanges: "No changes — the calendar already matches these rules.",
+      summaryHead: (nights: number) => `${nights} night(s) will change`,
+      pairNights: (n: number) => `${n} night(s) updated`,
+      before: "Now",
+      after: "After",
+      confirmTitle: "Apply pricing to the calendar?",
+      confirmBody:
+        "This overwrites the nightly rates in the selected date range for every room and rate plan that has a starting price. Day-level exceptions you set on the calendar afterwards are not affected. This cannot be undone in bulk.",
+      confirmCta: "Overwrite calendar rates",
+      applied: (n: number) => `Applied ${n} nightly rate(s) to the calendar`,
+      overwriteNote:
+        "Applying overwrites daily rates in this range for every room × rate plan with a starting price. Use the calendar afterwards for one-off exceptions.",
+    },
+  },
 } as const
 
 export type AriMessages = typeof ariMessages

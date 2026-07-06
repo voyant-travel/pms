@@ -58,6 +58,7 @@ import {
   createRoomType,
 } from "../../../packages/ari/src/service-crud.js"
 import { bulkUpsertInventory, bulkUpsertRates } from "../../../packages/ari/src/service-calendar.js"
+import { createPricingRule, upsertRateBase } from "../../../packages/ari/src/service-pricing.js"
 import { checkIn, noShow } from "../../../packages/front-desk/src/service-ops.js"
 import { generateTasksForDate } from "../../../packages/housekeeping/src/service-generation.js"
 import { createMaintenanceBlock } from "../../../packages/housekeeping/src/service-maintenance.js"
@@ -196,6 +197,8 @@ const WIPE_TABLES = [
   "invoices",
   "payment_sessions",
   // PMS overlays first (loose refs to bookings/units/properties)
+  "pms_pricing_rules",
+  "pms_rate_base",
   "pms_folio_postings",
   "pms_folios",
   "pms_business_dates",
@@ -922,6 +925,67 @@ async function seedRates() {
   console.log(`  rates upserted: ${upserted}`)
 }
 
+/**
+ * The nightly base BEFORE any season/weekend uplift: just the per-plan modifier
+ * over the room's base (the first half of `nightlyCents`). This is what a
+ * pms_rate_base row stores; the two pricing rules below reproduce the season +
+ * weekend uplifts on top of it. `nightlyCents` remains the daily-rate
+ * materializer so seeded rates/bookings/folios stay byte-identical — these rows
+ * populate the new Pricing surface and demonstrate the engine's inputs.
+ */
+function planBaseCents(baseCents: number, plan: PlanKind): number {
+  if (plan === "nr") return Math.round(baseCents * 0.85)
+  if (plan === "hb") return baseCents + 3000
+  if (plan === "weekly") return Math.round(baseCents * 0.8)
+  return baseCents
+}
+
+async function seedPricing() {
+  console.log("→ ari: base rates + pricing rules (Summer +60%, Weekend +15%)…")
+  let bases = 0
+  for (const def of PROPERTIES) {
+    const p = seeded[def.key]
+    for (const rp of def.ratePlans) {
+      for (const rt of def.roomTypes) {
+        await upsertRateBase(db, {
+          propertyId: p.propertyId,
+          ratePlanId: p.ratePlanIds[rp.code],
+          roomTypeId: p.roomTypeIds[rt.code],
+          currency: EUR,
+          baseAmountCents: planBaseCents(rt.baseCents, rp.plan),
+        })
+        bases++
+      }
+    }
+  }
+
+  // Rules mirror `nightlyCents`: Seaside summer ×1.6 (Jun–Aug), then Grand +
+  // Seaside weekend ×1.15 (Fri/Sat). Priority orders season before weekend.
+  const year = new Date().getUTCFullYear()
+  await createPricingRule(db, {
+    propertyId: seeded.seaside.propertyId,
+    name: `Seaside summer ${year}`,
+    kind: "season",
+    fromDate: `${year}-06-01`,
+    toDate: `${year}-08-31`,
+    adjustmentType: "percent",
+    adjustmentValue: 60,
+    priority: 10,
+  })
+  for (const key of ["grand", "seaside"] as const) {
+    await createPricingRule(db, {
+      propertyId: seeded[key].propertyId,
+      name: "Weekend uplift",
+      kind: "weekday",
+      weekdays: [5, 6], // Fri + Sat (ISO)
+      adjustmentType: "percent",
+      adjustmentValue: 15,
+      priority: 20,
+    })
+  }
+  console.log(`  base rates: ${bases}, rules: 3`)
+}
+
 // ───────────────────────── Units + inventory ─────────────────────────
 
 async function seedUnitsAndInventory() {
@@ -1506,6 +1570,7 @@ async function main() {
   await seedOperations()
   await seedAri()
   await seedRates()
+  await seedPricing()
   await seedUnitsAndInventory()
   await seedBookings()
   await seedFrontDesk()
