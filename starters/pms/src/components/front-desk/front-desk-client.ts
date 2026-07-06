@@ -14,7 +14,9 @@ import type {
   Boards,
   CheckInInput,
   CheckOutInput,
+  CreateReservationResult,
   NoShowInput,
+  ReservationAvailability,
   StayOpsRow,
   TapeChart,
 } from "@voyant-travel/pms-front-desk"
@@ -64,6 +66,42 @@ export const frontDeskKeys = {
   units: (propertyId?: string) => [...frontDeskKeys.all, "units", propertyId ?? null] as const,
   assignments: (bookingItemId: string) =>
     [...frontDeskKeys.all, "assignments", bookingItemId] as const,
+}
+
+// --- new reservation (availability + create) ---------------------------------
+
+export interface AvailabilityRequestBody {
+  propertyId: string
+  checkIn: string
+  checkOut: string
+  adults: number
+  children: number
+  rooms: number
+}
+
+export interface CreateReservationBody {
+  propertyId: string
+  checkIn: string
+  checkOut: string
+  occupancy: { adults: number; children: number; infants: number }
+  selections: Array<{ roomTypeId: string; ratePlanId: string; quantity: number }>
+  guest: { firstName: string; lastName: string; email?: string; phone?: string }
+  notes?: string
+}
+
+export function getReservationAvailability(
+  body: AvailabilityRequestBody,
+): Promise<ItemEnvelope<ReservationAvailability>> {
+  return api.post<ItemEnvelope<ReservationAvailability>>(
+    `${FRONT_DESK}/reservations/availability`,
+    body,
+  )
+}
+
+export function createReservation(
+  body: CreateReservationBody,
+): Promise<ItemEnvelope<CreateReservationResult>> {
+  return api.post<ItemEnvelope<CreateReservationResult>>(`${FRONT_DESK}/reservations`, body)
 }
 
 // --- room units --------------------------------------------------------------

@@ -12,11 +12,12 @@
  */
 
 import { adminRoutePageModule, defineAdminExtension } from "@voyant-travel/admin"
-import { CalendarClock, DoorOpen, LayoutGrid, ListChecks } from "lucide-react"
+import { CalendarClock, CalendarPlus, DoorOpen, LayoutGrid, ListChecks } from "lucide-react"
 
 import { frontDeskMessages } from "@/components/front-desk/front-desk-messages"
 
 const ROUTES = {
+  newReservation: "/front-desk/reservations/new",
   tapeChart: "/front-desk/tape-chart",
   boards: "/front-desk/boards",
   units: "/front-desk/units",
@@ -34,6 +35,12 @@ export default defineAdminExtension({
           url: ROUTES.tapeChart,
           icon: LayoutGrid,
           items: [
+            {
+              id: "front-desk-new-reservation",
+              title: frontDeskMessages.nav.newReservation,
+              url: ROUTES.newReservation,
+              icon: CalendarPlus,
+            },
             {
               id: "front-desk-tape-chart",
               title: frontDeskMessages.nav.tapeChart,
@@ -58,6 +65,15 @@ export default defineAdminExtension({
     },
   ],
   routes: [
+    {
+      id: "front-desk-new-reservation",
+      path: ROUTES.newReservation,
+      title: frontDeskMessages.nav.newReservation,
+      page: () =>
+        import("@/components/front-desk/new-reservation-page").then((m) =>
+          adminRoutePageModule(m.NewReservationPage),
+        ),
+    },
     {
       id: "front-desk-tape-chart",
       path: ROUTES.tapeChart,

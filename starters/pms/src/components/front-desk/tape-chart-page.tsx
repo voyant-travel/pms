@@ -15,6 +15,7 @@ import {
 } from "./front-desk-dates"
 import { frontDeskMessages } from "./front-desk-messages"
 import { FrontDeskPageShell } from "./front-desk-page-shell"
+import { NewReservationButton } from "./new-reservation-button"
 import { type MoveTarget, StayDetailDialog } from "./stay-detail-dialog"
 import { TapeChartGrid } from "./tape-chart-grid"
 import type { StayBar } from "./tape-chart-model"
@@ -131,7 +132,10 @@ function StatusLegend() {
 
 export function TapeChartPage() {
   return (
-    <FrontDeskPageShell title={frontDeskMessages.tapeChart.title}>
+    <FrontDeskPageShell
+      title={frontDeskMessages.tapeChart.title}
+      controls={() => <NewReservationButton />}
+    >
       {(propertyId) => <TapeChartView propertyId={propertyId} />}
     </FrontDeskPageShell>
   )

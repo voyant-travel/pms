@@ -30,6 +30,7 @@ import { frontDeskKeys, getBoards, listRoomUnits } from "./front-desk-client"
 import { addDaysIso, todayIso } from "./front-desk-dates"
 import { frontDeskMessages } from "./front-desk-messages"
 import { FrontDeskPageShell } from "./front-desk-page-shell"
+import { NewReservationButton } from "./new-reservation-button"
 import { useFrontDeskMutations } from "./use-front-desk-mutations"
 
 const STATE_VARIANT = {
@@ -258,7 +259,10 @@ function BoardsView({ propertyId }: { propertyId: string }) {
 
 export function BoardsPage() {
   return (
-    <FrontDeskPageShell title={frontDeskMessages.boards.title}>
+    <FrontDeskPageShell
+      title={frontDeskMessages.boards.title}
+      controls={() => <NewReservationButton />}
+    >
       {(propertyId) => <BoardsView propertyId={propertyId} />}
     </FrontDeskPageShell>
   )
