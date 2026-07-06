@@ -73,6 +73,11 @@ export function SiteFooter(): React.ReactElement {
                 Book a stay
               </Link>
             </li>
+            <li>
+              <Link to="/shop/booking" className="transition-colors hover:text-white">
+                Manage booking
+              </Link>
+            </li>
           </ul>
         </div>
 

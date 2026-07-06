@@ -20,6 +20,7 @@ const NAV: readonly NavItem[] = [
   { label: "Our Hotels", to: "/shop/hotels" },
   { label: "About", to: "/shop/about" },
   { label: "Contact", to: "/shop/contact" },
+  { label: "Manage booking", to: "/shop/booking" },
 ]
 
 function Wordmark(): React.ReactElement {

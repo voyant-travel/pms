@@ -227,6 +227,23 @@ export function StorefrontBookingJourney({
         return
       }
 
+      // Stash the payer email so the confirmation page can authorize its rich
+      // stay-detail fetch (`/v1/public/stay-bookings/:id?email=`) — the same
+      // traveler-email match the guest-lookup uses. sessionStorage survives
+      // the PSP redirect round-trip within the tab and keeps the email out of
+      // the URL. If it's ever absent the confirmation page degrades to the
+      // payment-only view (no leak).
+      if (typeof sessionStorage !== "undefined" && contact?.email) {
+        try {
+          sessionStorage.setItem(
+            `voyant.booking.${json.bookingId}`,
+            JSON.stringify({ email: contact.email }),
+          )
+        } catch {
+          // Storage full / disabled — non-fatal.
+        }
+      }
+
       switch (json.kind) {
         case "card_redirect":
           if (json.redirectUrl) {

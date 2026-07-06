@@ -2,6 +2,9 @@ import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-rou
 import { useEffect, useState } from "react"
 import { z } from "zod"
 
+import type { StayBookingDetail } from "@/components/storefront/booking/booking-view-model"
+import { StaySummary } from "@/components/storefront/booking/stay-summary"
+import { useStayBookingDetail } from "@/components/storefront/booking/use-stay-booking"
 import { Container } from "@/components/storefront/site/primitives"
 import { getApiUrl } from "@/lib/env"
 import { useStorefrontMessagesOrDefault } from "@/lib/storefront-i18n"
@@ -54,29 +57,78 @@ function ShopConfirmationRouteComponent(): React.ReactElement {
   const search = useSearch({ from: "/(storefront)/shop_/confirmation/$bookingId" })
   const kind = search.kind ?? "default"
 
+  // Fetch the rich stay detail once (authorized by the payer email the journey
+  // stashed) so both the reference block and the recap show the guest-friendly
+  // booking number (STAY-…) — the value the guest types into find-my-booking —
+  // rather than the opaque internal id from the URL.
+  const email = useStashedEmail(bookingId)
+  const { detail } = useStayBookingDetail(bookingId, { email, enabled: Boolean(email) })
+  const reference = detail?.bookingNumber ?? bookingId
+
   return (
     <div className="bg-[var(--acme-paper)]">
       <Container className="py-16 sm:py-24">
         <div className="mx-auto max-w-2xl">
           {kind === "bank_transfer" ? (
-            <BankTransferPanel bookingId={bookingId} />
+            <BankTransferPanel bookingId={bookingId} reference={reference} />
           ) : kind === "card_pending" ? (
             <CardPendingPanel
               bookingId={bookingId}
+              reference={reference}
               paymentRef={search.session ?? search.orderId ?? search.ref}
             />
           ) : kind === "inquiry" ? (
-            <InquiryPanel bookingId={bookingId} />
+            <InquiryPanel reference={reference} />
           ) : kind === "hold" ? (
-            <HoldPanel bookingId={bookingId} />
+            <HoldPanel reference={reference} />
           ) : (
-            <DefaultPanel bookingId={bookingId} />
+            <DefaultPanel reference={reference} />
           )}
-          <div className="mt-8 text-center">
-            <BackLink />
-          </div>
+        </div>
+        {/* Rich reservation recap — only for kinds that commit a real stay
+            (an inquiry has no booked inventory yet). Rendered once the stashed
+            payer email authorizes the fetch; absent that, this stays hidden. */}
+        {kind !== "inquiry" && detail ? <ConfirmationStayDetails detail={detail} /> : null}
+        <div className="mx-auto mt-8 max-w-2xl text-center">
+          <BackLink />
         </div>
       </Container>
+    </div>
+  )
+}
+
+/** Read the payer email the booking journey stashed for this booking. */
+function useStashedEmail(bookingId: string): string | null {
+  const [email, setEmail] = useState<string | null>(null)
+  useEffect(() => {
+    if (typeof sessionStorage === "undefined") return
+    const raw = sessionStorage.getItem(`voyant.booking.${bookingId}`)
+    if (!raw) return
+    try {
+      const parsed = JSON.parse(raw) as { email?: string }
+      if (parsed.email) setEmail(parsed.email)
+    } catch {
+      // Ignore a corrupt stash.
+    }
+  }, [bookingId])
+  return email
+}
+
+function ConfirmationStayDetails({ detail }: { detail: StayBookingDetail }): React.ReactElement {
+  const t = useStorefrontMessagesOrDefault().manageBooking
+
+  return (
+    <div className="mx-auto mt-10 max-w-3xl space-y-6">
+      <StaySummary detail={detail} />
+      <div className="rounded-sm border border-[var(--acme-line)] bg-[var(--acme-paper)] p-5 text-center">
+        <p className="acme-eyebrow">{t.findLaterTitle}</p>
+        <p className="mx-auto mt-2 max-w-md text-[var(--acme-ink-soft)] text-sm leading-relaxed">
+          {t.findLaterBody}
+        </p>
+        <Link to="/shop/booking" className="acme-btn acme-btn-outline mt-4">
+          {t.manageCta}
+        </Link>
+      </div>
     </div>
   )
 }
@@ -121,13 +173,20 @@ function ReferenceBlock({ label, value }: { label: string; value: string }): Rea
   )
 }
 
-function BankTransferPanel({ bookingId }: { bookingId: string }): React.ReactElement {
+function BankTransferPanel({
+  bookingId,
+  reference,
+}: {
+  bookingId: string
+  reference: string
+}): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   const [stash, setStash] = useState<BankTransferStash | null>(null)
   const status = useCheckoutStatus(bookingId)
   const liveInstructions = status?.bankTransferInstructions ?? null
   const instructions = liveInstructions ?? stash?.instructions ?? null
   const proformaNumber = liveInstructions?.proformaNumber ?? stash?.proformaNumber ?? null
+  const bookingRef = status?.bookingNumber || reference
 
   useEffect(() => {
     if (typeof sessionStorage === "undefined") return
@@ -146,7 +205,7 @@ function BankTransferPanel({ bookingId }: { bookingId: string }): React.ReactEle
       <p>{t.bankTransferIntro}</p>
       {instructions ? (
         <dl className="space-y-2 rounded-sm border border-[var(--acme-line)] bg-[var(--acme-paper)] p-4">
-          <Row label={t.bookingReference} value={bookingId} />
+          <Row label={t.bookingReference} value={bookingRef} />
           {proformaNumber ? <Row label={t.proformaNumber} value={proformaNumber} /> : null}
           <Row label={t.beneficiary} value={instructions.beneficiary} />
           <Row label={t.bank} value={instructions.bankName} />
@@ -183,22 +242,25 @@ interface CheckoutStatus {
 
 function CardPendingPanel({
   bookingId,
+  reference,
   paymentRef,
 }: {
   bookingId: string
+  reference: string
   paymentRef?: string
 }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   const status = useCheckoutStatus(bookingId, paymentRef)
+  const bookingRef = status?.bookingNumber || reference
 
   if (status?.paymentStatus === "paid") {
-    return <PaymentSuccessPanel bookingId={bookingId} status={status} />
+    return <PaymentSuccessPanel reference={bookingRef} status={status} />
   }
 
   if (status?.paymentStatus === "failed") {
     return (
       <Panel eyebrow="Payment" title={t.paymentNotCompletedTitle}>
-        <ReferenceBlock label={t.bookingReference} value={status.bookingNumber || bookingId} />
+        <ReferenceBlock label={t.bookingReference} value={bookingRef} />
         <p className="text-[var(--acme-ink-faint)]">{t.paymentNotCompletedBody}</p>
       </Panel>
     )
@@ -206,23 +268,23 @@ function CardPendingPanel({
 
   return (
     <Panel eyebrow="One moment" title={t.processingTitle}>
-      <ReferenceBlock label={t.bookingReference} value={bookingId} />
+      <ReferenceBlock label={t.bookingReference} value={bookingRef} />
       <p className="text-[var(--acme-ink-faint)]">{t.processingBody}</p>
     </Panel>
   )
 }
 
 function PaymentSuccessPanel({
-  bookingId,
+  reference,
   status,
 }: {
-  bookingId: string
+  reference: string
   status: CheckoutStatus
 }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
     <Panel eyebrow="Confirmed" title={t.confirmedTitle} confirmed>
-      <ReferenceBlock label={t.bookingReference} value={status.bookingNumber || bookingId} />
+      <ReferenceBlock label={t.bookingReference} value={reference} />
       {status.session ? (
         <p>
           {t.paymentReceived}{" "}
@@ -276,31 +338,31 @@ function useCheckoutStatus(bookingId: string, paymentRef?: string): CheckoutStat
   return status
 }
 
-function InquiryPanel({ bookingId }: { bookingId: string }): React.ReactElement {
+function InquiryPanel({ reference }: { reference: string }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
     <Panel eyebrow="Received" title={t.inquiryTitle} confirmed>
       <p>{t.inquiryBody}</p>
-      <ReferenceBlock label={t.referenceLabel.replace(/:$/, "")} value={bookingId} />
+      <ReferenceBlock label={t.referenceLabel.replace(/:$/, "")} value={reference} />
     </Panel>
   )
 }
 
-function HoldPanel({ bookingId }: { bookingId: string }): React.ReactElement {
+function HoldPanel({ reference }: { reference: string }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
     <Panel eyebrow="On hold" title={t.holdTitle} confirmed>
-      <ReferenceBlock label={t.bookingReference} value={bookingId} />
+      <ReferenceBlock label={t.bookingReference} value={reference} />
       <p className="text-[var(--acme-ink-faint)]">{t.holdBody}</p>
     </Panel>
   )
 }
 
-function DefaultPanel({ bookingId }: { bookingId: string }): React.ReactElement {
+function DefaultPanel({ reference }: { reference: string }): React.ReactElement {
   const t = useStorefrontMessagesOrDefault().confirmation
   return (
     <Panel eyebrow="Confirmed" title={t.defaultTitle} confirmed>
-      <ReferenceBlock label={t.bookingReference} value={bookingId} />
+      <ReferenceBlock label={t.bookingReference} value={reference} />
       <p className="text-[var(--acme-ink-faint)]">{t.defaultBody}</p>
     </Panel>
   )

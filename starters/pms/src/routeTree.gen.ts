@@ -27,6 +27,7 @@ import { Route as authAcceptInviteRouteImport } from './routes/(auth)/accept-inv
 import { Route as authAcceptInvitationRouteImport } from './routes/(auth)/accept-invitation'
 import { Route as storefrontShopHotelsRouteImport } from './routes/(storefront)/shop_.hotels'
 import { Route as storefrontShopContactRouteImport } from './routes/(storefront)/shop_.contact'
+import { Route as storefrontShopBookingRouteImport } from './routes/(storefront)/shop_.booking'
 import { Route as storefrontShopAboutRouteImport } from './routes/(storefront)/shop_.about'
 import { Route as storefrontShopConfirmationBookingIdRouteImport } from './routes/(storefront)/shop_.confirmation.$bookingId'
 import { Route as storefrontShopProductsEntityModuleEntityIdRouteImport } from './routes/(storefront)/shop_.products.$entityModule.$entityId'
@@ -119,6 +120,11 @@ const storefrontShopContactRoute = storefrontShopContactRouteImport.update({
   path: '/shop/contact',
   getParentRoute: () => storefrontRouteRoute,
 } as any)
+const storefrontShopBookingRoute = storefrontShopBookingRouteImport.update({
+  id: '/shop_/booking',
+  path: '/shop/booking',
+  getParentRoute: () => storefrontRouteRoute,
+} as any)
 const storefrontShopAboutRoute = storefrontShopAboutRouteImport.update({
   id: '/shop_/about',
   path: '/shop/about',
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/pay/$sessionId': typeof PaySessionIdRoute
   '/proposal/$quoteVersionId': typeof ProposalQuoteVersionIdRoute
   '/shop/about': typeof storefrontShopAboutRoute
+  '/shop/booking': typeof storefrontShopBookingRoute
   '/shop/contact': typeof storefrontShopContactRoute
   '/shop/hotels': typeof storefrontShopHotelsRoute
   '/shop/confirmation/$bookingId': typeof storefrontShopConfirmationBookingIdRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/pay/$sessionId': typeof PaySessionIdRoute
   '/proposal/$quoteVersionId': typeof ProposalQuoteVersionIdRoute
   '/shop/about': typeof storefrontShopAboutRoute
+  '/shop/booking': typeof storefrontShopBookingRoute
   '/shop/contact': typeof storefrontShopContactRoute
   '/shop/hotels': typeof storefrontShopHotelsRoute
   '/shop/confirmation/$bookingId': typeof storefrontShopConfirmationBookingIdRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/pay_/$sessionId': typeof PaySessionIdRoute
   '/proposal/$quoteVersionId': typeof ProposalQuoteVersionIdRoute
   '/(storefront)/shop_/about': typeof storefrontShopAboutRoute
+  '/(storefront)/shop_/booking': typeof storefrontShopBookingRoute
   '/(storefront)/shop_/contact': typeof storefrontShopContactRoute
   '/(storefront)/shop_/hotels': typeof storefrontShopHotelsRoute
   '/(storefront)/shop_/confirmation/$bookingId': typeof storefrontShopConfirmationBookingIdRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/pay/$sessionId'
     | '/proposal/$quoteVersionId'
     | '/shop/about'
+    | '/shop/booking'
     | '/shop/contact'
     | '/shop/hotels'
     | '/shop/confirmation/$bookingId'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/pay/$sessionId'
     | '/proposal/$quoteVersionId'
     | '/shop/about'
+    | '/shop/booking'
     | '/shop/contact'
     | '/shop/hotels'
     | '/shop/confirmation/$bookingId'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/pay_/$sessionId'
     | '/proposal/$quoteVersionId'
     | '/(storefront)/shop_/about'
+    | '/(storefront)/shop_/booking'
     | '/(storefront)/shop_/contact'
     | '/(storefront)/shop_/hotels'
     | '/(storefront)/shop_/confirmation/$bookingId'
@@ -421,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof storefrontShopContactRouteImport
       parentRoute: typeof storefrontRouteRoute
     }
+    '/(storefront)/shop_/booking': {
+      id: '/(storefront)/shop_/booking'
+      path: '/shop/booking'
+      fullPath: '/shop/booking'
+      preLoaderRoute: typeof storefrontShopBookingRouteImport
+      parentRoute: typeof storefrontRouteRoute
+    }
     '/(storefront)/shop_/about': {
       id: '/(storefront)/shop_/about'
       path: '/shop/about'
@@ -481,6 +500,7 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 interface storefrontRouteRouteChildren {
   storefrontShopRoute: typeof storefrontShopRoute
   storefrontShopAboutRoute: typeof storefrontShopAboutRoute
+  storefrontShopBookingRoute: typeof storefrontShopBookingRoute
   storefrontShopContactRoute: typeof storefrontShopContactRoute
   storefrontShopHotelsRoute: typeof storefrontShopHotelsRoute
   storefrontShopConfirmationBookingIdRoute: typeof storefrontShopConfirmationBookingIdRoute
@@ -491,6 +511,7 @@ interface storefrontRouteRouteChildren {
 const storefrontRouteRouteChildren: storefrontRouteRouteChildren = {
   storefrontShopRoute: storefrontShopRoute,
   storefrontShopAboutRoute: storefrontShopAboutRoute,
+  storefrontShopBookingRoute: storefrontShopBookingRoute,
   storefrontShopContactRoute: storefrontShopContactRoute,
   storefrontShopHotelsRoute: storefrontShopHotelsRoute,
   storefrontShopConfirmationBookingIdRoute:
