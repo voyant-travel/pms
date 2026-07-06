@@ -138,7 +138,8 @@ export const foliosMessages = {
     posted: "Postings created",
     rolledTo: "Rolled to",
     unpriced: "Unpriced stays",
-    unpricedHint: "These stays had no resolvable nightly rate and were NOT charged:",
+    unpricedHint:
+      "These stays have no nightly rate for this date — set rates in the calendar, then run the audit again.",
     doneToast: (posted: number, inHouse: number) =>
       `Posted ${posted} charge(s) across ${inHouse} in-house stay(s).`,
   },

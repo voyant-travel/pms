@@ -38,6 +38,7 @@ export {
 export type { FoliosDb } from "./db.js"
 export {
   type AuditStay,
+  enrichUnpriced,
   type NightAuditPlan,
   type PlannedPosting,
   planNightAuditPostings,
@@ -45,6 +46,8 @@ export {
   roomSourceKey,
   spansNight,
   taxSourceKey,
+  type UnpricedStay,
+  type UnpricedStayLabels,
 } from "./night-audit.js"
 export {
   buildDailyReport,

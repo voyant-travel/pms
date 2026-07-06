@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest"
 
 import {
   type AuditStay,
+  enrichUnpriced,
   planNightAuditPostings,
   resolveNightlyAmountCents,
   roomSourceKey,
   spansNight,
   taxSourceKey,
+  type UnpricedStayLabels,
 } from "./night-audit"
 
 describe("spansNight (in-house selection)", () => {
@@ -97,5 +99,41 @@ describe("planNightAuditPostings", () => {
     ])
     // stay 1: room + tax; stay 2: room only
     expect(plan.postings).toHaveLength(3)
+  })
+})
+
+describe("enrichUnpriced", () => {
+  const labels = new Map<string, UnpricedStayLabels>([
+    [
+      "bkit_1",
+      { bookingNumber: "STAY-0007", guestName: "Maria Ionescu", roomTypeName: "Deluxe King" },
+    ],
+  ])
+
+  it("maps a raw booking-item id to its human labels", () => {
+    expect(enrichUnpriced(["bkit_1"], labels)).toEqual([
+      {
+        bookingItemId: "bkit_1",
+        bookingNumber: "STAY-0007",
+        guestName: "Maria Ionescu",
+        roomTypeName: "Deluxe King",
+      },
+    ])
+  })
+
+  it("degrades missing labels to null but keeps the id", () => {
+    expect(enrichUnpriced(["bkit_missing"], labels)).toEqual([
+      {
+        bookingItemId: "bkit_missing",
+        bookingNumber: null,
+        guestName: null,
+        roomTypeName: null,
+      },
+    ])
+  })
+
+  it("preserves order and length", () => {
+    const out = enrichUnpriced(["bkit_missing", "bkit_1"], labels)
+    expect(out.map((u) => u.bookingItemId)).toEqual(["bkit_missing", "bkit_1"])
   })
 })

@@ -16,12 +16,18 @@
  * rolls. `lastAuditRunAt` records the most recent successful roll.
  */
 
-import { stayBookingItems, stayDailyRates } from "@voyant-travel/accommodations/schema"
+import { roomTypes, stayBookingItems, stayDailyRates } from "@voyant-travel/accommodations/schema"
 import { bookingItems, bookings } from "@voyant-travel/bookings/schema"
 import { addDays, formatIsoDate } from "@voyant-travel/pms-units"
 import { and, eq, gt, inArray, lte, sql } from "drizzle-orm"
 import type { FoliosDb } from "./db.js"
-import { type AuditStay, planNightAuditPostings, resolveNightlyAmountCents } from "./night-audit.js"
+import {
+  type AuditStay,
+  enrichUnpriced,
+  planNightAuditPostings,
+  resolveNightlyAmountCents,
+  type UnpricedStay,
+} from "./night-audit.js"
 import type { DailyReport } from "./reports.js"
 import { type BusinessDateRow, businessDates, folioPostings } from "./schema.js"
 import { ensureStayFolio } from "./service-folios.js"
@@ -75,6 +81,10 @@ interface InHouseStayRow {
   checkOutDate: string
   nightCount: number
   currency: string
+  bookingNumber: string | null
+  contactFirstName: string | null
+  contactLastName: string | null
+  roomTypeName: string | null
 }
 
 /** Select the property's reserved stays that span night D. */
@@ -92,10 +102,16 @@ async function loadInHouseStays(
       checkOutDate: stayBookingItems.checkOutDate,
       nightCount: stayBookingItems.nightCount,
       currency: bookings.sellCurrency,
+      bookingNumber: bookings.bookingNumber,
+      contactFirstName: bookings.contactFirstName,
+      contactLastName: bookings.contactLastName,
+      // Room type name is a cheap add: the stay already carries `roomTypeId`.
+      roomTypeName: roomTypes.name,
     })
     .from(stayBookingItems)
     .innerJoin(bookingItems, eq(bookingItems.id, stayBookingItems.bookingItemId))
     .innerJoin(bookings, eq(bookings.id, bookingItems.bookingId))
+    .leftJoin(roomTypes, eq(roomTypes.id, stayBookingItems.roomTypeId))
     .where(
       and(
         eq(stayBookingItems.propertyId, propertyId),
@@ -106,12 +122,14 @@ async function loadInHouseStays(
     )
 }
 
+export type { UnpricedStay } from "./night-audit.js"
+
 export interface NightAuditResult {
   propertyId: string
   businessDate: string
   inHouse: number
   posted: number
-  unpriced: string[]
+  unpriced: UnpricedStay[]
   rolledTo: string
   report: DailyReport
 }
@@ -196,13 +214,33 @@ export async function runNightAudit(db: FoliosDb, propertyId: string): Promise<N
     .set({ currentDate: rolledTo, lastAuditRunAt: new Date(), updatedAt: new Date() })
     .where(eq(businessDates.propertyId, propertyId))
 
+  // Enrich the planner's raw unpriced booking-item ids with the human labels the
+  // in-house join already loaded (booking number, guest, room type).
+  const labelsById = new Map(
+    inHouse.map((s) => [
+      s.bookingItemId,
+      {
+        bookingNumber: s.bookingNumber,
+        guestName: joinName(s.contactFirstName, s.contactLastName),
+        roomTypeName: s.roomTypeName,
+      },
+    ]),
+  )
+  const unpriced: UnpricedStay[] = enrichUnpriced(plan.unpriced, labelsById)
+
   return {
     propertyId,
     businessDate: date,
     inHouse: inHouse.length,
     posted,
-    unpriced: plan.unpriced,
+    unpriced,
     rolledTo,
     report,
   }
+}
+
+/** Join a contact's first/last name into a single display name, or null. */
+function joinName(first: string | null, last: string | null): string | null {
+  const name = [first, last].filter(Boolean).join(" ").trim()
+  return name.length > 0 ? name : null
 }

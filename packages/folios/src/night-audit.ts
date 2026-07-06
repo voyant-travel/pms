@@ -57,6 +57,41 @@ export interface NightAuditPlan {
   unpriced: string[]
 }
 
+/** Human labels for an unpriced stay, resolved by the service's in-house join. */
+export interface UnpricedStayLabels {
+  bookingNumber: string | null
+  guestName: string | null
+  roomTypeName: string | null
+}
+
+/**
+ * An unpriced stay enriched with the labels the night-audit page renders
+ * ("STAY-… · Guest · Deluxe King"). The raw `bookingItemId` is retained for the
+ * UI's title/tooltip only.
+ */
+export interface UnpricedStay extends UnpricedStayLabels {
+  bookingItemId: string
+}
+
+/**
+ * PURE: enrich the planner's raw unpriced booking-item ids with human labels the
+ * service already loaded. Missing labels degrade to null (the id still renders).
+ */
+export function enrichUnpriced(
+  bookingItemIds: readonly string[],
+  labelsById: ReadonlyMap<string, UnpricedStayLabels>,
+): UnpricedStay[] {
+  return bookingItemIds.map((bookingItemId) => {
+    const labels = labelsById.get(bookingItemId)
+    return {
+      bookingItemId,
+      bookingNumber: labels?.bookingNumber ?? null,
+      guestName: labels?.guestName ?? null,
+      roomTypeName: labels?.roomTypeName ?? null,
+    }
+  })
+}
+
 /** PURE: is a stay in-house for night D? `checkIn <= D < checkOut` (half-open). */
 export function spansNight(checkInDate: string, checkOutDate: string, date: string): boolean {
   return checkInDate <= date && date < checkOutDate

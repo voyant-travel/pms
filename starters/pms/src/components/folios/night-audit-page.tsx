@@ -94,11 +94,21 @@ function NightAuditView({ propertyId }: { propertyId: string }) {
                   {m.unpriced} ({result.unpriced.length})
                 </span>
                 <p className="text-muted-foreground text-xs">{m.unpricedHint}</p>
-                <div className="flex flex-wrap gap-2">
-                  {result.unpriced.map((id) => (
-                    <Badge key={id} variant="destructive" className="font-mono font-normal">
-                      {id}
-                    </Badge>
+                <div className="flex flex-col gap-1">
+                  {result.unpriced.map((stay) => (
+                    <div
+                      key={stay.bookingItemId}
+                      title={stay.bookingItemId}
+                      className="flex flex-wrap items-center gap-2 text-sm"
+                    >
+                      <Badge variant="destructive" className="font-normal">
+                        {stay.bookingNumber ?? stay.bookingItemId}
+                      </Badge>
+                      {stay.guestName ? <span>{stay.guestName}</span> : null}
+                      {stay.roomTypeName ? (
+                        <span className="text-muted-foreground">· {stay.roomTypeName}</span>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               </div>
