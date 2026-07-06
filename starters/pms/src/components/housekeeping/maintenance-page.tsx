@@ -16,6 +16,7 @@ import { Plus } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
+import { formatDayRange } from "@/lib/format-date"
 import { frontDeskKeys, listRoomUnits } from "../front-desk/front-desk-client"
 import { todayIso } from "../front-desk/front-desk-dates"
 import {
@@ -162,8 +163,8 @@ function MaintenanceView({ propertyId }: { propertyId: string }) {
             {rows.map(({ block, timeline, days }) => (
               <TableRow key={block.id}>
                 <TableCell className="font-medium">{unitLabel(block.unitId)}</TableCell>
-                <TableCell className="font-mono text-xs">
-                  {block.fromDate} → {block.toDate}
+                <TableCell className="text-xs">
+                  {formatDayRange(block.fromDate, block.toDate)}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{days}</TableCell>
                 <TableCell className="text-muted-foreground">
