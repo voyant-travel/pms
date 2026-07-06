@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@voyant-travel/ui/components/dialog"
-import { Input } from "@voyant-travel/ui/components/input"
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import {
 import { Textarea } from "@voyant-travel/ui/components/textarea"
 import { useState } from "react"
 import { toast } from "sonner"
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { Field } from "../ari/ari-form"
 import type { RoomUnit } from "../front-desk/front-desk-client"
 import { todayIso } from "../front-desk/front-desk-dates"
@@ -131,7 +131,7 @@ export function MaintenanceDialog({
               onValueChange={(v) => set("unitId", v ?? "")}
               disabled={block !== null}
             >
-              <SelectTrigger id="block-unit">
+              <SelectTrigger id="block-unit" className="w-full">
                 <SelectValue placeholder={m.maintenance.pickUnit} />
               </SelectTrigger>
               <SelectContent>
@@ -146,22 +146,19 @@ export function MaintenanceDialog({
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label={m.maintenance.fromDate} htmlFor="block-from">
-              <Input
-                id="block-from"
-                type="date"
-                value={form.fromDate}
-                onChange={(e) => set("fromDate", e.target.value)}
-              />
-            </Field>
-            <Field label={m.maintenance.toDate} htmlFor="block-to">
-              <Input
-                id="block-to"
-                type="date"
-                value={form.toDate}
-                onChange={(e) => set("toDate", e.target.value)}
-              />
-            </Field>
+            <IsoDateField
+              label={m.maintenance.fromDate}
+              value={form.fromDate}
+              onChange={(v) => set("fromDate", v)}
+              required
+            />
+            <IsoDateField
+              label={m.maintenance.toDate}
+              value={form.toDate}
+              onChange={(v) => set("toDate", v)}
+              min={form.fromDate || undefined}
+              required
+            />
           </div>
 
           <Field label={m.maintenance.reason} htmlFor="block-reason">
@@ -169,7 +166,7 @@ export function MaintenanceDialog({
               value={form.reason}
               onValueChange={(v) => set("reason", (v ?? "maintenance") as MaintenanceReason)}
             >
-              <SelectTrigger id="block-reason">
+              <SelectTrigger id="block-reason" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

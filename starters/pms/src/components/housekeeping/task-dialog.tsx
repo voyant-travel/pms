@@ -20,6 +20,7 @@ import {
 import { Textarea } from "@voyant-travel/ui/components/textarea"
 import { useState } from "react"
 import { toast } from "sonner"
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { Field } from "../ari/ari-form"
 import type { RoomUnit } from "../front-desk/front-desk-client"
 import { createTask, housekeepingKeys, type TaskType } from "./housekeeping-client"
@@ -107,7 +108,7 @@ export function TaskDialog({
         <div className="flex flex-col gap-4">
           <Field label={m.taskDialog.unit} htmlFor="task-unit">
             <Select value={form.unitId} onValueChange={(v) => set("unitId", v ?? "")}>
-              <SelectTrigger id="task-unit">
+              <SelectTrigger id="task-unit" className="w-full">
                 <SelectValue placeholder={m.taskDialog.pickUnit} />
               </SelectTrigger>
               <SelectContent>
@@ -127,7 +128,7 @@ export function TaskDialog({
                 value={form.type}
                 onValueChange={(v) => set("type", (v ?? "clean") as TaskType)}
               >
-                <SelectTrigger id="task-type">
+                <SelectTrigger id="task-type" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,14 +140,11 @@ export function TaskDialog({
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={m.taskDialog.dueDate} htmlFor="task-due">
-              <Input
-                id="task-due"
-                type="date"
-                value={form.dueDate}
-                onChange={(e) => set("dueDate", e.target.value)}
-              />
-            </Field>
+            <IsoDateField
+              label={m.taskDialog.dueDate}
+              value={form.dueDate}
+              onChange={(v) => set("dueDate", v)}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

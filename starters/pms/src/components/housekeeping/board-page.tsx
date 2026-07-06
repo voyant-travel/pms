@@ -1,10 +1,10 @@
 "use client"
 
 import { Button } from "@voyant-travel/ui/components/button"
-import { Input } from "@voyant-travel/ui/components/input"
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react"
 import { useState } from "react"
 
+import { IsoDateField } from "../admin-shared/iso-date-field"
 import { addDaysIso, todayIso } from "../front-desk/front-desk-dates"
 import { housekeepingMessages } from "./housekeeping-messages"
 import { HousekeepingPageShell } from "./housekeeping-page-shell"
@@ -28,11 +28,11 @@ function BoardView({ propertyId }: { propertyId: string }) {
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <Input
-          type="date"
-          className="w-40"
+        <IsoDateField
           value={date}
-          onChange={(e) => setDate(e.target.value || todayIso())}
+          onChange={(v) => setDate(v || todayIso())}
+          required
+          className="w-40"
         />
         <Button
           variant="outline"
