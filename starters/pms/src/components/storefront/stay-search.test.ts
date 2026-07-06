@@ -7,6 +7,7 @@ import {
   resolveOccupancy,
   staySearchSchema,
   toBookingJourneySearch,
+  todayIso,
 } from "./stay-search"
 
 describe("staySearchSchema", () => {
@@ -70,6 +71,13 @@ describe("defaultStayDates", () => {
     const from = Date.parse("2026-07-04T09:30:00Z")
     expect(defaultStayDates(from)).toEqual({ checkIn: "2026-07-04", checkOut: "2026-07-06" })
     expect(countNights("2026-07-04", "2026-07-06")).toBe(2)
+  })
+})
+
+describe("todayIso", () => {
+  it("returns the calendar date for the given instant, deterministic via `from`", () => {
+    expect(todayIso(Date.parse("2026-07-04T09:30:00Z"))).toBe("2026-07-04")
+    expect(todayIso(Date.parse("2026-07-04T23:59:59Z"))).toBe("2026-07-04")
   })
 })
 

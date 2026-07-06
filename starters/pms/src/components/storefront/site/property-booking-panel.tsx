@@ -1,6 +1,6 @@
 "use client"
 
-import { countNights } from "@/components/storefront/stay-search"
+import { countNights, todayIso } from "@/components/storefront/stay-search"
 
 /**
  * Branded, sticky booking panel for the Acme property page. Pure
@@ -47,6 +47,7 @@ export function PropertyBookingPanel({
   onRooms: (n: number) => void
   onBook: () => void
 }): React.ReactElement {
+  const today = todayIso()
   const nights = countNights(checkIn, checkOut)
   const hasPrice = totalCents > 0 && currency
   const perNight = hasPrice && nights ? totalCents / nights : null
@@ -62,6 +63,7 @@ export function PropertyBookingPanel({
             <input
               type="date"
               className="acme-input"
+              min={today}
               value={checkIn}
               onChange={(e) => onCheckIn(e.target.value)}
             />
@@ -71,7 +73,7 @@ export function PropertyBookingPanel({
             <input
               type="date"
               className="acme-input"
-              min={checkIn}
+              min={checkIn > today ? checkIn : today}
               value={checkOut}
               onChange={(e) => onCheckOut(e.target.value)}
             />

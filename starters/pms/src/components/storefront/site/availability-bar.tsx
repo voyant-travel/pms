@@ -7,6 +7,7 @@ import {
   defaultStayDates,
   isValidStayRange,
   type StaySearch,
+  todayIso,
 } from "@/components/storefront/stay-search"
 import type { PropertyPortfolioItem } from "./use-property-portfolio"
 
@@ -37,6 +38,7 @@ export function AvailabilityBar({
   const [children, setChildren] = useState(initial?.children ?? 0)
   const [rooms, setRooms] = useState(initial?.rooms ?? 1)
 
+  const today = todayIso()
   const datesValid = isValidStayRange(checkIn, checkOut)
   const guestSummary = `${adults + children} guest${adults + children === 1 ? "" : "s"} · ${rooms} room${
     rooms === 1 ? "" : "s"
@@ -98,6 +100,7 @@ export function AvailabilityBar({
           aria-label="Check-in date"
           type="date"
           className="acme-input border-0 shadow-none focus:shadow-none"
+          min={today}
           value={checkIn}
           onChange={(e) => setCheckIn(e.target.value)}
         />
@@ -108,7 +111,7 @@ export function AvailabilityBar({
           aria-label="Check-out date"
           type="date"
           className="acme-input border-0 shadow-none focus:shadow-none"
-          min={checkIn}
+          min={checkIn > today ? checkIn : today}
           value={checkOut}
           onChange={(e) => setCheckOut(e.target.value)}
         />

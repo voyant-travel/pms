@@ -75,6 +75,15 @@ function isoDateFromOffset(days: number, from: number = Date.now()): string {
 }
 
 /**
+ * Today's calendar date as `YYYY-MM-DD`. Used as the `min` on check-in /
+ * check-out date inputs so a guest can't pick a stay in the past (which
+ * would only fail later with an unhelpful "unavailable" quote).
+ */
+export function todayIso(from: number = Date.now()): string {
+  return isoDateFromOffset(0, from)
+}
+
+/**
  * Sensible default window used when the landing page is opened without
  * dates: check-in today, check-out in two nights. Kept here (not inline
  * in the route) so it's deterministic under test via the `from` seam.
