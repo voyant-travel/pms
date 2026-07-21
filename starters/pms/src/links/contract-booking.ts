@@ -6,7 +6,9 @@ import { contractLinkable } from "@voyant-travel/legal/linkables"
  * A booking can have many contracts (customer travel contract, supplier
  * addendum, amendment). Each contract attaches to at most one booking.
  */
-export const contractBookingLink = defineLink(
+const contractBookingLink = defineLink(
   { linkable: contractLinkable, isList: true },
   bookingLinkable,
 )
+
+export default contractBookingLink

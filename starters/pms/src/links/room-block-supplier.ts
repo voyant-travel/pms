@@ -6,7 +6,9 @@ import { supplierLinkable } from "@voyant-travel/distribution/suppliers/linkable
  * Each room block is negotiated with one supplier; a supplier can back many
  * blocks. See RFC voyant#1489.
  */
-export const roomBlockSupplierLink = defineLink(supplierLinkable, {
+const roomBlockSupplierLink = defineLink(supplierLinkable, {
   linkable: roomBlockLinkable,
   isList: true,
 })
+
+export default roomBlockSupplierLink

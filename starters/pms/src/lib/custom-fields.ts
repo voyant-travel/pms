@@ -1,11 +1,40 @@
 import {
+  type CustomFieldDefinition,
   type CustomFieldRegistry,
   createCustomFieldRegistry,
-  customFieldsFromGlob,
-  mergeCustomFieldDefinitions,
 } from "@voyant-travel/core/custom-fields"
-import { loadCustomFieldDefinitions } from "@voyant-travel/relationships/custom-fields-registry"
+import { loadCustomFieldDefinitions } from "@voyant-travel/custom-fields"
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
+
+type CustomFieldModule = {
+  default?: CustomFieldDefinition | CustomFieldDefinition[]
+  fields?: CustomFieldDefinition | CustomFieldDefinition[]
+}
+
+function flattenCustomFieldDefinitions(value: unknown): CustomFieldDefinition[] {
+  if (!value) return []
+  if (Array.isArray(value)) return value.flatMap(flattenCustomFieldDefinitions)
+  return [value as CustomFieldDefinition]
+}
+
+function customFieldsFromGlob(modules: Record<string, CustomFieldModule>): CustomFieldDefinition[] {
+  return Object.values(modules).flatMap((module) =>
+    flattenCustomFieldDefinitions(module.default ?? module.fields),
+  )
+}
+
+function mergeCustomFieldDefinitions(
+  sources: readonly (readonly CustomFieldDefinition[])[],
+): CustomFieldDefinition[] {
+  const merged = new Map<string, CustomFieldDefinition>()
+  for (const source of sources) {
+    for (const field of source) {
+      const id = `${field.entity}.${field.namespace}.${field.key}`
+      if (!merged.has(id)) merged.set(id, field)
+    }
+  }
+  return [...merged.values()]
+}
 
 /**
  * Code-declared custom fields, discovered from `src/custom-fields/*.ts` at build

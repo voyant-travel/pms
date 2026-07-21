@@ -1,6 +1,5 @@
-import { createAuthenticatedR2DocumentDownloadResolver } from "@voyant-travel/hono/document-download"
-import type { StorageProvider } from "@voyant-travel/storage"
-import { createR2Provider } from "@voyant-travel/storage/providers/r2"
+import { createAuthenticatedDocumentDownloadResolver } from "@voyant-travel/hono/document-download"
+import type { StorageProvider, StorageUploadBody, UploadOptions } from "@voyant-travel/storage"
 
 const MIME_BY_EXT: Record<string, string> = {
   pdf: "application/pdf",
@@ -34,14 +33,51 @@ function createR2BucketStorage(
   bucket: R2Bucket | undefined,
   options: {
     publicBaseUrl?: string
+    name?: string
   } = {},
 ): StorageProvider | null {
   if (!bucket) return null
 
-  return createR2Provider({
-    bucket,
-    ...(options.publicBaseUrl ? { publicBaseUrl: options.publicBaseUrl } : {}),
-  })
+  const publicBaseUrl = options.publicBaseUrl?.replace(/\/+$/, "")
+  return {
+    name: options.name ?? "r2-binding",
+    async upload(body: StorageUploadBody, uploadOptions: UploadOptions = {}) {
+      const key = uploadOptions.key ?? crypto.randomUUID()
+      await bucket.put(key, await toBytes(body), {
+        ...(uploadOptions.contentType
+          ? { httpMetadata: { contentType: uploadOptions.contentType } }
+          : {}),
+        ...(uploadOptions.metadata ? { customMetadata: uploadOptions.metadata } : {}),
+      })
+      return {
+        key,
+        url: publicBaseUrl ? `${publicBaseUrl}/${encodeStorageKey(key)}` : "",
+      }
+    },
+    async delete(key: string) {
+      await bucket.delete(key)
+    },
+    async signedUrl(key: string) {
+      return publicBaseUrl ? `${publicBaseUrl}/${encodeStorageKey(key)}` : ""
+    },
+    async get(key: string) {
+      const object = await bucket.get(key)
+      return object ? object.arrayBuffer() : null
+    },
+  }
+}
+
+async function toBytes(body: StorageUploadBody): Promise<Uint8Array> {
+  if (body instanceof Uint8Array) return body
+  if (body instanceof ArrayBuffer) return new Uint8Array(body)
+  return new Uint8Array(await body.arrayBuffer())
+}
+
+function encodeStorageKey(key: string): string {
+  return key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/")
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -136,9 +172,9 @@ export async function resolveDocumentDownloadUrl(
 }
 
 const authenticatedDocumentDownloadResolver =
-  createAuthenticatedR2DocumentDownloadResolver<CloudflareBindings>({
+  createAuthenticatedDocumentDownloadResolver<CloudflareBindings>({
     apiBaseUrl: (env) =>
       env.APP_URL?.trim() || env.API_BASE_URL?.trim() || env.DOCUMENTS_BASE_URL?.trim() || null,
     routePrefix: "/v1/admin/documents/files",
-    bucketBindingName: "DOCUMENTS_BUCKET",
+    isAvailable: (env) => Boolean(env.DOCUMENTS_BUCKET),
   })

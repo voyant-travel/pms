@@ -141,7 +141,7 @@ function resolveSmartbillRuntime(env: SmartbillEnv): SmartbillRuntime | null {
   }
 }
 
-function resolveSmartbillRuntimeOptions(env: SmartbillEnv) {
+export function resolveSmartbillRuntimeOptions(env: SmartbillEnv) {
   const username = nonEmpty(env.SMARTBILL_USERNAME)
   const apiToken = nonEmpty(env.SMARTBILL_API_TOKEN) ?? nonEmpty(env.SMARTBILL_TOKEN)
   const companyVatCode = nonEmpty(env.SMARTBILL_COMPANY_VAT_CODE)
