@@ -1,4 +1,4 @@
-import { defineProject } from "@voyant-travel/framework/project"
+import { defineModule, defineProject } from "@voyant-travel/framework/project"
 import {
   selectStandardOperatorDistribution,
   STANDARD_OPERATOR_ACCESS,
@@ -12,17 +12,28 @@ const distribution = selectStandardOperatorDistribution({
   exclude: [
     "@voyant-travel/flights",
     "@voyant-travel/cruises",
+    "@voyant-travel/cruises/content-extension",
     "@voyant-travel/charters",
     "@voyant-travel/mice",
+    "@voyant-travel/realtime",
   ],
+})
+
+const strippedCatalogVerticalShims = defineModule({
+  id: "@voyant-travel/pms-admin#catalog-stripped-vertical-shims",
+  localId: "catalog-stripped-vertical-shims",
+  provides: {
+    ports: [{ id: "catalog.extension.charters" }, { id: "catalog.extension.cruises" }],
+  },
 })
 
 export default defineProject({
   productBom: STANDARD_OPERATOR_PRODUCT_BOM_REFERENCE,
-  modules: distribution.modules,
+  modules: [...distribution.modules, strippedCatalogVerticalShims],
   extensions: distribution.extensions,
-  plugins: ["@voyant-travel/plugin-smartbill"],
-  access: STANDARD_OPERATOR_ACCESS,
+  access: {
+    presets: STANDARD_OPERATOR_ACCESS.presets?.filter((preset) => preset.id !== "automation"),
+  },
   // Product-job cadence is hosted explicitly by the Worker entry: managed
   // deployments use Cloud's HTTP scheduler, while self-hosted Wrangler uses
   // generated Cron Triggers. Keep the resolved graph target-neutral so the

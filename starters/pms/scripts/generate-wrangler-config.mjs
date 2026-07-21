@@ -6,6 +6,7 @@ import { cloudflareCronTriggersForProductJobs } from "@voyant-travel/framework/w
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..")
 const graphPath = join(projectRoot, ".voyant/deployment-graph.generated.json")
+const productBomPath = join(projectRoot, ".voyant/product-bom.generated.json")
 const baseConfigPath = join(projectRoot, "wrangler.jsonc")
 const outputPath = join(projectRoot, ".voyant/wrangler.generated.json")
 const selfHostedOutputPath = join(projectRoot, ".voyant/wrangler.self-host.generated.json")
@@ -18,7 +19,7 @@ if (scheduleAuthority !== "cloudflare-cron" && scheduleAuthority !== "managed-ht
   )
 }
 
-const graph = JSON.parse(await readFile(graphPath, "utf8"))
+const graph = await readGeneratedGraph()
 const baseConfig = JSON.parse(stripJsonComments(await readFile(baseConfigPath, "utf8")))
 const deploymentCrons = Array.isArray(baseConfig.triggers?.crons)
   ? baseConfig.triggers.crons
@@ -44,6 +45,20 @@ await Promise.all([
     ? [writeFile(selfHostedOutputPath, `${JSON.stringify(selfHostedConfig, null, 2)}\n`)]
     : []),
 ])
+
+async function readGeneratedGraph() {
+  try {
+    return JSON.parse(await readFile(graphPath, "utf8"))
+  } catch (error) {
+    if (!error || error.code !== "ENOENT") throw error
+  }
+
+  const productBom = JSON.parse(await readFile(productBomPath, "utf8"))
+  if (!productBom.graph) {
+    throw new Error(`${productBomPath} must contain graph metadata.`)
+  }
+  return productBom.graph
+}
 
 function withScheduleAuthority(config, crons, authority) {
   return {

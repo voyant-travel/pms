@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "generate:voyant": "voyant build --artifacts-only && node scripts/generate-wrangler-config.mjs",
+    "generate:voyant": "tsx scripts/generate-voyant-artifacts.ts && tsx scripts/generate-wrangler-config.mjs",
     "generate:voyant:self-host": "VOYANT_PRODUCT_JOB_SCHEDULE_AUTHORITY=cloudflare-cron pnpm run generate:voyant",
     "generate:voyant:managed": "VOYANT_PRODUCT_JOB_SCHEDULE_AUTHORITY=managed-http pnpm run generate:voyant",
     "predev": "pnpm run generate:voyant:self-host",
