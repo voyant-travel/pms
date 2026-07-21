@@ -10,32 +10,25 @@ import authHandler, {
 } from "./auth/handler"
 import {
   buildOperatorProviders,
-  deploymentLocalExtensions,
-  deploymentLocalModules,
-  OPERATOR_EXCLUDED,
+  operatorComposition,
+  operatorGraphComposition,
+  operatorProjectRuntime,
 } from "./composition"
 import { dbFromEnvForApp, httpDbFromEnvForApp } from "./lib/db"
-import { bookingScheduleBundle } from "./routes/booking-schedule"
 import { mountStayBookingDetailRoutes } from "./routes/stay-booking-detail"
-import { generateContractPdfForBooking } from "./runtime/operator-runtime-adapter"
-import { tripsPaymentBundle } from "./runtime/trips-runtime"
-import { catalogBridgeBundle } from "./subscribers/catalog-bridge"
-import { createCatalogCheckoutBundle } from "./subscribers/catalog-checkout-finalize-runtime"
+import { bindOperatorGraphEventDelivery } from "./runtime/worker-runtime-host"
 import { smartbillOperatorBundle } from "./subscribers/smartbill"
 
-// The standard module/extension set is owned by @voyant-travel/framework;
-// `createVoyantApp` assembles it (FRAMEWORK_RUNTIME_MANIFEST + frameworkComposition)
-// with this deployment's injected `providers` and its two deployment-local module
-// families (`deploymentLocalModules`), then composes + mounts. The deployment no
-// longer hand-maintains a manifest or registry. See the consolidated-deployments
-// RFC (Workstream B) + voyant#1608 / #1620.
+// Standard modules, extensions, and subscriber facet modules are composed from
+// the generated project graph in composition.ts. This app adds only PMS-local
+// factories and bundles.
 export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOperatorProviders>>({
   providers: buildOperatorProviders(),
-  modules: deploymentLocalModules,
-  extensions: deploymentLocalExtensions,
-  // Stays-only PMS: drop the standard flights module (ADR-0007 subsetting).
-  // cruises/charters/MICE were deployment-local and are simply not registered.
-  exclude: OPERATOR_EXCLUDED,
+  modules: operatorComposition.modules,
+  extensions: operatorComposition.extensions,
+  accessCatalog: operatorProjectRuntime.graphRuntime.accessCatalog,
+  accessResources: operatorGraphComposition.accessResources,
+  dbTransactionalPaths: operatorGraphComposition.routePosture.transactionalPaths,
   // Observability seam (RFC voyant#1553): stamp this app's name on emitted
   // error events and forward unhandled 5xx exceptions — each tagged with the
   // same `requestId` shown to the user on `X-Request-Id` — to the Workers log
@@ -78,6 +71,7 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
   //   - operator-profile / payment-policy: sanitized storefront-preview reads;
   //     owning module not yet annotated.
   publicPaths: [
+    ...operatorGraphComposition.routePosture.publicPaths,
     "/v1/public/payment-link-config",
     "/v1/public/payment-link",
     "/v1/public/products",
@@ -91,16 +85,8 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
     "/v1/local/mock-card",
   ],
   plugins: [
-    // bookingScheduleBundle subscribes to booking.confirmed BEFORE
-    // legal's auto-generate-contract subscriber so the rendered
-    // contract reads the freshly-written deposit/balance rows.
-    bookingScheduleBundle,
-    catalogBridgeBundle,
-    createCatalogCheckoutBundle({
-      generateContractPdf: ({ env, db, eventBus, bookingId }) =>
-        generateContractPdfForBooking(env, db, eventBus, bookingId),
-    }),
-    tripsPaymentBundle,
+    // Standard product subscribers are graph-owned and are mounted through
+    // operatorComposition. Only deployment/provider plugins remain here.
     smartbillOperatorBundle,
     netopiaHonoBundle(),
   ],
@@ -177,4 +163,12 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
       )
     })
   },
+})
+
+bindOperatorGraphEventDelivery(async (event, bindings) => {
+  await app.ready(bindings)
+  if (!app.eventBus.deliver) {
+    throw new Error("The operator event bus does not support durable event redelivery.")
+  }
+  return app.eventBus.deliver(event as Parameters<NonNullable<typeof app.eventBus.deliver>>[0])
 })

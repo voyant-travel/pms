@@ -53,9 +53,9 @@
   "triggers": {
     // PMS-owned schedules only. `generate:voyant` merges these with the
     // selected packages' generated product-job cadences for direct/self-hosted
-    // deployments. Managed builds (identified by
-    // VOYANT_CLOUD_WORKLOAD_ENVIRONMENT_ID) generate the active Wrangler config
-    // without package crons because managed HTTP scheduling owns that cadence.
+    // deployments. Managed builds explicitly select `managed-http` and generate
+    // their Wrangler config without package crons because the managed scheduler
+    // owns that cadence. Generation fails when no authority is selected.
     "crons": [
       // Housekeeping auto-generation (PLAN §4.3) — daily at 06:00; turns each
       // property's departures/stayovers into cleaning tasks (idempotent).

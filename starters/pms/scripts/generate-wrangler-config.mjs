@@ -10,27 +10,48 @@ const baseConfigPath = join(projectRoot, "wrangler.jsonc")
 const outputPath = join(projectRoot, ".voyant/wrangler.generated.json")
 const selfHostedOutputPath = join(projectRoot, ".voyant/wrangler.self-host.generated.json")
 const managedOutputPath = join(projectRoot, ".voyant/wrangler.managed.generated.json")
+const scheduleAuthority = process.env.VOYANT_PRODUCT_JOB_SCHEDULE_AUTHORITY?.trim()
+
+if (scheduleAuthority !== "cloudflare-cron" && scheduleAuthority !== "managed-http") {
+  throw new Error(
+    "VOYANT_PRODUCT_JOB_SCHEDULE_AUTHORITY must be explicitly set to cloudflare-cron or managed-http.",
+  )
+}
 
 const graph = JSON.parse(await readFile(graphPath, "utf8"))
 const baseConfig = JSON.parse(stripJsonComments(await readFile(baseConfigPath, "utf8")))
 const deploymentCrons = Array.isArray(baseConfig.triggers?.crons)
   ? baseConfig.triggers.crons
   : []
-const productCrons = cloudflareCronTriggersForProductJobs(graph.provisioning?.jobs ?? [])
-const selfHostedConfig = withCrons(baseConfig, [...deploymentCrons, ...productCrons])
-const managedConfig = withCrons(baseConfig, deploymentCrons)
-const managed = Boolean(process.env.VOYANT_CLOUD_WORKLOAD_ENVIRONMENT_ID?.trim())
-const selectedConfig = managed ? managedConfig : selfHostedConfig
+const managedConfig = withScheduleAuthority(baseConfig, deploymentCrons, "managed-http")
+const selfHostedConfig =
+  scheduleAuthority === "cloudflare-cron"
+    ? withScheduleAuthority(
+        baseConfig,
+        [
+          ...deploymentCrons,
+          ...cloudflareCronTriggersForProductJobs(graph.provisioning?.jobs ?? []),
+        ],
+        "cloudflare-cron",
+      )
+    : undefined
+const selectedConfig = selfHostedConfig ?? managedConfig
 
 await Promise.all([
   writeFile(outputPath, `${JSON.stringify(selectedConfig, null, 2)}\n`),
-  writeFile(selfHostedOutputPath, `${JSON.stringify(selfHostedConfig, null, 2)}\n`),
   writeFile(managedOutputPath, `${JSON.stringify(managedConfig, null, 2)}\n`),
+  ...(selfHostedConfig
+    ? [writeFile(selfHostedOutputPath, `${JSON.stringify(selfHostedConfig, null, 2)}\n`)]
+    : []),
 ])
 
-function withCrons(config, crons) {
+function withScheduleAuthority(config, crons, authority) {
   return {
     ...config,
+    vars: {
+      ...config.vars,
+      VOYANT_PRODUCT_JOB_SCHEDULE_AUTHORITY: authority,
+    },
     triggers: {
       ...config.triggers,
       crons: [...new Set(crons)],

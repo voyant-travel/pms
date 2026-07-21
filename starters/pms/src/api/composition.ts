@@ -7,23 +7,17 @@
  * Keeping the manifest + registry + capabilities in one file is intentional; the
  * length scales with the module count, not with logic complexity.
  *
- * The standard module/extension set + their order are owned by
- * @voyant-travel/framework. `app.ts` calls `createVoyantApp({ providers,
- * modules })` which assembles `FRAMEWORK_RUNTIME_MANIFEST` + `frameworkComposition`
- * with this deployment's injected providers + `deploymentLocalModules`, then
- * composes + mounts. This file owns only the deployment-specific bits: the
- * provider container (`buildOperatorProviders`) and the two deployment-local
- * module factories. `OPERATOR_RUNTIME_MANIFEST` + `operatorComposition` remain as
- * DERIVED exports for `voyant db doctor` parity + the composition tests. This is
- * the runtime half of the migration-resilience work (voyant#1608 / #1620).
+ * The standard module/extension set + their order come from the generated
+ * project graph. This file composes that graph once, then appends the PMS-local
+ * factories. The resulting manifest and registry remain useful to db doctor and
+ * composition tests without maintaining a second product list.
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
 import {
+  composeVoyantGraphRuntime,
   extensionsFromGlob,
-  FRAMEWORK_RUNTIME_MANIFEST,
   type FrameworkProviders,
-  frameworkComposition,
   modulesFromGlob,
 } from "@voyant-travel/framework"
 import type { VoyantDb } from "@voyant-travel/hono"
@@ -77,17 +71,20 @@ import {
 import { createRelationshipsStorefrontIntakePersistence } from "./runtime/storefront-intake-runtime"
 import { createOperatorTripsRoutesOptions } from "./runtime/trips-runtime"
 import { closeTerminalBookingPaymentSchedules } from "./subscribers/booking-payment-cleanup"
+import { createGeneratedProjectRuntime } from "../../.voyant/runtime/project-runtime.generated"
+import {
+  createOperatorWorkerRuntimeHostPrimitives,
+  deliverOperatorGraphEvent,
+} from "./runtime/worker-runtime-host"
 
 /**
  * The operator deployment's capability container. Every template-specific
  * resolver/service a module factory needs is gathered here so wiring lives in
  * one typed place rather than being threaded through `createApp`.
  */
-// `extends FrameworkProviders` is the compile-time guard that this container
-// satisfies the framework's injected provider contract (so the relocated
-// `frameworkComposition` factories can read it). A future framework provider
-// addition becomes required here, failing the operator typecheck until
-// `buildOperatorProviders` wires it — that's the intended forcing function.
+// `extends FrameworkProviders` keeps the app-local capability container
+// compatible with the framework while package-owned requirements flow through
+// generated runtime ports.
 export interface OperatorCapabilities extends FrameworkProviders {
   resolveNotificationProviders: typeof resolveNotificationProviders
   resolvePublicCheckoutBaseUrl: typeof resolvePublicCheckoutBaseUrlFromBindings
@@ -231,12 +228,7 @@ export function buildOperatorProviders(): OperatorCapabilities {
 }
 
 /**
- * The deployment-local module factories — the only two families that aren't
- * package-owned standard (Better-Auth team invitations + the operator's own
- * Better-Auth team invitations — coupled to the deployment's auth client).
- * `createVoyantApp` merges these onto the standard `frameworkComposition` set;
- * `app.ts` passes them as `modules`. (operator-settings is now a standard
- * package module owned by the framework.)
+ * Deployment-local module factories appended to the generated graph.
  */
 /**
  * Custom modules dropped into `src/modules/<name>/index.ts` are auto-discovered
@@ -335,47 +327,43 @@ export const deploymentLocalExtensions: Record<string, ExtensionFactory<Operator
   ...discoveredExtensions,
 }
 
-/**
- * Standard framework modules this stays-only PMS deployment does NOT run.
- * `app.ts` passes this to `createVoyantApp({ exclude })`, which filters the
- * runtime manifest and validates the exclusion against the framework capability
- * graph (ADR-0007 — dropping a required/depended-on module fails loudly at boot).
- *
- * The tour-operator verticals cruises / charters / MICE were deployment-local
- * (never in the framework standard set) and are simply no longer registered
- * above, so they need no `exclude` entry. Flights IS a standard framework module,
- * so it must be excluded here to stop mounting its routes (and to keep the
- * derived manifest/registry below honest for the drift tests + `db doctor`).
- * trips + quotes are retained: their provider ports are required by
- * `FrameworkProviders` and they mount by default (see docs/PLAN.md §7 verdict).
- */
-export const OPERATOR_EXCLUDED = ["@voyant-travel/flights"] as const
-
-const excludedStandardModules = new Set<string>(OPERATOR_EXCLUDED)
-
-const subsettedFrameworkModules = FRAMEWORK_RUNTIME_MANIFEST.modules.filter(
-  (name) => !excludedStandardModules.has(name),
+export const operatorProjectRuntime = createGeneratedProjectRuntime()
+const graphPrimitives = createOperatorWorkerRuntimeHostPrimitives(
+  {} as CloudflareBindings,
+  deliverOperatorGraphEvent,
 )
+const graphPorts = operatorProjectRuntime.createRuntimePorts({ primitives: graphPrimitives })
+export const operatorGraphComposition = await composeVoyantGraphRuntime({
+  runtime: operatorProjectRuntime.graphRuntime,
+  ports: graphPorts,
+  capabilities: buildOperatorProviders(),
+})
 
-const subsettedFrameworkModuleFactories = Object.fromEntries(
-  Object.entries(frameworkComposition.modules).filter(
-    ([name]) => !excludedStandardModules.has(name),
-  ),
+const graphModuleFactories = Object.fromEntries(
+  operatorGraphComposition.modules.map((module, index) => [
+    `selected-graph-module:${index}:${module.module.name}`,
+    () => module,
+  ]),
 ) as CompositionRegistry<OperatorCapabilities>["modules"]
 
+const graphExtensionFactories = Object.fromEntries(
+  operatorGraphComposition.extensions.map((extension, index) => [
+    `selected-graph-extension:${index}:${extension.extension.name}`,
+    () => extension,
+  ]),
+) as CompositionRegistry<OperatorCapabilities>["extensions"]
+
 /**
- * The full composed manifest + registry — DERIVED from the framework-owned
- * standard set (minus {@link OPERATOR_EXCLUDED}) plus the deployment-local
- * additions. `app.ts` builds the app via `createVoyantApp` (which assembles the
- * same internally, applying the same `exclude`); these exports remain for
- * `voyant db doctor` parity inspection and the composition tests.
+ * The full composed manifest + registry, derived from the selected graph plus
+ * deployment-local additions. These exports remain for db-doctor parity and
+ * composition tests.
  */
 export const OPERATOR_RUNTIME_MANIFEST = {
-  modules: [...subsettedFrameworkModules, ...Object.keys(deploymentLocalModules)],
-  extensions: [...FRAMEWORK_RUNTIME_MANIFEST.extensions, ...Object.keys(deploymentLocalExtensions)],
+  modules: [...Object.keys(graphModuleFactories), ...Object.keys(deploymentLocalModules)],
+  extensions: [...Object.keys(graphExtensionFactories), ...Object.keys(deploymentLocalExtensions)],
 } satisfies CompositionManifest
 
 export const operatorComposition: CompositionRegistry<OperatorCapabilities> = {
-  modules: { ...subsettedFrameworkModuleFactories, ...deploymentLocalModules },
-  extensions: { ...frameworkComposition.extensions, ...deploymentLocalExtensions },
+  modules: { ...graphModuleFactories, ...deploymentLocalModules },
+  extensions: { ...graphExtensionFactories, ...deploymentLocalExtensions },
 }

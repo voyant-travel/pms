@@ -1,17 +1,13 @@
 import { submitBookingReservationPlan } from "@voyant-travel/bookings/reservation-plans"
-import type { PaymentCompletedEvent } from "@voyant-travel/finance"
-import type { HonoBundle } from "@voyant-travel/hono/plugin"
 import {
   type CancelTripComponentsDeps,
   type PriceTripDeps,
   type ReserveTripDeps,
   type StartCheckoutDeps,
   type TripsRoutesOptions,
-  tripsService,
 } from "@voyant-travel/trips"
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import type { Context } from "hono"
-import { withDbFromEnv } from "../lib/db"
 import {
   cancelComponent,
   previewComponentCancellation,
@@ -33,35 +29,6 @@ export function createOperatorTripsRoutesOptions(): TripsRoutesOptions {
     startCheckoutDeps: (c) => createStartCheckoutDeps(c),
     cancelTripComponentsDeps: (c) => createCancelTripComponentsDeps(c),
   }
-}
-
-export const tripsPaymentBundle: HonoBundle = {
-  name: "trips-payment-completion",
-  bootstrap: ({ bindings, eventBus }) => {
-    const env = bindings as CloudflareBindings
-    eventBus.subscribe<PaymentCompletedEvent>("payment.completed", async ({ data }) => {
-      if (data.targetType !== "other" || !data.targetId?.startsWith("trip_")) return
-
-      try {
-        await withDbFromEnv(env, async (rawDb) => {
-          const db = rawDb as unknown as PostgresJsDatabase
-          await tripsService.completeTripCheckout(db, {
-            envelopeId: data.targetId ?? undefined,
-            paymentSessionId: data.paymentSessionId,
-            payload: {
-              amountCents: data.amountCents,
-              currency: data.currency,
-              provider: data.provider,
-              targetType: data.targetType,
-              targetId: data.targetId,
-            },
-          })
-        })
-      } catch (err) {
-        console.error("[trips] payment completion failed", err)
-      }
-    })
-  },
 }
 
 function createPriceTripDeps(c: Context): PriceTripDeps {
