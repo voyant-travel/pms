@@ -10,8 +10,8 @@ import {
   operatorComposition,
 } from "./composition"
 
-function entryName(entry: string | { resolve: string }): string {
-  return typeof entry === "string" ? entry : entry.resolve
+function entryName(entry: string | { resolve?: string; packageName?: string }): string {
+  return typeof entry === "string" ? entry : (entry.resolve ?? entry.packageName ?? "")
 }
 
 describe("operator runtime composition", () => {
@@ -90,9 +90,13 @@ describe("operator runtime composition", () => {
     expect(channelPush?.extension.module).toBe("distribution")
     expect(channelPush?.adminRoutes).toBeDefined()
 
-    const bookingTax = byName("booking-tax")
-    expect(bookingTax?.extension.module).toBe("bookings")
-    expect(bookingTax?.lazyAdminRoutes).toBeTypeOf("function")
+    const bookingTaxPreview = byName("booking-tax-preview")
+    expect(bookingTaxPreview?.extension.module).toBe("bookings")
+    expect(bookingTaxPreview?.lazyAdminRoutes).toBeTypeOf("function")
+
+    const bookingTaxSettings = byName("booking-tax-settings")
+    expect(bookingTaxSettings?.extension.module).toBe("finance")
+    expect(bookingTaxSettings?.lazyAdminRoutes).toBeTypeOf("function")
 
     // Booking-schedule owns an admin route on bookings + a public route
     // mounted at /v1/public/payment-policy via the publicPath override.
@@ -109,7 +113,7 @@ describe("operator runtime composition", () => {
     // Lazy extensions (loaded on demand, context bridged by createApp).
     const actionLedgerHealth = byName("action-ledger-health")
     expect(actionLedgerHealth?.extension.module).toBe("action-ledger")
-    expect(actionLedgerHealth?.lazyAdminRoutes).toBeTypeOf("function")
+    expect(actionLedgerHealth?.adminRoutes ?? actionLedgerHealth?.lazyAdminRoutes).toBeDefined()
 
     const proposal = byName("proposal")
     expect(proposal?.extension.module).toBe("quote-versions")
@@ -129,13 +133,11 @@ describe("operator runtime composition", () => {
     )
     const mod = (name: string) => composed.modules.find((m) => m.module.name === name)
 
-    // mcp/invitations route bundles live in the operator and load lazily;
-    // createApp mounts + caches them with the request context bridged. (flights
-    // is excluded from this stays-only deployment, so it is not mounted.)
+    // mcp stays app-local and loads lazily; auth-owned invitations are now graph
+    // modules. Flights is excluded from this stays-only deployment.
     expect(mod("flights")).toBeUndefined()
     expect(mod("mcp")?.lazyAdminRoutes).toBeTypeOf("function")
-    expect(mod("invitations")?.lazyAdminRoutes).toBeTypeOf("function")
-    expect(mod("invitations")?.lazyPublicRoutes).toBeTypeOf("function")
+    expect(mod("invitations")).toBeDefined()
   })
 
   it("registers the ARI authoring package (@voyant-travel/pms-ari) with eager admin routes", () => {

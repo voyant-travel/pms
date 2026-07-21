@@ -10,7 +10,9 @@ import { personLinkable } from "@voyant-travel/relationships/linkables"
  * The `person_id` columns remain on the legal tables; this link materializes the
  * association for cross-module queries.
  */
-export const contractPersonLink = defineLink(
+const contractPersonLink = defineLink(
   { linkable: contractLinkable, isList: true },
   personLinkable,
 )
+
+export default contractPersonLink

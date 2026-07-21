@@ -39,12 +39,11 @@ import foliosModule from "@voyant-travel/pms-folios"
 import { createFrontDeskModule } from "@voyant-travel/pms-front-desk"
 import housekeepingModule from "@voyant-travel/pms-housekeeping"
 import unitsModule from "@voyant-travel/pms-units"
-import { createRealtimeHonoModule } from "@voyant-travel/realtime"
 import { relationshipsService } from "@voyant-travel/relationships"
+import { storageObjectRuntimePort } from "@voyant-travel/storage/runtime-port"
 import { Hono } from "hono"
 import { resolveOperatorCustomFields } from "../lib/custom-fields"
 import { resolveNotificationProviders } from "../lib/notifications"
-import { operatorRealtimeBridgeRoutes, resolveRealtimeProviders } from "../lib/realtime"
 import { asPostgresDb } from "./lib/booking-engine-db"
 import { resolveBookingRequirementsProductSnapshot } from "./lib/booking-requirements-product-snapshot"
 import { buildCatalogContext } from "./lib/catalog-context"
@@ -59,6 +58,7 @@ import {
   createOperatorDocumentStorage,
   createOperatorInvoiceExchangeRateResolver,
   createOperatorInvoiceSettlementPollers,
+  createOperatorSmartbillRuntimeHost,
   readOperatorDocumentContentBase64,
   resolveOperatorContractDocumentGenerator,
   resolveOperatorDb,
@@ -280,33 +280,6 @@ const pmsDomainModules: Record<string, ModuleFactory<OperatorCapabilities>> = {
 export const deploymentLocalModules: Record<string, ModuleFactory<OperatorCapabilities>> = {
   ...discoveredModules,
   ...pmsDomainModules,
-  "operator/invitations": () => ({
-    module: { name: "invitations" },
-    lazyAdminRoutes: () =>
-      import("./routes/invitations").then((m) => m.createInvitationsAdminRoutes()),
-    lazyPublicRoutes: () =>
-      import("./routes/invitations").then((m) => m.createInvitationsPublicRoutes()),
-    // Invitation redemption is reached from an emailed link without a session
-    // (ADR-0008); the public surface is anonymous.
-    anonymous: true,
-  }),
-  // Cloud-mode team management mounted at /v1/admin/team — proxies member
-  // management to the Voyant Cloud platform when VOYANT_ADMIN_AUTH_MODE is
-  // "voyant-cloud". The local invitations surface above stays the local-mode
-  // path; these routes 404 in local mode.
-  "operator/team": () => ({
-    module: { name: "team" },
-    lazyAdminRoutes: () => import("./routes/team").then((m) => m.createTeamAdminRoutes()),
-  }),
-  // Realtime channels (voyant#1695). Mints scoped client tokens at
-  // /v1/{admin,public}/realtime/token and bridges domain events to channels as
-  // invalidation hints. Provider-agnostic and fully optional: inert until
-  // VOYANT_REALTIME_ENABLED is set (see lib/realtime.ts).
-  "operator/realtime": () =>
-    createRealtimeHonoModule({
-      resolveProviders: resolveRealtimeProviders,
-      bridgeRoutes: operatorRealtimeBridgeRoutes,
-    }),
 }
 
 /**
@@ -332,7 +305,13 @@ const graphPrimitives = createOperatorWorkerRuntimeHostPrimitives(
   {} as CloudflareBindings,
   deliverOperatorGraphEvent,
 )
-const graphPorts = operatorProjectRuntime.createRuntimePorts({ primitives: graphPrimitives })
+const graphPorts = operatorProjectRuntime.createRuntimePorts({
+  primitives: graphPrimitives,
+  runtimePorts: {
+    "smartbill.runtime-host": createOperatorSmartbillRuntimeHost(),
+    [storageObjectRuntimePort.id]: { resolve: () => null },
+  },
+})
 export const operatorGraphComposition = await composeVoyantGraphRuntime({
   runtime: operatorProjectRuntime.graphRuntime,
   ports: graphPorts,

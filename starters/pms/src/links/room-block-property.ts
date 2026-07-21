@@ -7,7 +7,9 @@ import { propertyLinkable } from "@voyant-travel/operations/places/linkables"
  * blocks. Replaces the loose `room_blocks.property_id` column with a link
  * pivot. See RFC voyant#1489.
  */
-export const roomBlockPropertyLink = defineLink(propertyLinkable, {
+const roomBlockPropertyLink = defineLink(propertyLinkable, {
   linkable: roomBlockLinkable,
   isList: true,
 })
+
+export default roomBlockPropertyLink

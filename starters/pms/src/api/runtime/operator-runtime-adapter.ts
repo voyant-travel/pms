@@ -9,7 +9,10 @@ import {
   readDocumentContentBase64,
   resolveDocumentDownloadUrl,
 } from "../lib/storage"
-import { createSmartbillSettlementPollers } from "../subscribers/smartbill"
+import {
+  createSmartbillSettlementPollers,
+  resolveSmartbillRuntimeOptions,
+} from "../subscribers/smartbill"
 import {
   generateContractPdfForBooking,
   resolveContractDocumentGenerator,
@@ -71,6 +74,15 @@ export function createOperatorInvoiceExchangeRateResolver(bindings: unknown) {
 
 export function createOperatorInvoiceSettlementPollers(bindings: unknown) {
   return createSmartbillSettlementPollers(operatorBindings(bindings))
+}
+
+export function createOperatorSmartbillRuntimeHost() {
+  return {
+    resolveDatabase: (bindings: unknown) => resolveOperatorDb(bindings),
+    resolveConfig: (bindings: unknown) => resolveSmartbillRuntimeOptions(operatorBindings(bindings)),
+    resolveDocumentStorage: (bindings: unknown) => createOperatorDocumentStorage(bindings),
+    logger: console,
+  }
 }
 
 export { generateContractPdfForBooking }

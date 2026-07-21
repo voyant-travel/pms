@@ -7,7 +7,9 @@ import { organizationLinkable } from "@voyant-travel/relationships/linkables"
  * organization. Replaces the former hard `contracts.organization_id →
  * organizations.id` cross-package FK (module decoupling: links, not FKs).
  */
-export const contractOrganizationLink = defineLink(
+const contractOrganizationLink = defineLink(
   { linkable: contractLinkable, isList: true },
   organizationLinkable,
 )
+
+export default contractOrganizationLink

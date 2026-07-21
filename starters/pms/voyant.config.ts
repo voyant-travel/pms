@@ -14,15 +14,18 @@ const distribution = selectStandardOperatorDistribution({
     "@voyant-travel/cruises",
     "@voyant-travel/charters",
     "@voyant-travel/mice",
+    "@voyant-travel/realtime",
   ],
 })
 
 export default defineProject({
   productBom: STANDARD_OPERATOR_PRODUCT_BOM_REFERENCE,
-  modules: distribution.modules,
+  modules: [...distribution.modules, "@voyant-travel/pms-catalog-vertical-stubs"],
   extensions: distribution.extensions,
   plugins: ["@voyant-travel/plugin-smartbill"],
-  access: STANDARD_OPERATOR_ACCESS,
+  access: {
+    presets: STANDARD_OPERATOR_ACCESS.presets?.filter((preset) => preset.id !== "automation"),
+  },
   // Product-job cadence is hosted explicitly by the Worker entry: managed
   // deployments use Cloud's HTTP scheduler, while self-hosted Wrangler uses
   // generated Cron Triggers. Keep the resolved graph target-neutral so the
