@@ -4,13 +4,18 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
+    "generate:voyant": "voyant build --artifacts-only && node scripts/generate-wrangler-config.mjs",
+    "predev": "pnpm run generate:voyant",
     "dev": "vite dev --port 3300",
+    "prebuild": "pnpm run generate:voyant",
     "build": "vite build",
     "preview": "pnpm run build && vite preview",
+    "pretypecheck": "pnpm run generate:voyant",
     "typecheck": "NODE_OPTIONS=--max-old-space-size=14336 tsc -p tsconfig.server.json && NODE_OPTIONS=--max-old-space-size=14336 tsc -p tsconfig.client.json",
+    "pretest": "pnpm run generate:voyant",
     "test": "vitest run --passWithNoTests",
     "generate:openapi": "UPDATE_OPENAPI=1 vitest run src/api/openapi.test.ts",
-    "deploy": "pnpm run build && wrangler deploy",
+    "deploy": "pnpm run build && wrangler deploy --config .voyant/wrangler.generated.json",
     "check:startup": "pnpm run build && wrangler check startup",
     "measure:startup": "pnpm run build && node ../../scripts/measure-cloudflare-startup.mjs .",
     "db:generate": "drizzle-kit generate --config=drizzle.deployment-migrations.config.ts",
@@ -24,7 +29,7 @@
     "seed:acme": "tsx scripts/seed-acme.ts",
     "sync:sources": "tsx scripts/sync-sources.ts",
     "notifications:mock": "node scripts/mock-notifications.mjs",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "cf-typegen": "pnpm run generate:voyant && wrangler types --config .voyant/wrangler.generated.json --env-interface CloudflareBindings",
     "lint": "biome check src/"
   },
   "dependencies": {

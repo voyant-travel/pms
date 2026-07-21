@@ -18,7 +18,10 @@ export default defineConfig(
     appRootUrl: import.meta.url,
     plugins: [
       devtools(),
-      cloudflare({ viteEnvironment: { name: "ssr" } }),
+      cloudflare({
+        configPath: ".voyant/wrangler.generated.json",
+        viteEnvironment: { name: "ssr" },
+      }),
       tailwindcss(),
       tanstackStart({
         router: {
