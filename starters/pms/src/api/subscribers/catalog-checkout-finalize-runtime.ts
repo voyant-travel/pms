@@ -1,26 +1,23 @@
 /**
- * Operator (deployment) wiring for the checkout-finalize workflow.
+ * Operator (deployment) wiring for checkout finalization.
  *
- * The reusable finalize saga driver (`dispatchCheckoutFinalize`) and the
- * acceptance-signature promotion live in `@voyant-travel/commerce/checkout`.
+ * The idempotent `finalizeCheckout` operation and acceptance-signature
+ * promotion live in `@voyant-travel/commerce/checkout`.
  * This file keeps the thin deployment wiring:
  *   - the HonoBundle that subscribes to `payment.completed` /
- *     `contract.document.generated` events and registers the
- *     `checkout-finalize` runner in the operator's workflow-runs registry,
+ *     `contract.document.generated` events,
  *   - the platform glue (db resolver, env bindings, contract-pdf generator).
  *
- * Swapping the runner registry, payment trigger, or contract-pdf generator is a
- * change here — never in the package's finalize step logic.
+ * Swapping the payment trigger or contract-pdf generator is a change here —
+ * never in the package's finalization logic.
  */
 import {
-  type DispatchCheckoutFinalizeParams,
   type CatalogCheckoutContractPdfGenerator as PackageContractPdfGenerator,
-  dispatchCheckoutFinalize as packageDispatchCheckoutFinalize,
+  finalizeCheckout,
   persistAcceptanceSignature,
 } from "@voyant-travel/commerce/checkout"
 import type { EventBus } from "@voyant-travel/core"
 import type { HonoBundle } from "@voyant-travel/hono/plugin"
-import type { WorkflowRunnerRegistry } from "@voyant-travel/workflow-runs"
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import { withDbFromEnv } from "../lib/db"
 import { operatorBindings, operatorPostgresDb } from "../runtime/operator-runtime-adapter"
@@ -45,7 +42,7 @@ interface ContractDocumentGeneratedPayload {
 /**
  * Optional callback that generates (or fetches existing) the contract PDF for
  * a booking. Wired by app.ts and forwarded into the explicit
- * `generate_contract_pdf` workflow step. The deployment supplies its
+ * contract-PDF stage. The deployment supplies its
  * platform bindings (`env`), so this type carries `env` for the operator's
  * own callers; it adapts to the package's env-less generator inside the bundle.
  */
@@ -56,33 +53,10 @@ export type CatalogCheckoutContractPdfGenerator = (input: {
   bookingId: string
 }) => Promise<{ contractId: string; attachmentId: string } | null>
 
-type DispatchParams = Omit<DispatchCheckoutFinalizeParams, "generateContractPdf"> & {
-  env: CloudflareBindings
-  generateContractPdf?: CatalogCheckoutContractPdfGenerator
-}
-
 /**
- * Dispatch the checkout-finalize workflow, adapting the operator's
- * env-carrying contract-pdf generator to the package's env-less form by
- * closing over the bundle's env bindings.
- */
-function dispatchCheckoutFinalize(params: DispatchParams): Promise<{ runId: string }> {
-  const { env, generateContractPdf, ...rest } = params
-  const packageGenerator: PackageContractPdfGenerator | undefined = generateContractPdf
-    ? ({ db, eventBus, bookingId }) => generateContractPdf({ env, db, eventBus, bookingId })
-    : undefined
-  return packageDispatchCheckoutFinalize({
-    ...rest,
-    generateContractPdf: packageGenerator,
-  })
-}
-
-/**
- * Bundle factory that subscribes to checkout-finalize events and registers
- * workflow-runs rerun/resume handlers for the standalone dashboard.
+ * Bundle factory that subscribes to checkout-finalize events.
  */
 export function createCatalogCheckoutBundle(opts: {
-  workflowRunnerRegistry?: WorkflowRunnerRegistry
   generateContractPdf?: CatalogCheckoutContractPdfGenerator
 }): HonoBundle {
   return {
@@ -104,84 +78,28 @@ export function createCatalogCheckoutBundle(opts: {
       eventBus.subscribe<PaymentCompletedPayload>("payment.completed", async ({ data }) => {
         if (!data.bookingId) return
         const bookingId = data.bookingId
-        try {
-          await withDbFromEnv(env, async (rawDb) => {
-            await dispatchCheckoutFinalize({
-              env,
-              db: operatorPostgresDb(rawDb),
-              eventBus,
-              input: {
-                bookingId,
-                paymentSessionId: data.paymentSessionId,
-                paymentIntent: data.paymentIntent,
-              },
-              trigger: "payment.completed",
-              correlationId: data.paymentSessionId ?? null,
-              tags: [
-                `bookingId:${bookingId}`,
-                ...(data.paymentSessionId ? [`paymentSessionId:${data.paymentSessionId}`] : []),
-                ...(data.paymentIntent ? [`paymentIntent:${data.paymentIntent}`] : []),
-              ],
-              generateContractPdf: opts.generateContractPdf,
-            })
-          })
-        } catch {
-          // dispatchCheckoutFinalize already logged + recorded the
-          // failure; swallow here so the event-bus callback doesn't
-          // bubble to the dispatch caller.
-        }
-      })
+        const generateContractPdf = opts.generateContractPdf
+        const packageGenerator: PackageContractPdfGenerator | undefined = generateContractPdf
+          ? ({ db, eventBus: bus, bookingId: id }) =>
+              generateContractPdf({ env, db, eventBus: bus, bookingId: id })
+          : undefined
 
-      if (opts.workflowRunnerRegistry) {
-        opts.workflowRunnerRegistry.register({
-          name: "checkout-finalize",
-          idempotency: "unsafe",
-          description:
-            "Confirms the booking and issues the final invoice. A fresh rerun issues another invoice number; use Resume to retry from a failed step.",
-          rerun: async (rawInput, ctx) => {
-            const input = rawInput as DispatchCheckoutFinalizeParams["input"] | null
-            if (!input?.bookingId) {
-              throw new Error("checkout-finalize rerun: recorded input has no bookingId")
-            }
-            return withDbFromEnv(env, async (rawDb) =>
-              dispatchCheckoutFinalize({
-                env,
-                db: operatorPostgresDb(rawDb),
-                eventBus,
-                input,
-                trigger: "manual.rerun",
-                correlationId: ctx.correlationId,
-                tags: [...ctx.tags, "rerun:true"],
-                parentRunId: ctx.parentRunId,
-                triggeredByUserId: ctx.triggeredByUserId,
-                generateContractPdf: opts.generateContractPdf,
-              }),
-            )
-          },
-          resume: async (rawInput, ctx) => {
-            const input = rawInput as DispatchCheckoutFinalizeParams["input"] | null
-            if (!input?.bookingId) {
-              throw new Error("checkout-finalize resume: recorded input has no bookingId")
-            }
-            return withDbFromEnv(env, async (rawDb) =>
-              dispatchCheckoutFinalize({
-                env,
-                db: operatorPostgresDb(rawDb),
-                eventBus,
-                input,
-                trigger: "manual.resume",
-                correlationId: ctx.correlationId,
-                tags: [...ctx.tags, "resume:true"],
-                parentRunId: ctx.parentRunId,
-                triggeredByUserId: ctx.triggeredByUserId,
-                resumeFromStep: ctx.resumeFromStep,
-                seedResults: ctx.seedResults,
-                generateContractPdf: opts.generateContractPdf,
-              }),
-            )
-          },
+        // Event delivery retries failures. The operation is idempotent and the
+        // booking/finance state remains the source of truth, so do not swallow
+        // errors or recreate a deployment-local run registry.
+        await withDbFromEnv(env, async (rawDb) => {
+          await finalizeCheckout({
+            db: operatorPostgresDb(rawDb),
+            eventBus,
+            input: {
+              bookingId,
+              paymentSessionId: data.paymentSessionId,
+              paymentIntent: data.paymentIntent,
+            },
+            generateContractPdf: packageGenerator,
+          })
         })
-      }
+      })
     },
   }
 }

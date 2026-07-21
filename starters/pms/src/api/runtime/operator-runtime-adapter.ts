@@ -1,11 +1,6 @@
 import { buildBookingRouteRuntime, createBookingPiiService } from "@voyant-travel/bookings"
 import { createVoyantDataFxExchangeRateResolver } from "@voyant-travel/finance"
 import type { VoyantDb } from "@voyant-travel/hono"
-import {
-  type CloudWorkflowsClientEnv,
-  createCloudWorkflowDriver,
-} from "@voyant-travel/workflows/client"
-import { createInMemoryDriver } from "@voyant-travel/workflows-orchestrator/in-memory"
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import { resolveVoyantApiKey } from "../../lib/voyant-cloud"
 import { getDbFromEnv } from "../lib/db"
@@ -76,29 +71,6 @@ export function createOperatorInvoiceExchangeRateResolver(bindings: unknown) {
 
 export function createOperatorInvoiceSettlementPollers(bindings: unknown) {
   return createSmartbillSettlementPollers(operatorBindings(bindings))
-}
-
-export function operatorWorkflowCloudEnv(env: CloudflareBindings): CloudWorkflowsClientEnv {
-  return {
-    VOYANT_CLOUD_WORKFLOWS_URL: env.VOYANT_CLOUD_WORKFLOWS_URL,
-    VOYANT_CLOUD_WORKFLOW_TRIGGER_TOKEN: env.VOYANT_CLOUD_WORKFLOW_TRIGGER_TOKEN,
-    VOYANT_CLOUD_APP_SLUG: env.VOYANT_CLOUD_APP_SLUG ?? "operator",
-    VOYANT_CLOUD_ENVIRONMENT: env.VOYANT_CLOUD_ENVIRONMENT,
-  }
-}
-
-export function createOperatorWorkflowDriver(bindings: unknown) {
-  const env = operatorBindings(bindings)
-  // Use Voyant Cloud orchestration only when it's actually configured.
-  // Local/self-hosted deployments (no Cloud workflow URL + trigger token) run
-  // workflows fully in-process via the in-memory driver — no Cloud dependency.
-  const cloudConfigured =
-    Boolean(env.VOYANT_CLOUD_WORKFLOWS_URL?.trim()) &&
-    Boolean(env.VOYANT_CLOUD_WORKFLOW_TRIGGER_TOKEN?.trim())
-  if (cloudConfigured) {
-    return () => createCloudWorkflowDriver({ env: operatorWorkflowCloudEnv(env) })
-  }
-  return createInMemoryDriver()
 }
 
 export { generateContractPdfForBooking }

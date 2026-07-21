@@ -43,9 +43,8 @@ export default defineVoyantConfig({
   plugins: ["@voyant-travel/plugin-smartbill"],
   // Mounted Hono extensions that own migrated schema.
   extensions: ["@voyant-travel/catalog-authoring"],
-  // Schema this template migrates but does not mount as a module or extension:
-  //  - workflow-runs: only its admin routes are mounted, not a module
-  additionalSchemas: ["@voyant-travel/availability", "@voyant-travel/workflow-runs"],
+  // Schema this template migrates but does not mount as a module or extension.
+  additionalSchemas: ["@voyant-travel/availability"],
   // Template-local Drizzle schema(s) owned by no package: the generated
   // cross-module link tables (folded into the migration history instead of
   // applied out-of-band via sync-links — regenerate with

@@ -1,7 +1,6 @@
 import { financeService } from "@voyant-travel/finance"
 import { createVoyantApp } from "@voyant-travel/framework"
 import { netopiaHonoBundle } from "@voyant-travel/plugin-netopia"
-import { mountWorkflowRunsAdminRoutes, WorkflowRunnerRegistry } from "@voyant-travel/workflow-runs"
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import { OPERATOR_APP_NAME, operatorReporter } from "../lib/observability"
 import authHandler, {
@@ -17,28 +16,12 @@ import {
 } from "./composition"
 import { dbFromEnvForApp, httpDbFromEnvForApp } from "./lib/db"
 import { bookingScheduleBundle } from "./routes/booking-schedule"
-import { channelPushBundle } from "./routes/channel-push"
 import { mountStayBookingDetailRoutes } from "./routes/stay-booking-detail"
-import {
-  createOperatorWorkflowDriver,
-  generateContractPdfForBooking,
-} from "./runtime/operator-runtime-adapter"
+import { generateContractPdfForBooking } from "./runtime/operator-runtime-adapter"
 import { tripsPaymentBundle } from "./runtime/trips-runtime"
 import { catalogBridgeBundle } from "./subscribers/catalog-bridge"
 import { createCatalogCheckoutBundle } from "./subscribers/catalog-checkout-finalize-runtime"
 import { smartbillOperatorBundle } from "./subscribers/smartbill"
-
-/**
- * Process-wide registry of workflow runners. Bundles register their
- * runners on bootstrap (see `createCatalogCheckoutBundle`) so the
- * `/v1/admin/workflow-runs/:id/{rerun,resume}` endpoints can dispatch
- * a workflow by name. The dashboard's "Rerun" / "Resume" buttons are
- * powered by this registry. Self-hosted workflow services should
- * register runners that call `createSelfHostWorkflowClient(...)`
- * and forward resume calls with `ctx.resumeFromStep` and
- * `ctx.seedResults`.
- */
-const workflowRunnerRegistry = new WorkflowRunnerRegistry()
 
 // The standard module/extension set is owned by @voyant-travel/framework;
 // `createVoyantApp` assembles it (FRAMEWORK_RUNTIME_MANIFEST + frameworkComposition)
@@ -75,16 +58,10 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
   db: (env) =>
     env.DB_FORCE_TRANSACTIONAL === "1" ? dbFromEnvForApp(env) : httpDbFromEnvForApp(env),
   dbTransactional: (env) => dbFromEnvForApp(env),
-  // Workflow runtime — managed Cloud forwarding. App code forwards
-  // trigger/event calls to Voyant Cloud; workflow bundles execute in the
-  // hosted Node runtime.
-  workflows: {
-    driver: createOperatorWorkflowDriver,
-  },
   // Durable event delivery (RFC voyant#1687 Phase 2.1): emits persist to
   // the event_outbox table before subscribers run; failed deliveries are
-  // retried by the */2min drain cron in entry.ts. Requires migration
-  // 0062 (event_outbox).
+  // retried by the DB package's selected event-outbox job. Requires migration
+  // 0062 (event_outbox); delivery state remains authoritative in the database.
   outbox: true,
   // ADR-0008: the anonymous-access surface is DECLARED on the routes that own it
   // (`anonymous` on the module/extension, or on a plugin bundle for webhook
@@ -120,13 +97,11 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
     bookingScheduleBundle,
     catalogBridgeBundle,
     createCatalogCheckoutBundle({
-      workflowRunnerRegistry,
       generateContractPdf: ({ env, db, eventBus, bookingId }) =>
         generateContractPdfForBooking(env, db, eventBus, bookingId),
     }),
     tripsPaymentBundle,
     smartbillOperatorBundle,
-    channelPushBundle,
     netopiaHonoBundle(),
   ],
   auth: {
@@ -139,29 +114,6 @@ export const app = createVoyantApp<CloudflareBindings, ReturnType<typeof buildOp
     validateApiKey: async ({ env, db, apiKey }) => validateApiTokenAccess(env, db, apiKey),
   },
   additionalRoutes: (hono) => {
-    // Every domain + deployment-local route family is now composed through the
-    // registry (see composition.ts). The only thing left here is the workflow-
-    // runs admin surface, which is coupled to the app-level runner registry that
-    // bundle bootstraps populate at construction time.
-
-    // Workflow runs admin surface — list/get + rerun/resume actions
-    // feeding the `WorkflowRunsPage` UI from
-    // `@voyant-travel/workflows-react/ui`. The registry is populated by
-    // bundle bootstraps (e.g. catalog-checkout registers the
-    // `checkout-finalize` runner).
-    mountWorkflowRunsAdminRoutes(hono, {
-      runners: workflowRunnerRegistry,
-      resolveUserId: (c) => {
-        // Hono Context — typed loosely so the package stays
-        // transport-agnostic; pull the userId set by the auth
-        // middleware. Returns null for runs triggered without an
-        // active session (shouldn't happen on the admin surface).
-        const ctx = c as { get: (key: string) => unknown }
-        const userId = ctx.get("userId")
-        return typeof userId === "string" ? userId : null
-      },
-    })
-
     // Guest-facing rich stay detail for the confirmation + manage-booking
     // pages. Authorization is enforced inside the handler (email match or
     // guest-booking capability); the prefix is listed in `publicPaths` above.

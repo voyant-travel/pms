@@ -30,17 +30,9 @@
  *                                   promotions-architecture §9.1 + §9.2).
  *                                   Payload's `affected.kind` decides:
  *                                   `products` → reindex listed IDs in
- *                                   the subscriber. `all` (global /
- *                                   market / audience scope) → log +
- *                                   skip; ops triggers
- *                                   `pnpm exec tsx scripts/reindex.ts products`
- *                                   manually. Inline enumeration of every
- *                                   owned product is unsafe on Cloudflare
- *                                   Workers (CPU / wall-time limits);
- *                                   the proper fix is to enqueue a
- *                                   `@voyant-travel/workflows` job — tracked
- *                                   in voyant-travel/voyant#515 (blocked on
- *                                   #514, `trigger.on()` runtime).
+ *                                   this subscriber. `all` → the Commerce
+ *                                   subscriber records durable reindex intent
+ *                                   for its package-owned job.
  *   - `booking.confirmed`         → capture a snapshot graph of the
  *                                   booking's product line items via
  *                                   `captureSnapshotGraph`
@@ -238,12 +230,9 @@ export const catalogBridgeBundle: HonoBundle = {
     // `affected.kind === "products"` → reindex each listed ID inline.
     // Bounded by the offer's materialized link table; safe on Workers.
     //
-    // `affected.kind === "all"` → routed into the
-    // `promotions.reindex-all-products` workflow declared by the
-    // promotions module; the workflow runtime fans the work out across
-    // per-product steps so each one stays inside Worker CPU limits.
-    // The trigger.on filter (also declared by the promotions module)
-    // forwards the event automatically — nothing to do here.
+    // `affected.kind === "all"` is owned by Commerce: its subscriber records
+    // a durable, coalescing checkpoint and the package job drains it. This
+    // deployment subscriber only handles bounded product-id sets.
     eventBus.subscribe<PromotionChangedPayload>("promotion.changed", async ({ data }) => {
       if (data.affected.kind === "all") return
       const productIds = data.affected.productIds

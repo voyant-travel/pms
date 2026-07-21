@@ -39,9 +39,6 @@
       "id": "replace-with-rate-limit-kv-namespace-id"
     }
   ],
-  // Workflow runtime — managed Cloud forwarding. Configure
-  // VOYANT_CLOUD_WORKFLOWS_URL, VOYANT_CLOUD_APP_SLUG, and the secret
-  // VOYANT_CLOUD_WORKFLOW_TRIGGER_TOKEN for deployments that use workflows.
   // Per-request metrics (RFC voyant#1687 Phase 3.4). On Voyant Cloud the
   // build publisher namespaces the dataset per tenant
   // ({org}_{env}_voyant_operator_metrics); self-hosted deployments get
@@ -55,25 +52,6 @@
   ],
   "triggers": {
     "crons": [
-      // Channel-push reconcilers (per channel-push-architecture.md §13.2).
-      // Booking-link reconciler runs every 15 min; availability hourly;
-      // content nightly. The single scheduled handler in entry.ts runs
-      // the appropriate scanner based on `event.cron`.
-      "*/15 * * * *",
-      "0 * * * *",
-      "0 3 * * *",
-      // Draft reaper (per booking-journey-architecture.md §5.7) — drops
-      // expired booking_drafts hourly at :05 to avoid colliding with the
-      // hourly availability reconciler at :00.
-      "5 * * * *",
-      // Promotions boundary scheduler (per promotions-architecture.md
-      // §9.2) — every 5 minutes; emits/dispatches `promotion.changed`
-      // for offers crossing valid_from / valid_until since the last tick.
-      "*/5 * * * *",
-      // Event-outbox drain (RFC #1687 Phase 2.1) — redelivers failed or
-      // interrupted event deliveries with backoff; the happy path
-      // completes at emit time, so this sweep is small.
-      "*/2 * * * *",
       // Housekeeping auto-generation (PLAN §4.3) — daily at 06:00; turns each
       // property's departures/stayovers into cleaning tasks (idempotent).
       "0 6 * * *",
@@ -81,9 +59,8 @@
       // nightly room + tax charge, computes the day's stats, and rolls each
       // property's business date (idempotent by posting source_key).
       "0 2 * * *",
-      // Channel ARI push (PLAN §4.7) — every 15 min at :03/:18/:33/:48 (offset
-      // off the distribution reconcilers so the cron STRING is unique). Drains
-      // pending pms_channel_ari_events through registered channel connectors.
+      // Channel ARI push (PLAN §4.7) — every 15 min at :03/:18/:33/:48. Drains
+      // pending PMS ARI events through registered channel connectors.
       "3,18,33,48 * * * *"
     ]
   }
