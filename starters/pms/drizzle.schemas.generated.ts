@@ -22,6 +22,5 @@ export const schema = [
   "../../node_modules/.pnpm/@voyant-travel+operator-settings@0.2.25_@cloudflare+workers-types@4.20260702.1_@neondatabase+_l3q4qgiiycvw3g5rcova3mnzba/node_modules/@voyant-travel/operator-settings/dist/schema.js",
   "../../node_modules/.pnpm/@voyant-travel+accommodations@0.109.9_@cloudflare+workers-types@4.20260702.1_@neondatabase+se_ucmgwo4v4rbl2xqqhohqx6yyru/node_modules/@voyant-travel/accommodations/dist/schema.js",
   "../../node_modules/.pnpm/@voyant-travel+catalog-authoring@0.106.28_@cloudflare+workers-types@4.20260702.1_@neondatabas_wdrcfbskpr4fqi6dpvgkbypbjq/node_modules/@voyant-travel/catalog-authoring/dist/schema.js",
-  "../../node_modules/.pnpm/@voyant-travel+workflow-runs@0.111.17_@cloudflare+workers-types@4.20260702.1_@neondatabase+se_bjcifkkflqdhfyoix7kpuwa2ia/node_modules/@voyant-travel/workflow-runs/dist/schema.js",
   "./drizzle.links.generated.ts",
 ] as const

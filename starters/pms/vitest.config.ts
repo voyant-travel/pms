@@ -11,9 +11,6 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     passWithNoTests: true,
-    // The workflow-import / route-mounting tests dynamically load the whole
-    // operator module graph, which is slow under the concurrent full-suite run.
-    // Give them headroom so they don't flake on the default 5s timeout.
     testTimeout: 30_000,
     server: {
       deps: {

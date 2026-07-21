@@ -6,7 +6,9 @@ import { policyLinkable } from "@voyant-travel/legal/linkables"
  * A policy can apply to many products (cancellation rules, payment schedule,
  * etc.); a product can carry many policies (one per kind).
  */
-export const policyProductLink = defineLink(
+const policyProductLink = defineLink(
   { linkable: policyLinkable, isList: true },
   { linkable: productLinkable, isList: true },
 )
+
+export default policyProductLink

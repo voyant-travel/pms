@@ -7,7 +7,9 @@ import { personLinkable } from "@voyant-travel/relationships/linkables"
  *
  * Replaces the former `products.person_id` column with a link pivot table.
  */
-export const personProductLink = defineLink(personLinkable, {
+const personProductLink = defineLink(personLinkable, {
   linkable: productLinkable,
   isList: true,
 })
+
+export default personProductLink

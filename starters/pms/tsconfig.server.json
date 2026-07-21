@@ -629,7 +629,6 @@
       "@voyant-travel/core/plugin": ["../../packages/core/dist/plugin.d.ts"],
       "@voyant-travel/core/query": ["../../packages/core/dist/query.d.ts"],
       "@voyant-travel/core/registry": ["../../packages/core/dist/registry.d.ts"],
-      "@voyant-travel/core/workflows": ["../../packages/core/dist/workflows.d.ts"],
       "@voyant-travel/cruises": ["../../packages/cruises/dist/index.d.ts"],
       "@voyant-travel/cruises-contracts": ["../../packages/cruises-contracts/dist/index.d.ts"],
       "@voyant-travel/cruises-contracts/cabin-features": [
@@ -863,9 +862,6 @@
         "../../packages/distribution-react/dist/suppliers/ui.d.ts"
       ],
       "@voyant-travel/distribution-react/ui": ["../../packages/distribution-react/dist/ui.d.ts"],
-      "@voyant-travel/distribution/channel-push-workflows": [
-        "../../packages/distribution/dist/channel-push/workflow-entry.d.ts"
-      ],
       "@voyant-travel/distribution/external-refs/validation": [
         "../../packages/distribution/dist/external-refs/validation.d.ts"
       ],
@@ -1818,77 +1814,15 @@
       "@voyant-travel/worker-runtime/types": ["../../packages/worker-runtime/dist/types.d.ts"],
       "@voyant-travel/worker-runtime/worker-fetch": [
         "../../packages/worker-runtime/dist/worker-fetch.d.ts"
-      ],
-      "@voyant-travel/workflow-runs": ["../../packages/workflow-runs/dist/index.d.ts"],
-      "@voyant-travel/workflow-runs/recorder": ["../../packages/workflow-runs/dist/recorder.d.ts"],
-      "@voyant-travel/workflow-runs/routes": ["../../packages/workflow-runs/dist/routes.d.ts"],
-      "@voyant-travel/workflow-runs/schema": ["../../packages/workflow-runs/dist/schema.d.ts"],
-      "@voyant-travel/workflow-runs/service": ["../../packages/workflow-runs/dist/service.d.ts"],
-      "@voyant-travel/workflow-runs/workflows": [
-        "../../packages/workflow-runs/dist/workflows.d.ts"
-      ],
-      "@voyant-travel/workflows": ["../../packages/workflows/dist/index.d.ts"],
-      "@voyant-travel/workflows-orchestrator": [
-        "../../packages/workflows-orchestrator/dist/index.d.ts"
-      ],
-      "@voyant-travel/workflows-orchestrator/in-memory": [
-        "../../packages/workflows-orchestrator/dist/driver-inmemory.d.ts"
-      ],
-      "@voyant-travel/workflows-orchestrator/selfhost": [
-        "../../packages/workflows-orchestrator/dist/node/index.d.ts"
-      ],
-      "@voyant-travel/workflows-orchestrator/testing": [
-        "../../packages/workflows-orchestrator/dist/testing/driver-compliance.d.ts"
-      ],
-      "@voyant-travel/workflows-react": ["../../packages/workflows-react/dist/index.d.ts"],
-      "@voyant-travel/workflows-react/client": ["../../packages/workflows-react/dist/client.d.ts"],
-      "@voyant-travel/workflows-react/components/*": [
-        "../../packages/workflows-react/dist/components/*.d.ts"
-      ],
-      "@voyant-travel/workflows-react/i18n": [
-        "../../packages/workflows-react/dist/i18n/index.d.ts"
-      ],
-      "@voyant-travel/workflows-react/i18n/en": [
-        "../../packages/workflows-react/dist/i18n/en.d.ts"
-      ],
-      "@voyant-travel/workflows-react/i18n/ro": [
-        "../../packages/workflows-react/dist/i18n/ro.d.ts"
-      ],
-      "@voyant-travel/workflows-react/ui": ["../../packages/workflows-react/dist/ui.d.ts"],
-      "@voyant-travel/workflows-react/workflow-runs": [
-        "../../packages/workflows-react/dist/workflow-runs.d.ts"
-      ],
-      "@voyant-travel/workflows-react/workflow-runs-client": [
-        "../../packages/workflows-react/dist/workflow-runs-client.d.ts"
-      ],
-      "@voyant-travel/workflows-react/workflow-schedules-client": [
-        "../../packages/workflows-react/dist/workflow-schedules-client.d.ts"
-      ],
-      "@voyant-travel/workflows/auth": ["../../packages/workflows/dist/auth/index.d.ts"],
-      "@voyant-travel/workflows/bindings": ["../../packages/workflows/dist/bindings.d.ts"],
-      "@voyant-travel/workflows/client": ["../../packages/workflows/dist/client.d.ts"],
-      "@voyant-travel/workflows/config": ["../../packages/workflows/dist/config.d.ts"],
-      "@voyant-travel/workflows/driver": ["../../packages/workflows/dist/driver.d.ts"],
-      "@voyant-travel/workflows/errors": ["../../packages/workflows/dist/errors.d.ts"],
-      "@voyant-travel/workflows/events": ["../../packages/workflows/dist/events/index.d.ts"],
-      "@voyant-travel/workflows/handler": ["../../packages/workflows/dist/handler/index.d.ts"],
-      "@voyant-travel/workflows/http-ingest": ["../../packages/workflows/dist/http-ingest.d.ts"],
-      "@voyant-travel/workflows/protocol": ["../../packages/workflows/dist/protocol/index.d.ts"],
-      "@voyant-travel/workflows/rate-limit": [
-        "../../packages/workflows/dist/rate-limit/index.d.ts"
-      ],
-      "@voyant-travel/workflows/testing": ["../../packages/workflows/dist/testing/index.d.ts"]
+      ]
     }
   },
   "include": [
     "src/entry.ts",
     "src/start.ts",
     "src/scheduled-crons.ts",
-    "src/workflows.ts",
     "src/hono-api-dispatch.ts",
     "src/hono-api-dispatch.test.ts",
-    "src/workflows-bundle.test.ts",
-    "src/workflows-import.test.ts",
     "src/api/**/*.ts",
     "src/modules/**/*.ts",
     "src/links/**/*.ts",

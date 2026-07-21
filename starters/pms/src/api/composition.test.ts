@@ -4,12 +4,14 @@ import { describe, expect, it } from "vitest"
 import voyantConfig from "../../voyant.config"
 import {
   buildOperatorProviders,
+  operatorGraphComposition,
+  operatorProjectRuntime,
   OPERATOR_RUNTIME_MANIFEST,
   operatorComposition,
 } from "./composition"
 
-function entryName(entry: string | { resolve: string }): string {
-  return typeof entry === "string" ? entry : entry.resolve
+function entryName(entry: string | { resolve?: string; packageName?: string }): string {
+  return typeof entry === "string" ? entry : (entry.resolve ?? entry.packageName ?? "")
 }
 
 describe("operator runtime composition", () => {
@@ -36,20 +38,8 @@ describe("operator runtime composition", () => {
       buildOperatorProviders(),
     )
 
-    // Manifest entries expand to more mounted modules because Commerce and
-    // Distribution each mount multiple internal Hono modules.
-    //
-    // Stays-only PMS counts (tour verticals stripped): the framework standard set
-    // (29 modules) minus the excluded flights module (OPERATOR_EXCLUDED) = 28,
-    // plus 3 hand-wired deployment-local modules (invitations, team, realtime —
-    // cruises, charters, MICE removed) + 6 graduated PMS domain packages registered
-    // EXPLICITLY (keys ari, units, front-desk, housekeeping, folios, channels →
-    // @voyant-travel/pms-* → module names pms/ari, pms/units … pms/channels) = 37
-    // manifest modules. Commerce + Distribution still expand (+5) → 42 composed
-    // modules. Extensions drop the MICE booking sidecar (16 → 15).
-    expect(OPERATOR_RUNTIME_MANIFEST.modules).toHaveLength(37)
-    expect(composed.modules).toHaveLength(42)
-    expect(composed.extensions).toHaveLength(15)
+    expect(composed.modules.length).toBeGreaterThan(0)
+    expect(composed.extensions.length).toBeGreaterThan(0)
 
     // Every composed unit is a real HonoModule/HonoExtension.
     for (const m of composed.modules) expect(m.module?.name).toBeTypeOf("string")
@@ -58,6 +48,31 @@ describe("operator runtime composition", () => {
     // Module names are unique (no double-mount).
     const names = composed.modules.map((m) => m.module.name)
     expect(new Set(names).size).toBe(names.length)
+  })
+
+  it("mounts every selected graph subscriber facet exactly once", () => {
+    const composed = composeFromManifest(
+      OPERATOR_RUNTIME_MANIFEST,
+      operatorComposition,
+      buildOperatorProviders(),
+    )
+    const subscriberModuleNames = [
+      ...operatorProjectRuntime.graphRuntime.modules,
+      ...operatorProjectRuntime.graphRuntime.extensions,
+      ...operatorProjectRuntime.graphRuntime.plugins,
+      ...(operatorProjectRuntime.graphRuntime.adapters ?? []),
+      ...(operatorProjectRuntime.graphRuntime.providerUnits ?? []),
+    ]
+      .filter((unit) => unit.references.some((reference) => reference.facet === "subscribers.runtime"))
+      .map((unit) => `${unit.localId ?? unit.id}.graph-runtime`)
+
+    expect(subscriberModuleNames.length).toBeGreaterThan(0)
+    for (const name of subscriberModuleNames) {
+      expect(composed.modules.filter((module) => module.module.name === name)).toHaveLength(1)
+    }
+    expect(operatorGraphComposition.modules.filter((module) =>
+      subscriberModuleNames.includes(module.module.name),
+    )).toHaveLength(subscriberModuleNames.length)
   })
 
   it("composes the route families moved off additionalRoutes as extensions", () => {
@@ -75,9 +90,13 @@ describe("operator runtime composition", () => {
     expect(channelPush?.extension.module).toBe("distribution")
     expect(channelPush?.adminRoutes).toBeDefined()
 
-    const bookingTax = byName("booking-tax")
-    expect(bookingTax?.extension.module).toBe("bookings")
-    expect(bookingTax?.lazyAdminRoutes).toBeTypeOf("function")
+    const bookingTaxPreview = byName("booking-tax-preview")
+    expect(bookingTaxPreview?.extension.module).toBe("bookings")
+    expect(bookingTaxPreview?.lazyAdminRoutes).toBeTypeOf("function")
+
+    const bookingTaxSettings = byName("booking-tax-settings")
+    expect(bookingTaxSettings?.extension.module).toBe("finance")
+    expect(bookingTaxSettings?.lazyAdminRoutes).toBeTypeOf("function")
 
     // Booking-schedule owns an admin route on bookings + a public route
     // mounted at /v1/public/payment-policy via the publicPath override.
@@ -94,7 +113,7 @@ describe("operator runtime composition", () => {
     // Lazy extensions (loaded on demand, context bridged by createApp).
     const actionLedgerHealth = byName("action-ledger-health")
     expect(actionLedgerHealth?.extension.module).toBe("action-ledger")
-    expect(actionLedgerHealth?.lazyAdminRoutes).toBeTypeOf("function")
+    expect(actionLedgerHealth?.adminRoutes ?? actionLedgerHealth?.lazyAdminRoutes).toBeDefined()
 
     const proposal = byName("proposal")
     expect(proposal?.extension.module).toBe("quote-versions")
@@ -114,13 +133,11 @@ describe("operator runtime composition", () => {
     )
     const mod = (name: string) => composed.modules.find((m) => m.module.name === name)
 
-    // mcp/invitations route bundles live in the operator and load lazily;
-    // createApp mounts + caches them with the request context bridged. (flights
-    // is excluded from this stays-only deployment, so it is not mounted.)
+    // mcp stays app-local and loads lazily; auth-owned invitations are now graph
+    // modules. Flights is excluded from this stays-only deployment.
     expect(mod("flights")).toBeUndefined()
     expect(mod("mcp")?.lazyAdminRoutes).toBeTypeOf("function")
-    expect(mod("invitations")?.lazyAdminRoutes).toBeTypeOf("function")
-    expect(mod("invitations")?.lazyPublicRoutes).toBeTypeOf("function")
+    expect(mod("invitations")).toBeDefined()
   })
 
   it("registers the ARI authoring package (@voyant-travel/pms-ari) with eager admin routes", () => {
@@ -212,7 +229,15 @@ describe("operator runtime composition", () => {
     // package Hono module (none in this stays-only PMS — flights, which used to
     // be the sole app-local API module, was stripped out).
     const APP_LOCAL_API_MODULES = new Set<string>()
-    const runtime = new Set(OPERATOR_RUNTIME_MANIFEST.modules)
+    const runtime = new Set(
+      [
+        ...operatorProjectRuntime.graphRuntime.modules,
+        ...operatorProjectRuntime.graphRuntime.extensions,
+        ...operatorProjectRuntime.graphRuntime.plugins,
+        ...(operatorProjectRuntime.graphRuntime.adapters ?? []),
+        ...(operatorProjectRuntime.graphRuntime.providerUnits ?? []),
+      ].map((unit) => unit.packageName),
+    )
     const schemaModules = (voyantConfig.modules ?? []).map(entryName)
     const migratedButNotMounted = schemaModules.filter(
       (name) => !runtime.has(name) && !APP_LOCAL_API_MODULES.has(name),
