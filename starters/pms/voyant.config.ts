@@ -21,7 +21,7 @@ export default defineProject({
   productBom: STANDARD_OPERATOR_PRODUCT_BOM_REFERENCE,
   modules: distribution.modules,
   extensions: distribution.extensions,
-  plugins: ["@voyant-travel/plugin-smartbill"],
+  plugins: [],
   access: STANDARD_OPERATOR_ACCESS,
   // Product-job cadence is hosted explicitly by the Worker entry: managed
   // deployments use Cloud's HTTP scheduler, while self-hosted Wrangler uses

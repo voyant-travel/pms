@@ -113,7 +113,7 @@
     "@voyant-travel/quotes-react": "^0.139.0",
     "@voyant-travel/react": "^0.104.1",
     "@voyant-travel/realtime": "^0.1.7",
-    "@voyant-travel/realtime-react": "workspace:*",
+    "@voyant-travel/realtime-react": "^0.2.2",
     "@voyant-travel/relationships": "^0.122.2",
     "@voyant-travel/relationships-react": "^0.141.0",
     "@voyant-travel/storage": "0.106.0",

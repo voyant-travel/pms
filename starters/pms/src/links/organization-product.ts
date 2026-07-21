@@ -8,7 +8,9 @@ import { organizationLinkable } from "@voyant-travel/relationships/linkables"
  *
  * Replaces the former `products.organization_id` column with a link pivot table.
  */
-export const organizationProductLink = defineLink(organizationLinkable, {
+const organizationProductLink = defineLink(organizationLinkable, {
   linkable: productLinkable,
   isList: true,
 })
+
+export default organizationProductLink
